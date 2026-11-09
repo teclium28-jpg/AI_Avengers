@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useOperational } from "../../context/OperationalContext";
 import type { NavigationPage } from "../../types";
+import { FairShareLogo, FairShareIcon } from "../brand/FairShareLogo";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -67,19 +68,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-zinc-200 shrink-0">
         {/* Brand & Organization */}
         <div className="p-5 border-b border-zinc-100 flex flex-col space-y-1">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-              FS
-            </div>
-            <div>
-              <span className="font-bold text-base tracking-tight text-zinc-950 font-sans block leading-none">
-                FairShare
-              </span>
-              <span className="text-[11px] text-zinc-400 font-mono">Enterprise v3.1</span>
-            </div>
-          </div>
+          <FairShareLogo size="md" />
           <div className="mt-3 pt-3 border-t border-zinc-100">
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-zinc-400 block">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 block font-mono">
               Authority Tenant
             </span>
             <span className="text-xs font-medium text-zinc-800 line-clamp-1 mt-0.5">
@@ -156,13 +147,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         {/* Top Command Bar */}
         <header className="bg-white border-b border-zinc-200 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0 sticky top-0 z-30">
           <div className="flex items-center space-x-3">
-            {/* Mobile menu toggle */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+            {/* Mobile menu toggle & brand icon */}
+            <div className="flex items-center space-x-2 md:hidden">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+              <FairShareIcon size={26} />
+            </div>
 
             {/* Current Active Context Badge */}
             <div className="flex items-center space-x-2">
