@@ -7,15 +7,23 @@ import {
   CheckCircle2,
   Database,
   ArrowRight,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 import {
   parseCsv,
   cleanRegionRows,
   cleanStockRows,
   buildPeriodInput,
+  prepareImport,
 } from "@fairshare/domain";
 import type { DataIssue, RawRegionRow, RawStockRow, RegionEntity } from "../types";
 import { useOperational } from "../context/OperationalContext";
+import {
+  INDIA_REGIONS_CSV,
+  INDIA_STOCK_CSV,
+  INDIA_DIRTY_REGIONS_CSV,
+} from "../lib/indiaSamples";
 
 export const DataIntakeView: React.FC = () => {
   const { applyBatchIntake } = useOperational();
@@ -49,14 +57,15 @@ export const DataIntakeView: React.FC = () => {
 
       const allIssues = [...regionIssues, ...stockIssues];
 
-      const { input, issues: buildIssues } = buildPeriodInput("2026-W46", regionRows, stockRows);
-      allIssues.push(...buildIssues);
+      // Use safe import gate from domain package
+      const prep = prepareImport("2026-W46", regionRows, stockRows);
+      allIssues.push(...prep.issues);
 
       setParsedIssues(allIssues);
       setHasValidated(true);
 
-      if (input && allIssues.length === 0) {
-        const mappedRegions: RegionEntity[] = input.regions.map((r) => ({
+      if (prep.ok && prep.input && allIssues.length === 0) {
+        const mappedRegions: RegionEntity[] = prep.input.regions.map((r) => ({
           regionId: r.regionId,
           regionName: r.regionName,
           assignedCenterId: r.centerId,
@@ -64,7 +73,9 @@ export const DataIntakeView: React.FC = () => {
           status: r.status === "open" ? "active" : "ineligible",
         }));
         setCleanedRegions(mappedRegions);
-        setCleanedStock(input.stockKits);
+        setCleanedStock(prep.input.stockKits);
+      } else {
+        setCleanedRegions([]);
       }
     } catch (err: any) {
       setParsedIssues([
@@ -74,6 +85,7 @@ export const DataIntakeView: React.FC = () => {
           message: err.message || "Failed to parse CSV format",
         },
       ]);
+      setCleanedRegions([]);
       setHasValidated(true);
     }
   };
@@ -88,7 +100,7 @@ export const DataIntakeView: React.FC = () => {
     }
   };
 
-  const loadSample = (type: "normal" | "reduced" | "shortage") => {
+  const loadSample = (type: "normal" | "reduced" | "shortage" | "india" | "india_dirty") => {
     if (type === "normal") {
       setStockCsvContent(
         `period_id,stock_kits,stock_type,source,as_of_date\n2026-W46,120,confirmed,Central Warehouse Normal Count,2026-11-10`
@@ -103,13 +115,19 @@ export const DataIntakeView: React.FC = () => {
       setRegionsCsvContent(
         `period_id,region_id,region_name,center_id,demand_kits,capacity_kits,prior_dispatched_kits,status,reported_or_simulated\n2026-W46,A,Zone 1 (North),CTR-A,60,60,0,open,reported\n2026-W46,B,Zone 2 (Central Throttled),CTR-B,60,20,0,open,reported\n2026-W46,C,Zone 3 (Coastal),CTR-C,60,60,0,open,reported`
       );
-    } else {
+    } else if (type === "shortage") {
       setStockCsvContent(
         `period_id,stock_kits,stock_type,source,as_of_date\n2026-W46,90,confirmed,Scarcity Depleted Reserve,2026-11-10`
       );
       setRegionsCsvContent(
         `period_id,region_id,region_name,center_id,demand_kits,capacity_kits,prior_dispatched_kits,status,reported_or_simulated\n2026-W46,A,Zone 1 (North),CTR-A,60,60,0,open,reported\n2026-W46,B,Zone 2 (Central),CTR-B,60,40,0,open,reported\n2026-W46,C,Zone 3 (Coastal),CTR-C,60,60,0,open,reported`
       );
+    } else if (type === "india") {
+      setStockCsvContent(INDIA_STOCK_CSV);
+      setRegionsCsvContent(INDIA_REGIONS_CSV);
+    } else if (type === "india_dirty") {
+      setStockCsvContent(INDIA_STOCK_CSV);
+      setRegionsCsvContent(INDIA_DIRTY_REGIONS_CSV);
     }
     setHasValidated(false);
   };
@@ -127,8 +145,8 @@ export const DataIntakeView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <span className="text-xs text-zinc-400 font-medium">Standard Batches:</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-zinc-400 font-medium">Load Scenarios:</span>
           <button
             onClick={() => loadSample("normal")}
             className="px-2.5 py-1 text-xs font-medium rounded border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-zinc-700"
@@ -146,6 +164,19 @@ export const DataIntakeView: React.FC = () => {
             className="px-2.5 py-1 text-xs font-medium rounded border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-zinc-700"
           >
             Shortage (90)
+          </button>
+          <span className="h-4 w-px bg-zinc-200 mx-1" />
+          <button
+            onClick={() => loadSample("india")}
+            className="px-2.5 py-1 text-xs font-semibold rounded border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800"
+          >
+            India 30-District
+          </button>
+          <button
+            onClick={() => loadSample("india_dirty")}
+            className="px-2.5 py-1 text-xs font-medium rounded border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800"
+          >
+            Injected Errors (Demo)
           </button>
         </div>
       </div>

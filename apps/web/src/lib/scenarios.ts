@@ -1,4 +1,6 @@
-import type { PeriodInput, RegionInputRow } from "../types";
+import type { PeriodInput, RegionInputRow, RawRegionRow } from "../types";
+import { parseCsv, cleanRegionRows } from "@fairshare/domain";
+import { INDIA_REGIONS_CSV } from "./indiaSamples";
 
 export interface ScenarioPreset {
   id: string;
@@ -107,5 +109,20 @@ export const SCENARIO_PRESETS: ScenarioPreset[] = [
       ),
     },
     expectedAllocation: { A: 60, B: 40, C: 0 },
+  },
+  {
+    id: "india-operation",
+    name: "India Multi-District Shortage (30 Districts)",
+    description: "National emergency relief across 30 state districts. 15,520 confirmed kits, prior dispatches in UP/BR/TN, 2 closed centers (Gadchiroli, Kamrup), 4 capacity bottlenecks.",
+    input: {
+      periodId: "p1",
+      stockKits: 15520,
+      regions: (() => {
+        const raw = parseCsv(INDIA_REGIONS_CSV) as unknown as RawRegionRow[];
+        const { rows } = cleanRegionRows(raw);
+        return rows;
+      })(),
+    },
+    expectedAllocation: {},
   },
 ];
