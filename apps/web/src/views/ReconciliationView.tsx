@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   GitCompare,
   Download,
@@ -10,120 +10,19 @@ import {
   AlertTriangle,
   Info,
 } from "lucide-react";
-import type {
-  DispatchReconciliationRow,
-  CenterReconciliationRow,
-  MovementEvent,
-} from "../types";
+import { useOperational } from "../context/OperationalContext";
 
-export const ReconciliationView: React.FC = () => {
-  // Layer 1: Dispatch Reconciliation (Origin -> Center)
-  const [dispatchData, setDispatchData] = useState<DispatchReconciliationRow[]>([
-    {
-      centerId: "CTR-A",
-      centerName: "Center A (North)",
-      dispatchedKits: 40,
-      receivedKits: 40,
-      inTransitKits: 0,
-      confirmedLossKits: 0,
-      unresolvedKits: 0,
-      isBalanced: true,
-    },
-    {
-      centerId: "CTR-B",
-      centerName: "Center B (Valley)",
-      dispatchedKits: 40,
-      receivedKits: 35,
-      inTransitKits: 0,
-      confirmedLossKits: 0,
-      unresolvedKits: 5, // 40 - (35 + 0 + 0) = 5 unresolved
-      isBalanced: false,
-    },
-    {
-      centerId: "CTR-C",
-      centerName: "Center C (Coastal)",
-      dispatchedKits: 40,
-      receivedKits: 40,
-      inTransitKits: 0,
-      confirmedLossKits: 0,
-      unresolvedKits: 0,
-      isBalanced: true,
-    },
-  ]);
+interface ReconciliationViewProps {
+  onOpenRecordModal: () => void;
+}
 
-  // Layer 2: Center Reconciliation (Center -> Household)
-  const [centerData, setCenterData] = useState<CenterReconciliationRow[]>([
-    {
-      centerId: "CTR-A",
-      centerName: "Center A (North)",
-      receivedKits: 40,
-      collectedKits: 38,
-      damagedKits: 0,
-      remainingInCenterKits: 2,
-      isBalanced: true,
-    },
-    {
-      centerId: "CTR-B",
-      centerName: "Center B (Valley)",
-      receivedKits: 35,
-      collectedKits: 25,
-      damagedKits: 0,
-      remainingInCenterKits: 10, // 35 received - 25 collected = 10 in center
-      isBalanced: true,
-    },
-    {
-      centerId: "CTR-C",
-      centerName: "Center C (Coastal)",
-      receivedKits: 40,
-      collectedKits: 36,
-      damagedKits: 0,
-      remainingInCenterKits: 4,
-      isBalanced: true,
-    },
-  ]);
-
-  // Movement events log
-  const [events, setEvents] = useState<MovementEvent[]>([
-    {
-      eventId: "evt_101",
-      timestampUTC: "2026-11-10T02:00:00Z",
-      periodId: "p1",
-      centerId: "CTR-B",
-      eventType: "dispatch",
-      quantityKits: 40,
-      referenceDoc: "BOL-9021",
-      notes: "Central depot dispatch to Center B",
-      recordedBy: "Ishaan (Depot)",
-    },
-    {
-      eventId: "evt_102",
-      timestampUTC: "2026-11-10T03:30:00Z",
-      periodId: "p1",
-      centerId: "CTR-B",
-      eventType: "receipt",
-      quantityKits: 35,
-      referenceDoc: "REC-4412",
-      notes: "Driver delivered 35 boxes. 5 boxes unaccounted for.",
-      recordedBy: "Center Operator B",
-    },
-    {
-      eventId: "evt_103",
-      timestampUTC: "2026-11-10T04:00:00Z",
-      periodId: "p1",
-      centerId: "CTR-B",
-      eventType: "collection",
-      quantityKits: 25,
-      referenceDoc: "DIST-LOG-01",
-      notes: "25 families collected monthly food drive kits",
-      recordedBy: "Distribution Staff B",
-    },
-  ]);
+export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ onOpenRecordModal }) => {
+  const { dispatchReconciliation, centerReconciliation, movements } = useOperational();
 
   // Formula-safe CSV exporter
   const handleExportSafeCsv = () => {
     let csv = "Center ID,Center Name,Dispatched,Received,In Transit,Loss,Unresolved Difference\n";
-    dispatchData.forEach((row) => {
-      // Escape cells beginning with =, +, -, @ to prevent spreadsheet injection
+    dispatchReconciliation.forEach((row) => {
       const sanitize = (val: string) => {
         if (/^[=+\-@\s]/.test(val)) return `'${val}`;
         return val;
@@ -135,7 +34,7 @@ export const ReconciliationView: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `fairshare_reconciliation_p1_${Date.now()}.csv`;
+    link.download = `fairshare_reconciliation_audit_${Date.now()}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -145,24 +44,26 @@ export const ReconciliationView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-16">
+    <div className="space-y-6 pb-16">
       {/* Header & Export controls */}
       <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center space-x-3">
-          <div className="p-2.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <GitCompare className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-zinc-900">
-              Two-Layer Physical Reconciliation Ledger
-            </h2>
-            <p className="text-xs text-zinc-500">
-              Separates transit accountability from center warehouse balances. Zero double-counting.
-            </p>
-          </div>
+        <div>
+          <h1 className="text-xl font-bold text-zinc-950 font-sans">
+            Two-Layer Physical Reconciliation Ledger
+          </h1>
+          <p className="text-xs text-zinc-500 mt-1">
+            Separates transit accountability from center warehouse balances. Zero double-counting.
+          </p>
         </div>
 
         <div className="flex items-center space-x-3 no-print">
+          <button
+            onClick={onOpenRecordModal}
+            className="inline-flex items-center px-3.5 py-2 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow-sm"
+          >
+            <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
+            Record Movement Waybill
+          </button>
           <button
             onClick={handleExportSafeCsv}
             className="inline-flex items-center px-3.5 py-2 text-xs font-medium text-zinc-700 bg-white border border-zinc-300 rounded-lg hover:bg-zinc-50 shadow-sm"
@@ -172,7 +73,7 @@ export const ReconciliationView: React.FC = () => {
           </button>
           <button
             onClick={handlePrint}
-            className="inline-flex items-center px-3.5 py-2 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow-sm"
+            className="inline-flex items-center px-3.5 py-2 text-xs font-medium text-zinc-700 bg-white border border-zinc-300 rounded-lg hover:bg-zinc-50 shadow-sm"
           >
             <Printer className="w-3.5 h-3.5 mr-1.5" />
             Print Audit Report
@@ -182,11 +83,11 @@ export const ReconciliationView: React.FC = () => {
 
       {/* Non-Punitive Humanitarian Ethics Callout */}
       <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 flex items-start space-x-3 text-xs text-blue-900 shadow-sm">
-        <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+        <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
         <div className="space-y-1">
           <span className="font-semibold block">Non-Punitive Operational Guidance:</span>
           <p className="leading-relaxed">
-            Unresolved transit quantities (such as Center B's 5 missing kits) represent review signals for warehouse investigation, <strong>never an accusation of fraud</strong>. Furthermore, low collection rates at centers never automatically lower future estimated demand.
+            Unresolved transit quantities represent review signals for warehouse investigation, <strong>never an accusation of fraud</strong>. Furthermore, low collection rates at centers never automatically lower future estimated demand.
           </p>
         </div>
       </div>
@@ -196,8 +97,8 @@ export const ReconciliationView: React.FC = () => {
         <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Truck className="w-4 h-4 text-emerald-600" />
-            <h3 className="text-sm font-semibold text-zinc-900">
-              Layer 1: Dispatch Reconciliation (Central Warehouse → Center)
+            <h3 className="text-sm font-semibold text-zinc-900 font-sans">
+              Layer 1: Dispatch Reconciliation (Central Warehouse → Distribution Nodes)
             </h3>
           </div>
           <span className="text-[11px] font-mono text-zinc-500">
@@ -215,13 +116,13 @@ export const ReconciliationView: React.FC = () => {
                 <th className="py-3 px-4 font-mono text-right">In Transit</th>
                 <th className="py-3 px-4 font-mono text-right">Loss</th>
                 <th className="py-3 px-4 font-mono text-right font-bold text-zinc-900">
-                  Unresolved Diff
+                  Unresolved Difference
                 </th>
                 <th className="py-3 px-4 text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {dispatchData.map((row) => (
+              {dispatchReconciliation.map((row) => (
                 <tr key={row.centerId} className="hover:bg-zinc-50/70">
                   <td className="py-3 px-4">
                     <span className="font-semibold text-zinc-800">{row.centerName}</span>
@@ -237,7 +138,7 @@ export const ReconciliationView: React.FC = () => {
                         row.unresolvedKits > 0 ? "text-amber-600 font-bold" : "text-emerald-700"
                       }
                     >
-                      {row.unresolvedKits}
+                      {row.unresolvedKits} kits
                     </span>
                   </td>
                   <td className="py-3 px-4 text-center">
@@ -249,7 +150,7 @@ export const ReconciliationView: React.FC = () => {
                     ) : (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
                         <AlertTriangle className="w-3 h-3 mr-1 text-amber-600" />
-                        5 Under Review
+                        Under Review
                       </span>
                     )}
                   </td>
@@ -265,8 +166,8 @@ export const ReconciliationView: React.FC = () => {
         <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Building className="w-4 h-4 text-emerald-600" />
-            <h3 className="text-sm font-semibold text-zinc-900">
-              Layer 2: Center Warehouse Balance (Received → Distributed)
+            <h3 className="text-sm font-semibold text-zinc-900 font-sans">
+              Layer 2: Center Warehouse Balance (Received → Beneficiary Distribution)
             </h3>
           </div>
           <span className="text-[11px] font-mono text-zinc-500">
@@ -283,13 +184,13 @@ export const ReconciliationView: React.FC = () => {
                 <th className="py-3 px-4 font-mono text-right">Collected by Families</th>
                 <th className="py-3 px-4 font-mono text-right">Damaged in Storage</th>
                 <th className="py-3 px-4 font-mono text-right font-bold text-zinc-900">
-                  Remaining in Stock
+                  Remaining in Store
                 </th>
                 <th className="py-3 px-4 text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {centerData.map((row) => (
+              {centerReconciliation.map((row) => (
                 <tr key={row.centerId} className="hover:bg-zinc-50/70">
                   <td className="py-3 px-4">
                     <span className="font-semibold text-zinc-800">{row.centerName}</span>
@@ -314,33 +215,33 @@ export const ReconciliationView: React.FC = () => {
         </div>
       </div>
 
-      {/* APPEND-ONLY MOVEMENT AUDIT LOG */}
+      {/* APPEND-ONLY MOVEMENT LOG */}
       <div className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
-          <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">
-            Append-Only Movement Events Log ({events.length})
+          <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider font-sans">
+            Physical Waybill Audit Log ({movements.length})
           </h3>
           <span className="text-[11px] text-zinc-400 font-mono">
-            Historical facts cannot be deleted or mutated
+            Immutable physical transit events
           </span>
         </div>
 
         <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden text-xs">
-          {events.map((evt) => (
-            <div key={evt.eventId} className="p-3 flex items-center justify-between hover:bg-zinc-50">
+          {movements.map((evt) => (
+            <div key={evt.recordId} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-zinc-50 gap-2">
               <div className="flex items-center space-x-3">
-                <span className="font-mono text-[11px] font-semibold text-zinc-500">
-                  {evt.eventId}
+                <span className="font-mono text-[11px] font-bold text-emerald-700">
+                  {evt.waybillNumber}
                 </span>
-                <span className="font-medium text-zinc-800 uppercase px-2 py-0.5 rounded text-[10px] bg-zinc-100 border border-zinc-200">
-                  {evt.eventType}
+                <span className="font-semibold uppercase px-2 py-0.5 rounded text-[10px] bg-zinc-100 border border-zinc-200 text-zinc-700">
+                  {evt.movementType}
                 </span>
-                <span className="text-zinc-600">{evt.notes}</span>
+                <span className="text-zinc-800">{evt.notes}</span>
               </div>
               <div className="flex items-center space-x-4 text-zinc-500 font-mono text-[11px]">
-                <span className="font-bold text-zinc-900">{evt.quantityKits} kits</span>
-                <span>Ref: {evt.referenceDoc}</span>
-                <span>{evt.recordedBy}</span>
+                <span className="font-bold text-zinc-900 text-xs">{evt.quantityKits} kits</span>
+                <span>{evt.timestampIST}</span>
+                <span>{evt.verifiedBy}</span>
               </div>
             </div>
           ))}

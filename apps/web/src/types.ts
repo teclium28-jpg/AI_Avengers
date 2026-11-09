@@ -21,77 +21,126 @@ export type {
 };
 
 export type ActiveTab = "practice" | "intake" | "receipts" | "reconciliation";
-
 export type UserRole = "coordinator" | "operator" | "reviewer";
+export type AlgorithmType = "srs-progressive-maxmin" | "hamilton-proportional";
+export type AllocationAlgorithmType = "srs-progressive-maxmin" | "hamilton-proportional";
 
-export interface UserSession {
-  userId: string;
-  name: string;
-  role: UserRole;
-  organizationId: string;
-  organizationName: string;
-  isSimulatedDemo: boolean;
+export type NavigationPage =
+  | "dashboard"
+  | "studio"
+  | "centers"
+  | "intake"
+  | "reconciliation"
+  | "audit";
+
+export type RegionOperatingStatus = "active" | "ineligible";
+export type CenterOperatingStatus = "active" | "constrained" | "closed";
+
+export interface RegionEntity {
+  regionId: string;
+  regionName: string;
+  assignedCenterId: string;
+  demandKits: number;
+  status: RegionOperatingStatus;
+  subDistrict?: string;
+  populationServed?: number;
 }
 
-export type AlgorithmType = "srs-progressive-maxmin" | "hamilton-proportional";
+export interface CenterEntity {
+  centerId: string;
+  centerName: string;
+  configuredCapacity: number;     // Physical handling limit (kits)
+  committedDispatches: number;    // Already dispatched and committed
+  operatingStatus: CenterOperatingStatus;
+  address?: string;
+  contactPerson?: string;
+}
 
-export interface DecisionReceipt {
+export interface StockBatch {
+  batchId: string;
+  periodId: string;
+  quantityKits: number;
+  stockType: "confirmed" | "hypothetical";
+  sourceWarehouse: string;
+  intakeDate: string;
+  notes?: string;
+}
+
+export interface CalculatedAllocationItem {
+  regionId: string;
+  regionName: string;
+  assignedCenterId: string;
+  centerName: string;
+  demandKits: number;
+  centerCapacity: number;
+  allocatedKits: number;
+  coverageFraction: { numerator: number; denominator: number };
+  coveragePercentage: number;
+  isCappedByCapacity: boolean;
+  isCappedByDemand: boolean;
+  status: "full" | "partial" | "capacity_capped" | "unserviceable" | "zero_demand";
+}
+
+export interface DecisionReceiptEntity {
   receiptId: string;
   periodId: string;
   revision: number;
   actorId: string;
   actorName: string;
-  actorRole: UserRole;
+  actorRole: string;
   timestampUTC: string;
   timestampIST: string;
-  algorithm: AlgorithmType;
+  algorithm: AllocationAlgorithmType;
   algorithmVersion: string;
   changeJustification: string;
   canonicalPayloadHash: string;
   stagedOverrides: {
     capacityOverrides: Record<string, number>;
-    statusOverrides: Record<string, "open" | "closed">;
+    statusOverrides: Record<string, "active" | "closed">;
   };
   resultingAllocation: Record<string, number>;
 }
 
-export type MovementEventType =
-  | "dispatch"
-  | "receipt"
-  | "collection"
-  | "loss_transit"
-  | "loss_center"
-  | "return";
+export type MovementType =
+  | "dispatch"       // Central Warehouse -> Center
+  | "receipt"        // Arrived at Center
+  | "collection"     // Distributed to Family / Community
+  | "transit_loss"   // Damaged or stolen in transit
+  | "center_damage"  // Spoiled or damaged in center warehouse
+  | "return";        // Returned to Central Depot
 
-export interface MovementEvent {
-  eventId: string;
-  timestampUTC: string;
+export interface MovementRecord {
+  recordId: string;
+  waybillNumber: string;
   periodId: string;
   centerId: string;
-  eventType: MovementEventType;
+  centerName: string;
+  movementType: MovementType;
   quantityKits: number;
-  referenceDoc: string;
-  notes?: string;
-  recordedBy: string;
+  timestampUTC: string;
+  timestampIST: string;
+  carrierOrAgent: string;
+  verifiedBy: string;
+  notes: string;
 }
 
-export interface DispatchReconciliationRow {
+export interface DispatchReconciliationSummary {
   centerId: string;
   centerName: string;
   dispatchedKits: number;
   receivedKits: number;
   inTransitKits: number;
   confirmedLossKits: number;
-  unresolvedKits: number; // dispatched - (received + inTransit + loss)
+  unresolvedKits: number;
   isBalanced: boolean;
 }
 
-export interface CenterReconciliationRow {
+export interface CenterReconciliationSummary {
   centerId: string;
   centerName: string;
   receivedKits: number;
   collectedKits: number;
   damagedKits: number;
-  remainingInCenterKits: number; // received - (collected + damaged)
+  remainingInCenterKits: number;
   isBalanced: boolean;
 }

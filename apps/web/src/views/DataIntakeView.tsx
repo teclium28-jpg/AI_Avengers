@@ -14,35 +14,26 @@ import {
   cleanStockRows,
   buildPeriodInput,
 } from "@fairshare/domain";
-import type {
-  RegionInputRow,
-  DataIssue,
-  RawRegionRow,
-  RawStockRow,
-} from "../types";
-import { BASE_REGIONS } from "../lib/scenarios";
+import type { DataIssue, RawRegionRow, RawStockRow, RegionEntity } from "../types";
+import { useOperational } from "../context/OperationalContext";
 
-interface DataIntakeViewProps {
-  onApplyNewInputs: (newRegions: RegionInputRow[], newStock: number) => void;
-}
+export const DataIntakeView: React.FC = () => {
+  const { applyBatchIntake } = useOperational();
 
-export const DataIntakeView: React.FC<DataIntakeViewProps> = ({
-  onApplyNewInputs,
-}) => {
   const [regionsCsvContent, setRegionsCsvContent] = useState<string>(
     `period_id,region_id,region_name,center_id,demand_kits,capacity_kits,prior_dispatched_kits,status,reported_or_simulated
-p1,A,Region A (North District),CTR-A,60,60,0,open,simulated
-p1,B,Region B (Central Valley),CTR-B,60,40,0,open,simulated
-p1,C,Region C (Coastal Belt),CTR-C,60,60,0,open,simulated`
+2026-W46,A,Zone 1 — Northern Wards,CTR-A,60,60,0,open,reported
+2026-W46,B,Zone 2 — Central Transit Belt,CTR-B,60,40,0,open,reported
+2026-W46,C,Zone 3 — Coastal Waterfront,CTR-C,60,60,0,open,reported`
   );
 
   const [stockCsvContent, setStockCsvContent] = useState<string>(
     `period_id,stock_kits,stock_type,source,as_of_date
-p1,120,confirmed,warehouse count,2026-11-10`
+2026-W46,120,confirmed,Central Warehouse Count,2026-11-10`
   );
 
   const [parsedIssues, setParsedIssues] = useState<DataIssue[]>([]);
-  const [cleanedRegions, setCleanedRegions] = useState<RegionInputRow[]>([]);
+  const [cleanedRegions, setCleanedRegions] = useState<RegionEntity[]>([]);
   const [cleanedStock, setCleanedStock] = useState<number>(120);
   const [hasValidated, setHasValidated] = useState<boolean>(false);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
@@ -58,14 +49,21 @@ p1,120,confirmed,warehouse count,2026-11-10`
 
       const allIssues = [...regionIssues, ...stockIssues];
 
-      const { input, issues: buildIssues } = buildPeriodInput("p1", regionRows, stockRows);
+      const { input, issues: buildIssues } = buildPeriodInput("2026-W46", regionRows, stockRows);
       allIssues.push(...buildIssues);
 
       setParsedIssues(allIssues);
       setHasValidated(true);
 
       if (input && allIssues.length === 0) {
-        setCleanedRegions(input.regions);
+        const mappedRegions: RegionEntity[] = input.regions.map((r) => ({
+          regionId: r.regionId,
+          regionName: r.regionName,
+          assignedCenterId: r.centerId,
+          demandKits: r.demandKits,
+          status: r.status === "open" ? "active" : "ineligible",
+        }));
+        setCleanedRegions(mappedRegions);
         setCleanedStock(input.stockKits);
       }
     } catch (err: any) {
@@ -82,9 +80,9 @@ p1,120,confirmed,warehouse count,2026-11-10`
 
   const handleApply = () => {
     if (cleanedRegions.length > 0 && parsedIssues.length === 0) {
-      onApplyNewInputs(cleanedRegions, cleanedStock);
+      applyBatchIntake(cleanedRegions, cleanedStock);
       setSuccessBanner(
-        `Successfully loaded ${cleanedRegions.length} regions and ${cleanedStock} confirmed stock kits into the Practice Desk.`
+        `Successfully transferred ${cleanedRegions.length} verified regions and ${cleanedStock} confirmed stock kits into the Allocation Studio.`
       );
       setTimeout(() => setSuccessBanner(null), 5000);
     }
@@ -93,80 +91,73 @@ p1,120,confirmed,warehouse count,2026-11-10`
   const loadSample = (type: "normal" | "reduced" | "shortage") => {
     if (type === "normal") {
       setStockCsvContent(
-        `period_id,stock_kits,stock_type,source,as_of_date\np1,120,confirmed,synthetic normal,2026-11-10`
+        `period_id,stock_kits,stock_type,source,as_of_date\n2026-W46,120,confirmed,Central Warehouse Normal Count,2026-11-10`
       );
       setRegionsCsvContent(
-        `period_id,region_id,region_name,center_id,demand_kits,capacity_kits,prior_dispatched_kits,status,reported_or_simulated\np1,A,Region A (North),CTR-A,60,60,0,open,simulated\np1,B,Region B (Valley),CTR-B,60,40,0,open,simulated\np1,C,Region C (Coastal),CTR-C,60,60,0,open,simulated`
+        `period_id,region_id,region_name,center_id,demand_kits,capacity_kits,prior_dispatched_kits,status,reported_or_simulated\n2026-W46,A,Zone 1 (North),CTR-A,60,60,0,open,reported\n2026-W46,B,Zone 2 (Central),CTR-B,60,40,0,open,reported\n2026-W46,C,Zone 3 (Coastal),CTR-C,60,60,0,open,reported`
       );
     } else if (type === "reduced") {
       setStockCsvContent(
-        `period_id,stock_kits,stock_type,source,as_of_date\np1,120,confirmed,synthetic reduced,2026-11-10`
+        `period_id,stock_kits,stock_type,source,as_of_date\n2026-W46,120,confirmed,Central Warehouse Count,2026-11-10`
       );
       setRegionsCsvContent(
-        `period_id,region_id,region_name,center_id,demand_kits,capacity_kits,prior_dispatched_kits,status,reported_or_simulated\np1,A,Region A (North),CTR-A,60,60,0,open,simulated\np1,B,Region B (Valley),CTR-B,60,20,0,open,simulated\np1,C,Region C (Coastal),CTR-C,60,60,0,open,simulated`
+        `period_id,region_id,region_name,center_id,demand_kits,capacity_kits,prior_dispatched_kits,status,reported_or_simulated\n2026-W46,A,Zone 1 (North),CTR-A,60,60,0,open,reported\n2026-W46,B,Zone 2 (Central Throttled),CTR-B,60,20,0,open,reported\n2026-W46,C,Zone 3 (Coastal),CTR-C,60,60,0,open,reported`
       );
     } else {
       setStockCsvContent(
-        `period_id,stock_kits,stock_type,source,as_of_date\np1,90,confirmed,synthetic shortage,2026-11-10`
+        `period_id,stock_kits,stock_type,source,as_of_date\n2026-W46,90,confirmed,Scarcity Depleted Reserve,2026-11-10`
       );
       setRegionsCsvContent(
-        `period_id,region_id,region_name,center_id,demand_kits,capacity_kits,prior_dispatched_kits,status,reported_or_simulated\np1,A,Region A (North),CTR-A,60,60,0,open,simulated\np1,B,Region B (Valley),CTR-B,60,40,0,open,simulated\np1,C,Region C (Coastal),CTR-C,60,60,0,open,simulated`
+        `period_id,region_id,region_name,center_id,demand_kits,capacity_kits,prior_dispatched_kits,status,reported_or_simulated\n2026-W46,A,Zone 1 (North),CTR-A,60,60,0,open,reported\n2026-W46,B,Zone 2 (Central),CTR-B,60,40,0,open,reported\n2026-W46,C,Zone 3 (Coastal),CTR-C,60,60,0,open,reported`
       );
     }
     setHasValidated(false);
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-16">
-      {/* Page Header */}
-      <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <UploadCloud className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-zinc-900">
-                Data Intake & CSV Validation Pipeline
-              </h2>
-              <p className="text-xs text-zinc-500">
-                Pre-flight checks against strict SRS rules: non-negative integers, impossible balance detection, and CSV formula injection protection.
-              </p>
-            </div>
-          </div>
+    <div className="space-y-6 pb-16">
+      {/* Header */}
+      <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-zinc-950 font-sans">
+            Batch Data Ingestion & Pre-Flight Validation
+          </h1>
+          <p className="text-xs text-zinc-500 mt-1">
+            Validates census demand and warehouse inventory against strict SRS rules before register persistence.
+          </p>
+        </div>
 
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-zinc-400 font-medium">Quick Fixtures:</span>
-            <button
-              onClick={() => loadSample("normal")}
-              className="px-2.5 py-1 text-xs font-medium rounded border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-zinc-700"
-            >
-              Normal (120)
-            </button>
-            <button
-              onClick={() => loadSample("reduced")}
-              className="px-2.5 py-1 text-xs font-medium rounded border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-zinc-700"
-            >
-              B Capped (20)
-            </button>
-            <button
-              onClick={() => loadSample("shortage")}
-              className="px-2.5 py-1 text-xs font-medium rounded border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-zinc-700"
-            >
-              Shortage (90)
-            </button>
-          </div>
+        <div className="flex items-center space-x-2">
+          <span className="text-xs text-zinc-400 font-medium">Standard Batches:</span>
+          <button
+            onClick={() => loadSample("normal")}
+            className="px-2.5 py-1 text-xs font-medium rounded border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-zinc-700"
+          >
+            Normal (120)
+          </button>
+          <button
+            onClick={() => loadSample("reduced")}
+            className="px-2.5 py-1 text-xs font-medium rounded border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-zinc-700"
+          >
+            B Capped (20)
+          </button>
+          <button
+            onClick={() => loadSample("shortage")}
+            className="px-2.5 py-1 text-xs font-medium rounded border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-zinc-700"
+          >
+            Shortage (90)
+          </button>
         </div>
       </div>
 
       {successBanner && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center space-x-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{successBanner}</span>
         </div>
       )}
 
-      {/* Two-file editor & preview */}
+      {/* CSV Editors Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* regions.csv */}
         <div className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm space-y-3">
@@ -177,7 +168,7 @@ p1,120,confirmed,warehouse count,2026-11-10`
                 regions.csv
               </h3>
             </div>
-            <span className="text-[11px] text-zinc-400 font-mono">Demands & Center Capacities</span>
+            <span className="text-[11px] text-zinc-400 font-mono">Zone Demands & Assigned Nodes</span>
           </div>
 
           <textarea
@@ -200,7 +191,7 @@ p1,120,confirmed,warehouse count,2026-11-10`
                 stock.csv
               </h3>
             </div>
-            <span className="text-[11px] text-zinc-400 font-mono">Confirmed Warehouse Inventory</span>
+            <span className="text-[11px] text-zinc-400 font-mono">Confirmed Depot Stock</span>
           </div>
 
           <textarea
@@ -218,14 +209,14 @@ p1,120,confirmed,warehouse count,2026-11-10`
       {/* Validation trigger bar */}
       <div className="bg-white rounded-xl border border-zinc-200 p-4 shadow-sm flex items-center justify-between">
         <div className="text-xs text-zinc-600">
-          Cleaned shape enforces SRS invariants before persisting to official register.
+          Executes strict data cleansing: rejects missing numbers, impossible balances, and spreadsheet injection.
         </div>
         <button
           onClick={handleValidate}
           className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 shadow-sm"
         >
           <FileCheck2 className="w-4 h-4 mr-1.5" />
-          Run Pre-Flight Validation
+          Run Cleanse & Validation
         </button>
       </div>
 
@@ -233,18 +224,18 @@ p1,120,confirmed,warehouse count,2026-11-10`
       {hasValidated && (
         <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
-            <h3 className="text-sm font-semibold text-zinc-900">
-              Pre-Flight Validation Assessment
+            <h3 className="text-sm font-semibold text-zinc-900 font-sans">
+              Validation Assessment Report
             </h3>
             {parsedIssues.length === 0 ? (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
                 <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-                All Constraints Validated
+                All Regulatory Invariants Passed
               </span>
             ) : (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200">
                 <AlertCircle className="w-3.5 h-3.5 mr-1 text-rose-600" />
-                {parsedIssues.length} Invalidation Issues Detected
+                {parsedIssues.length} Invalidation Errors
               </span>
             )}
           </div>
@@ -279,7 +270,7 @@ p1,120,confirmed,warehouse count,2026-11-10`
                   Validated Input Dataset Overview:
                 </div>
                 <div>• Confirmed Stock: <span className="font-mono font-bold">{cleanedStock} kits</span></div>
-                <div>• Verified Regions: <span className="font-mono font-bold">{cleanedRegions.length} distribution zones</span></div>
+                <div>• Verified Zones: <span className="font-mono font-bold">{cleanedRegions.length} zones</span></div>
                 <div>• Total Regional Demand: <span className="font-mono font-bold">{cleanedRegions.reduce((sum, r) => sum + r.demandKits, 0)} kits</span></div>
               </div>
 
@@ -288,7 +279,7 @@ p1,120,confirmed,warehouse count,2026-11-10`
                   onClick={handleApply}
                   className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 shadow-sm"
                 >
-                  Apply Validated Data to Practice Desk
+                  Transfer Validated Data to Allocation Studio
                   <ArrowRight className="w-4 h-4 ml-1.5" />
                 </button>
               </div>
