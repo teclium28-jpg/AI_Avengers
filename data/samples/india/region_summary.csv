@@ -1,0 +1,31 @@
+period_id,state_code,region_id,region_name,center_id,donation_volume_kits,center_capacity_kits,demand_estimate_kits,status,reported_or_simulated
+p1,MH,MH-MUM,Mumbai Suburban,CTR-MUM,825,1224,1896,open,simulated
+p1,MH,MH-THN,Thane,CTR-THN,998,2577,2718,open,simulated
+p1,MH,MH-PUN,Pune,CTR-PUN,1633,1690,2238,open,simulated
+p1,MH,MH-NAG,Nagpur,CTR-NAG,609,666,913,open,simulated
+p1,MH,MH-GAD,Gadchiroli,CTR-GAD,132,0,198,closed,simulated
+p1,DL,DL-NWD,North West Delhi,CTR-NWD,353,630,742,open,simulated
+p1,DL,DL-SED,South East Delhi,CTR-SED,223,643,601,open,simulated
+p1,UP,UP-LKO,Lucknow,CTR-LKO,422,820,936,open,simulated
+p1,UP,UP-VNS,Varanasi,CTR-VNS,350,879,882,open,simulated
+p1,UP,UP-BAH,Bahraich,CTR-BAH,312,595,692,open,simulated
+p1,BR,BR-PAT,Patna,CTR-PAT,726,844,1274,open,simulated
+p1,BR,BR-KIS,Kishanganj,CTR-KIS,245,288,435,open,simulated
+p1,WB,WB-KOL,Kolkata,CTR-KOL,848,630,1076,open,simulated
+p1,WB,WB-MUR,Murshidabad,CTR-MUR,855,1960,1843,open,simulated
+p1,TN,TN-CHE,Chennai,CTR-CHE,767,839,1288,open,simulated
+p1,TN,TN-MDU,Madurai,CTR-MDU,482,768,720,open,simulated
+p1,KA,KA-BLR,Bengaluru Urban,CTR-BLR,1594,1810,2229,open,simulated
+p1,KA,KA-RCH,Raichur,CTR-RCH,198,301,504,open,simulated
+p1,TS,TS-HYD,Hyderabad,CTR-HYD,506,704,872,open,simulated
+p1,AP,AP-VSK,Visakhapatnam,CTR-VSK,203,364,373,open,simulated
+p1,GJ,GJ-AMD,Ahmedabad,CTR-AMD,676,996,1758,open,simulated
+p1,RJ,RJ-JPR,Jaipur,CTR-JPR,1051,838,1331,open,simulated
+p1,RJ,RJ-BAR,Barmer,CTR-BAR,197,509,513,open,simulated
+p1,OD,OD-KAL,Kalahandi,CTR-KAL,221,192,326,open,simulated
+p1,OD,OD-BBS,Khordha (Bhubaneswar),CTR-BBS,130,440,423,open,simulated
+p1,AS,AS-GUW,Kamrup Metropolitan,CTR-GUW,241,0,295,closed,simulated
+p1,KL,KL-TVM,Thiruvananthapuram,CTR-TVM,16,330,0,open,simulated
+p1,MP,MP-BPL,Bhopal,CTR-BPL,148,508,492,open,simulated
+p1,CG,CG-BST,Bastar,CTR-BST,102,188,274,open,simulated
+p1,JH,JH-RAN,Ranchi,CTR-RAN,457,509,669,open,simulated

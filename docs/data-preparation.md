@@ -99,3 +99,23 @@ An independent validity evaluator (`isValidAllocation` in the same file) re-chec
 output against the SRS invariants (non-negative integers, within capacity/demand,
 total ≤ stock, closed regions get 0 new allocation) without re-running the allocation
 logic itself, per the plan's "independent validity evaluator" requirement.
+
+## Integration conventions (confirmed by data owner)
+
+**Inclusive period totals.** All quantities are totals for the period, including
+kits already dispatched. `pool = stockKits − Σ priorDispatchedKits`;
+`headroom = status == open ? max(0, min(demand, capacity) − prior) : 0`;
+`allocatedKits = priorDispatchedKits + newlyAllocatedKits`.
+Golden test: stock 100, demand/capacity 80, prior 20 → allocated 80, new 60, unallocated 20.
+
+**Closure after dispatch (policy: dispatched kits stay committed).** A region that
+closes after dispatching (`status = closed`, `capacity = 0`, `prior > 0`) keeps its
+prior kits, receives 0 new kits, and remains valid. The evaluator allows a region
+total up to `max(min(demand, capacity), prior)`, and checks `newlyAllocatedKits`
+against headroom separately. Golden test: A closed/cap 0/prior 30 + B open 60/60,
+stock 100 → A 30 (new 0), B 60, unallocated 10.
+
+**Safe import.** `buildPeriodInput` returns `input` even when issues exist (handy for
+previews). Persistence must go through `prepareImport`, which returns
+`ok: false, input: null` if there is any issue, so nothing is saved just because
+`input` is non-null.

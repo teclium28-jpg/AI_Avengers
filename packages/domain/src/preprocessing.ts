@@ -325,3 +325,26 @@ export function buildPeriodInput(
     issues,
   };
 }
+
+export interface PrepareImportResult {
+  /** True only when the period is safe to persist: no issues of any kind. */
+  ok: boolean;
+  /** Non-null only when `ok` is true. Callers must never persist on `issues` being ignored. */
+  input: PeriodInput | null;
+  issues: DataIssue[];
+}
+
+/**
+ * Safe import gate. `buildPeriodInput` returns a usable `input` even when issues
+ * exist (useful for previews); this helper withholds it unless the data is clean,
+ * so an import is never persisted just because `input` is non-null.
+ */
+export function prepareImport(
+  periodId: string,
+  regionRows: RegionInputRow[],
+  stockRows: StockInputRow[],
+): PrepareImportResult {
+  const { input, issues } = buildPeriodInput(periodId, regionRows, stockRows);
+  const ok = input !== null && issues.length === 0;
+  return { ok, input: ok ? input : null, issues };
+}
