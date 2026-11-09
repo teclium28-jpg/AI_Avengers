@@ -1,4 +1,41 @@
-:root { font-family: system-ui, sans-serif; color: #17382d; background: #f5f8f4; }
-body { margin: 0; }
-main { max-width: 48rem; margin: 12vh auto; padding: 1.5rem; }
-h1 { font-size: clamp(2rem, 5vw, 3.5rem); }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Monospace figures and ratios always align tabularly without jitter */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Print stylesheet for clean formal audit reports (no UI clutter) */
+@media print {
+  header, nav, button, .no-print, input[type="range"] {
+    display: none !important;
+  }
+  
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th, td {
+    border: 1px solid #d1d5db !important;
+    padding: 6px 10px !important;
+  }
+}

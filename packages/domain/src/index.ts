@@ -6,3 +6,4 @@
 export * from "./types.ts";
 export * from "./preprocessing.ts";
 export * from "./baseline.ts";
+export * from "./fairness.ts";
