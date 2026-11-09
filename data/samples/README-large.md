@@ -17,3 +17,9 @@ Regenerate or scale: `python3 scripts/generate_india_large.py OUT_DIR [REGIONS] 
 Verified: every period cleans with zero region issues and the baseline returns a valid allocation
 (100 regions: ~1 ms per period; 1,000 regions: ~4 ms average, 12 ms worst). The stress stock file
 raises "suspicious magnitude" flags (>100,000 kits) by design; they are warnings, not rejections.
+
+## region_summary.csv (all three folders)
+
+One row per region per period with the three quantities the DataNova guideline names:
+`donation_volume_kits`, `center_capacity_kits`, `demand_estimate_kits`. Donation volumes sum exactly to that
+period's `stock_kits`. Build with `python3 scripts/build_region_summary.py DIR`. Synthetic, labeled simulated.
