@@ -11,8 +11,9 @@ import {
   computeBaselineAllocation,
   isValidAllocation,
   parseCsv,
+  prepareImport,
 } from "../src/index.ts";
-import type { PeriodInput, RawRegionRow, RawStockRow, RegionInputRow } from "../src/types.ts";
+import type { PeriodInput, RawRegionRow, RawStockRow, RegionInputRow, StockInputRow } from "../src/types.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SAMPLES_ROOT = join(__dirname, "..", "..", "..", "data", "samples");
@@ -141,4 +142,61 @@ test("capped demand (zero capacity but confirmed demand) leaves region at zero w
   assert.equal(result.allocations.length, 1);
   assert.equal(result.allocations[0].allocatedKits, 0);
   assert.equal(result.unallocatedKits, 100);
+});
+
+const row = (o: Partial<RegionInputRow> & { regionId: string }): RegionInputRow => ({
+  periodId: "p1", regionName: `Region ${o.regionId}`, centerId: `CTR-${o.regionId}`,
+  demandKits: 0, capacityKits: 0, priorDispatchedKits: 0, status: "open", provenance: "simulated", ...o,
+});
+
+test("contract golden: inclusive totals (stock 100, demand/cap 80, prior 20)", () => {
+  const input: PeriodInput = {
+    periodId: "p1", stockKits: 100,
+    regions: [row({ regionId: "A", demandKits: 80, capacityKits: 80, priorDispatchedKits: 20 })],
+  };
+  const result = computeBaselineAllocation(input);
+  const a = result.allocations[0];
+  assert.equal(a.allocatedKits, 80);
+  assert.equal(a.newlyAllocatedKits, 60);
+  assert.equal(result.unallocatedKits, 20);
+  assert.equal(isValidAllocation(input, result).valid, true);
+});
+
+test("closure after dispatch: closed region keeps prior, gets nothing new, and validates", () => {
+  const input: PeriodInput = {
+    periodId: "p1", stockKits: 100,
+    regions: [
+      row({ regionId: "A", demandKits: 60, capacityKits: 0, priorDispatchedKits: 30, status: "closed" }),
+      row({ regionId: "B", demandKits: 60, capacityKits: 60 }),
+    ],
+  };
+  const result = computeBaselineAllocation(input);
+  const a = result.allocations.find((r) => r.regionId === "A")!;
+  const b = result.allocations.find((r) => r.regionId === "B")!;
+  assert.equal(a.allocatedKits, 30);
+  assert.equal(a.newlyAllocatedKits, 0);
+  assert.equal(b.allocatedKits, 60);
+  assert.equal(result.unallocatedKits, 10);
+  assert.equal(isValidAllocation(input, result).valid, true);
+});
+
+test("evaluator rejects new allocation beyond headroom", () => {
+  const input: PeriodInput = {
+    periodId: "p1", stockKits: 100,
+    regions: [row({ regionId: "A", demandKits: 50, capacityKits: 50, priorDispatchedKits: 20 })],
+  };
+  const bad = { periodId: "p1", totalStockKits: 100, totalAllocatedKits: 60, unallocatedKits: 40,
+    allocations: [{ regionId: "A", allocatedKits: 60, newlyAllocatedKits: 40, coverage: 1.2, boundByCapacity: false }] };
+  assert.equal(isValidAllocation(input, bad).valid, false);
+});
+
+test("prepareImport withholds input whenever any issue exists", () => {
+  const stock: StockInputRow[] = [{ periodId: "p1", stockKits: 10, stockType: "confirmed", source: "t", asOfDate: "2026-01-01" }];
+  const clean = prepareImport("p1", [row({ regionId: "A", demandKits: 5, capacityKits: 5 })], stock);
+  assert.equal(clean.ok, true);
+  assert.ok(clean.input);
+  const dirty = prepareImport("p1", [row({ regionId: "A", demandKits: 5, capacityKits: 5, priorDispatchedKits: 50 })], stock);
+  assert.equal(dirty.ok, false);
+  assert.equal(dirty.input, null);
+  assert.ok(dirty.issues.length > 0);
 });

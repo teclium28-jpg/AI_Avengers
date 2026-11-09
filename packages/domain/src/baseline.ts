@@ -228,14 +228,27 @@ export function isValidAllocation(
     if (!Number.isInteger(a.allocatedKits) || a.allocatedKits < 0) {
       violations.push(`region ${a.regionId}: allocatedKits must be a non-negative integer`);
     }
-    if (a.allocatedKits > row.demandKits) {
+    // Inclusive totals: a region may hold up to max(min(demand, capacity), prior).
+    // Prior dispatch is already committed, so it can exceed a later-lowered
+    // demand/capacity (e.g. closure after dispatch) without being a violation.
+    const ceiling = Math.max(Math.min(row.demandKits, row.capacityKits), row.priorDispatchedKits);
+    if (a.allocatedKits > ceiling) {
       violations.push(
-        `region ${a.regionId}: allocated (${a.allocatedKits}) exceeds demand (${row.demandKits})`,
+        `region ${a.regionId}: allocated (${a.allocatedKits}) exceeds allowed ceiling (${ceiling}) from demand (${row.demandKits}), capacity (${row.capacityKits}) and prior dispatch (${row.priorDispatchedKits})`,
       );
     }
-    if (a.allocatedKits > row.capacityKits) {
+    const headroom =
+      row.status === "open"
+        ? Math.max(0, Math.min(row.demandKits, row.capacityKits) - row.priorDispatchedKits)
+        : 0;
+    if (a.newlyAllocatedKits > headroom) {
       violations.push(
-        `region ${a.regionId}: allocated (${a.allocatedKits}) exceeds capacity (${row.capacityKits})`,
+        `region ${a.regionId}: new allocation (${a.newlyAllocatedKits}) exceeds headroom (${headroom})`,
+      );
+    }
+    if (a.allocatedKits !== row.priorDispatchedKits + a.newlyAllocatedKits) {
+      violations.push(
+        `region ${a.regionId}: allocated must equal prior dispatch plus new allocation`,
       );
     }
     if (a.allocatedKits < row.priorDispatchedKits) {
