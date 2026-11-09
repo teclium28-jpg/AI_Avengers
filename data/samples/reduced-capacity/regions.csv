@@ -1,0 +1,4 @@
+period_id,region_id,region_name,center_id,demand_kits,capacity_kits,prior_dispatched_kits,status,reported_or_simulated
+p1,A,Region A,CTR-A,60,60,0,open,simulated
+p1,B,Region B,CTR-B,60,20,0,open,simulated
+p1,C,Region C,CTR-C,60,60,0,open,simulated
