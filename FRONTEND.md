@@ -78,7 +78,18 @@ export type PeriodId = string;
 export type RegionId = string;
 export type CenterId = string;
 export type RevisionNumber = number; // e.g. 1, 2, 3...
-export type Rational = { numerator: bigint; denominator: bigint };
+
+// Internal domain calculation type (Exact BigInt arithmetic)
+export interface Rational {
+  numerator: bigint;
+  denominator: bigint;
+}
+
+// Wire transfer DTO (JSON.stringify-safe; Zod verified)
+export interface RationalDTO {
+  numerator: string;
+  denominator: string;
+}
 
 export type UserRole = 'coordinator' | 'operator' | 'reviewer';
 
@@ -89,6 +100,7 @@ export interface UserSession {
   role: UserRole;
   organizationId: OrganizationId;
   organizationName: string;
+  isSimulatedDemo?: boolean; // When true, explicitly badges UI as DEMO MODE
 }
 
 // ==========================================
@@ -99,7 +111,7 @@ export interface RegionDemand {
   regionName: string;
   demandKits: number;
   assignedCenterId: CenterId;
-  status: 'active' | 'closed';
+  status: 'active' | 'ineligible'; // Ineligible means explicitly excluded from program
 }
 
 export interface DistributionCenter {
@@ -116,8 +128,8 @@ export interface PeriodState {
   startDate: string; // ISO 8601 UTC
   endDate: string;   // ISO 8601 UTC
   currentRevision: RevisionNumber;
-  confirmedStock: number;         // Authoritative stock in warehouse
-  hypotheticalSurgeStock: number; // Staged in Practice Desk (never auto-reserved)
+  confirmedStock: number;         // Authoritative physical stock in warehouse
+  hypotheticalSurgeStock: number; // Staged in Practice Desk (never committed as stock)
   regions: Record<RegionId, RegionDemand>;
   centers: Record<CenterId, DistributionCenter>;
 }
@@ -127,17 +139,27 @@ export interface PeriodState {
 // ==========================================
 export type AllocationAlgorithmType = 'srs-progressive-maxmin' | 'hamilton-proportional';
 
+export type AllocationCoverageStatus = 
+  | 'full'                          // 100% demand met
+  | 'partial'                       // Under-allocated due to scarcity
+  | 'capped_by_capacity'            // Limited by center capacity
+  | 'capped_by_demand'              // Limited by region demand
+  | 'unserviceable_center_closed'   // Region has active demand, but assigned center is closed
+  | 'zero_demand'                   // Demand is 0; coverage is N/A
+  | 'ineligible';                   // Region is administrative inactive; coverage is N/A
+
 export interface RegionAllocationResult {
   regionId: RegionId;
   assignedCenterId: CenterId;
   demandKits: number;
   centerCapacity: number;
   allocatedKits: number;
-  coverageRatio: Rational;         // Exact rational fraction (e.g. 40/60)
+  coverageRatio: Rational;         // Domain BigInt representation
+  coverageRatioDTO: RationalDTO;   // Wire-safe string representation
   coveragePercentage: number;      // Display only: (allocatedKits / demandKits) * 100
   isCappedByCapacity: boolean;
   isCappedByDemand: boolean;
-  status: 'full' | 'partial' | 'capped' | 'zero_demand' | 'closed';
+  status: AllocationCoverageStatus;
 }
 
 export interface PlanCalculationOutput {
@@ -174,7 +196,7 @@ export interface DecisionReceipt {
   stagedOverrides: {
     capacityOverrides: Record<CenterId, number>;
     statusOverrides: Record<CenterId, 'active' | 'closed'>;
-    confirmedStockOverride?: number;
+    // Note: confirmedStock is NEVER overridable via acceptance; updated only via stock imports
   };
   resultingAllocation: Record<RegionId, number>;
 }
@@ -243,9 +265,27 @@ export interface CenterReconciliationSummary {
   4. Allocate 1 kit. Repeat until available stock is exhausted or all eligible regions are capped.
 
 ### 4.2 Hamilton Largest Remainder Baseline (`src/domain/hamiltonBaseline.ts`)
-* **Policy Mandate:** Capacity-aware proportional representation.
-* Floor rational shares $\lfloor \text{Stock} \times \frac{\text{Demand}_i}{\text{Total Demand}} \rfloor$, capped by center capacity.
-* Distribute remaining kits one-by-one in descending order of the fractional remainder, with ties broken by `regionId`.
+* **Policy Mandate:** Capacity-aware proportional representation with iterative redistribution.
+* **Iterative Redistribution Algorithm:**
+  A single pass of largest remainders is mathematically insufficient when capacity caps bind (e.g. Stock 100, Demands [60,60,60], Capacities [10,60,60]; capping Center A at 10 leaves 23 kits undistributed unless redistributed).
+  1. Initialize each eligible region's allocation to 0.
+  2. While useful stock remains and at least one region has remaining allocatable capacity and unmet demand:
+     a. Identify active, uncapped eligible regions: $\{ i \mid \text{allocated}_i < \text{demand}_i \text{ and } \text{allocated}_i < \text{capacity}_i \}$.
+     b. If no such regions exist, terminate loop (remaining stock cannot be legally distributed).
+     c. Calculate integer floor shares for these eligible regions proportional to their *remaining unmet demand*:
+        $$\text{share}_i = \min\left(\left\lfloor \text{remainingStock} \times \frac{\text{unmetDemand}_i}{\sum_{j \in \text{eligible}} \text{unmetDemand}_j} \right\rfloor, \text{remainingCapacity}_i, \text{unmetDemand}_i\right)$$
+     d. If $\sum \text{share}_i > 0$:
+        - Deduct from remaining stock, update allocations, and check if any region's capacity/demand bound is now saturated (capped).
+        - If caps bound, fix their allocations and repeat step 2.
+     e. If $\sum \text{share}_i == 0$ (all fractional leftovers):
+        - Compute exact fractional remainders: $r_i = \text{remainingStock} \times \text{unmetDemand}_i \pmod{\sum \text{unmetDemand}_j}$.
+        - Sort eligible regions in descending order of remainder $r_i$; break ties deterministically by alphabetical `regionId`.
+        - Distribute 1 whole kit to each sorted region until remaining stock is exhausted or all are capped.
+  3. Formal Invariant Guarantees:
+     - No region allocation exceeds its demand: $\text{allocated}_i \le \text{demand}_i$.
+     - No region allocation exceeds assigned center capacity: $\text{allocated}_i \le \text{capacity}_i$.
+     - No stock allocated twice; $\sum \text{allocated}_i \le \text{totalStock}$.
+     - Zero stock left undistributed unless all eligible regions have reached their capacity or demand caps.
 
 ### 4.3 Five Mandatory Deterministic Scenarios
 Every scenario button in the UI **resets all variables** to known states rather than inheriting accidental slider mutations:
@@ -256,7 +296,7 @@ Every scenario button in the UI **resets all variables** to known states rather 
 | **2. B Throttled** | 120 | [60, 60, 60] | [60, **20**, 60] | **[50, 20, 50]** | B hits capacity bound; remaining stock shifts fairly to A and C. |
 | **3. Stock Surge (+20)** | 140 *(120+20)* | [60, 60, 60] | [60, **20**, 60] | **[60, 20, 60]** | B remains throttled at 20; A and C fully satisfied (100%). |
 | **4. Restore Center B** | 120 | [60, 60, 60] | [60, **40**, 60] | **[40, 40, 40]** | Fully reverts to baseline; proves reversibility. |
-| **5. Emergency Closure** | 120 | [60, 60, 60] | [60, 40, **0 (Closed)**] | **[60, 40, 0]** | Region C closed (`N/A coverage`); cannot block flow to A and B. |
+| **5. Emergency Closure** | 120 | [60, 60, 60] | [60, 40, **0 (Closed)**] | **[60, 40, 0]** | Center C is closed (`operatingStatus: 'closed'`). Region C remains active with unmet demand visible (60 kits), but is flagged as `Unserviceable — Center Closed` (0 kits allocated, 0.0% coverage). Closed center cannot block flow to A and B. *(N/A coverage applies only when demand itself is 0 or region is administratively ineligible).* |
 
 ---
 
@@ -271,9 +311,12 @@ Every scenario button in the UI **resets all variables** to known states rather 
     * If local state == server state: `Authoritative Register • Revision r4` (Emerald border/pill).
     * If local state != server state: `Uncommitted Practice Preview` (Amber border/pill).
 * **Right Controls:**
-  * Network Latency indicator (`Mumbai Pooler: 28ms`).
-  * User Identity badge: `Swayam` with role badge `Coordinator`.
-  * Quick Role Switcher for hackathon demo (`Coordinator`, `Operator`, `Reviewer`).
+  * **Measured Network Latency:** Live HTTP round-trip ping to Cloudflare Worker/Supabase pooler (e.g. `28ms`), or `Telemetry Unavailable / Offline` if unreachable. Never hardcoded.
+  * **User Identity & Role:** Bound to verified Supabase JWT claims (e.g. `Coordinator`).
+  * **Role Switcher Guard (Security Boundary):**
+    * In **Production Mode**, user role and organization membership are strictly dictated by the verified Supabase JWT and server-side RLS. The dropdown is disabled or hidden.
+    * In **Demo Mode**, switching simulated roles displays a persistent high-visibility badge: `[DEMO MODE: SIMULATED IDENTITY]`. Changing demo roles alters only client-side UI perspectives; every backend request still undergoes strict server-side authorization checks.
+    * No personal developer names are hardcoded in application logic; standard seed configurations are used for demonstrations.
 
 ---
 
@@ -305,7 +348,7 @@ Full-width primary table occupying the top half of the workspace:
   5. `Allocated Kits`: Exact kits awarded (`40`).
   6. `Exact Coverage Fraction`: Rendered in JetBrains Mono (`40/60`).
   7. `Coverage %`: Percentage with tabular digits (`66.7%`).
-  8. `Constraint Status`: Badges (`Full 100%`, `Capped by Capacity`, `Fair Max-Min Share`, `Closed`).
+  8. `Constraint Status`: Badges (`Full 100%`, `Capped by Capacity`, `Fair Max-Min Share`, `Unserviceable — Center Closed`, `Zero Demand (N/A)`).
 
 #### C. Prominent Allocation Impact Section (Before vs. After)
 Rendered immediately below the matrix whenever local edits exist:
@@ -325,7 +368,10 @@ Rendered immediately below the matrix whenever local edits exist:
 * **Right Sub-Panel: Center Capacity Breakdown Cards:**
   * For each center:
     * `Configured Capacity`: Interactive slider (`0` to `100`).
-    * Numerical breakdown: `Capacity: 40` | `Dispatched: 0` | `Reserved: 40` | `Remaining Allocatable: 0`.
+    * **Non-Double-Counting Reservation Accounting:**
+      $$\text{Remaining Allocatable Capacity} = \text{Configured Capacity} - \text{Committed Dispatches} - \text{Undispatched Reservations}$$
+      where $\text{Undispatched Reservations} = \max(0, \text{Accepted Plan Allocation} - \text{Committed Dispatches})$.
+      *(This guarantees that as kits are physically dispatched against an existing reservation, they are not subtracted twice from remaining capacity).*
     * Toggle switch: `Active` vs `Emergency Closed`.
 
 #### E. Staged Action Bar (Bottom Floating Dock)
@@ -345,12 +391,19 @@ A non-bypassable modal required before committing any plan:
 4. **Mandatory Change Justification Input:**
    * Textarea with placeholder: `Explain reason for override (e.g., Highway bridge flooding reduced delivery throughput to Center B)`.
    * Submit button disabled until at least 10 characters are entered.
-5. **Idempotency Key:** Displays generated client UUID v4: `Idempotency-Key: b7a1c93e-...`.
+5. **Idempotency Lifecycle & Network Retry Survival:**
+   * A client UUID v4 idempotency key is generated **once per acceptance intent** when the review modal is initialized.
+   * **Retry Preservation:** If a network timeout, disconnect, or error occurs, the frontend **reuses the exact same idempotency key** upon retry. It must NOT generate a new UUID on retries.
+   * A new idempotency key is generated **only** if the coordinator alters the staged overrides or dismisses and reopens a completely new acceptance intent.
+   * **Replay Semantics:**
+     * Same organization + actor + key + canonical payload hash $\rightarrow$ returns original `200 OK` saved receipt (zero double-reservations).
+     * Same key + modified payload $\rightarrow$ server returns `422 Unprocessable Entity`.
+     * Different actor with same key $\rightarrow$ server returns `403 Forbidden`.
 6. **Actions:**
    * `Cancel / Return to Desk`
    * `Commit & Register Plan` $\rightarrow$ triggers `POST /api/v1/plans/accept`.
 7. **Conflict State Handler (HTTP 409):** If another coordinator advanced the revision to `r5`, the modal displays an inline error:
-   > *"Conflict: Revision r4 has been superseded by Revision r5 by Ishaan. Refresh to inspect authoritative changes."*
+   > *"Conflict: Revision r4 has been superseded by Revision r5. Refresh to inspect authoritative changes."*
    > Button: `Refresh from Register`.
 
 ---
@@ -380,9 +433,17 @@ A non-bypassable modal required before committing any plan:
   * `Actor`: `Swayam (Coordinator)`.
   * `Algorithm`: `SRS Progressive Max-Min v3.1 (Integer Cross-Product BigInt)`.
   * `Change Justification`: *"Bridge repairs complete, restoring Center B capacity to 40 kits."*
-* **Cryptographic Verification Widget:**
-  * Canonical JSON hash: `SHA-256: 3c9b740...`
-  * Status: `Fingerprint Valid • Tamper-Evident Match`.
+* **Canonical JSON Serialization & Fingerprint Verification:**
+  * To guarantee reproducible SHA-256 hashes across different runtimes:
+    1. Object keys are sorted lexicographically at every recursive depth.
+    2. Numbers are normalized strictly as base-10 integers (no floating point or exponential notation).
+    3. Strings are UTF-8 trimmed without extraneous whitespace.
+    4. Timestamps are formatted in ISO 8601 UTC with `Z` suffix.
+    5. Volatile or non-deterministic client-side UI states are excluded.
+  * **Status Badges:**
+    * `Fingerprint Match`: Local client recalculation of the canonical snapshot strictly equals the stored receipt hash.
+    * `Fingerprint Mismatch`: Flagged in red with alert indicating discrepancy between saved snapshot and stored hash.
+    * `Verification Unavailable`: Shown when offline or awaiting server snapshot.
 * **Revision Diff Viewer:** Side-by-side inspection comparing any two revisions (e.g. `r3` vs `r4`).
 
 ---
