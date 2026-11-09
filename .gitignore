@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.wrangler/
+.wrangler-dry-run/
+.uv-cache/
+.env
+.env.*
+!.env.example
+*.local
+coverage/

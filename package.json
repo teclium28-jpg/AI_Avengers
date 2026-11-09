@@ -1,0 +1,12 @@
+{
+  "name": "fairshare",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "npm run dev -w @fairshare/web",
+    "dev:api": "npm run dev -w @fairshare/api",
+    "build": "npm run build -w @fairshare/web",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

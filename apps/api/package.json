@@ -1,0 +1,11 @@
+{
+  "name": "@fairshare/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": { "hono": "^4.0.0" },
+  "devDependencies": { "typescript": "^5.0.0", "wrangler": "^4.0.0" }
+}
