@@ -54,7 +54,7 @@ export const DashboardView: React.FC = () => {
             Humanitarian Food Allocation & Distribution Register
           </h1>
           <p className="text-xs text-zinc-500 mt-1">
-            Authoritative decision-support terminal for Mumbai Metropolitan Food Relief Operations.
+            Authoritative decision-support terminal for State Disaster Food Relief & Humanitarian Logistics.
           </p>
         </div>
 
@@ -63,7 +63,7 @@ export const DashboardView: React.FC = () => {
             onClick={() => setActivePage("studio")}
             className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700 shadow-sm transition-colors"
           >
-            Launch Allocation Studio
+            Launch Allocation Planner
             <ArrowRight className="w-4 h-4 ml-1.5" />
           </button>
         </div>
@@ -176,7 +176,7 @@ export const DashboardView: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {currentPlan.map((item: CalculatedAllocationItem) => (
+                {currentPlan.slice(0, 8).map((item: CalculatedAllocationItem) => (
                   <tr key={item.regionId} className="hover:bg-zinc-50/70">
                     <td className="py-3.5 px-4 font-medium text-zinc-900">
                       {item.regionName}
@@ -187,10 +187,10 @@ export const DashboardView: React.FC = () => {
                       <span className="text-[11px] text-zinc-400 block font-mono">({item.assignedCenterId})</span>
                     </td>
                     <td className="py-3.5 px-4 font-mono text-right text-zinc-700">
-                      {item.demandKits} kits
+                      {item.demandKits.toLocaleString()} kits
                     </td>
                     <td className="py-3.5 px-4 font-mono text-right font-bold text-zinc-900 text-sm">
-                      {item.allocatedKits} kits
+                      {item.allocatedKits.toLocaleString()} kits
                     </td>
                     <td className="py-3.5 px-4 font-mono text-right font-semibold">
                       <span className="text-zinc-900">{item.coveragePercentage.toFixed(1)}%</span>
@@ -222,6 +222,17 @@ export const DashboardView: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {currentPlan.length > 8 && (
+            <div className="p-3 bg-zinc-50 border-t border-zinc-100 text-center">
+              <button
+                onClick={() => setActivePage("studio")}
+                className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 hover:underline"
+              >
+                View all {currentPlan.length} regions in Allocation Planner →
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right Col: Urgent Operational Notices & Quick Tools */}

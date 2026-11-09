@@ -113,30 +113,19 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         </nav>
 
         {/* Operational Status & Footer */}
-        <div className="p-4 border-t border-zinc-100 bg-zinc-50/50 space-y-3">
+        <div className="p-4 border-t border-zinc-100 bg-zinc-50/50 space-y-2.5">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-zinc-500 flex items-center">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-ping" />
-              Mumbai Pooler
+            <span className="text-zinc-600 font-medium flex items-center">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2" />
+              Network Online
             </span>
-            <span className="font-mono text-zinc-700 font-medium text-[11px]">24ms</span>
+            <span className="text-[11px] text-zinc-400 font-mono">Cycle W46</span>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-zinc-500 pt-2 border-t border-zinc-200">
-            <span>Authoritative State:</span>
-            <span className="font-mono font-bold text-emerald-700">r{authoritativeRevision}</span>
+          <div className="flex items-center justify-between text-[11px] text-zinc-500 pt-2 border-t border-zinc-200/70">
+            <span>Official Register:</span>
+            <span className="font-mono font-bold text-emerald-700">Rev {authoritativeRevision}</span>
           </div>
-
-          <button
-            onClick={() => {
-              if (confirm("Reset local demonstration data back to original seed baseline?")) {
-                resetToFactoryDefaults();
-              }
-            }}
-            className="w-full text-center text-[11px] text-zinc-400 hover:text-zinc-600 hover:underline pt-1 block"
-          >
-            Reset Local Demo State
-          </button>
         </div>
       </aside>
 

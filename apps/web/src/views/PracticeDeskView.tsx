@@ -4,16 +4,22 @@ import {
   Layers,
   TrendingDown,
   Building,
-  RotateCcw,
   CheckCircle2,
   Sliders,
   Scale,
-  Sparkles,
+  Search,
+  Filter,
   ArrowRight,
-  TrendingUp,
+  AlertTriangle,
+  RotateCcw,
+  SlidersHorizontal,
+  Lock,
+  ChevronDown,
 } from "lucide-react";
 import { useOperational } from "../context/OperationalContext";
-import { SCENARIO_PRESETS, ScenarioPreset } from "../lib/scenarios";
+import { INDIA_REGIONS_CSV, INDIA_STOCK_CSV } from "../lib/indiaSamples";
+import { parseCsv, cleanRegionRows } from "@fairshare/domain";
+import type { RawRegionRow } from "../types";
 
 interface PracticeDeskViewProps {
   onOpenAcceptModal: () => void;
@@ -32,7 +38,6 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
     setSelectedAlgorithm,
     hasStagedChanges,
     currentPlan,
-    baselinePlan,
     totalStockAvailable,
     totalAllocatedKits,
     totalUnmetKits,
@@ -41,286 +46,452 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
     activeCentersCount,
     authoritativeRevision,
     authoritativeStock,
-    authoritativeCenters,
     resetStudioToAuthoritative,
+    applyBatchIntake,
   } = useOperational();
 
-  const [compareBaseline, setCompareBaseline] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterMode, setFilterMode] = useState<"all" | "deficit" | "bound" | "closed">("all");
+  const [editingCapacityId, setEditingCapacityId] = useState<string | null>(null);
+  const [tempCapacityValue, setTempCapacityValue] = useState<number>(0);
+  const [showStockModal, setShowStockModal] = useState(false);
+  const [tempStockInput, setTempStockInput] = useState(stagedStock.toString());
+
+  // Quick Scope Selector
+  const isStatewide = stagedRegions.length > 10;
+
+  const switchToStatewide = () => {
+    const raw = parseCsv(INDIA_REGIONS_CSV) as unknown as RawRegionRow[];
+    const { rows } = cleanRegionRows(raw);
+    const regions = rows.map((r) => ({
+      regionId: r.regionId,
+      regionName: r.regionName,
+      assignedCenterId: r.centerId,
+      demandKits: r.demandKits,
+      status: r.status === "open" ? ("active" as const) : ("ineligible" as const),
+    }));
+    applyBatchIntake(regions, 15520);
+  };
+
+  const switchToMetropolitan = () => {
+    applyBatchIntake(
+      [
+        {
+          regionId: "A",
+          regionName: "Zone 1 — Northern Wards",
+          assignedCenterId: "CTR-A",
+          demandKits: 60,
+          status: "active",
+        },
+        {
+          regionId: "B",
+          regionName: "Zone 2 — Central Transit Belt",
+          assignedCenterId: "CTR-B",
+          demandKits: 60,
+          status: "active",
+        },
+        {
+          regionId: "C",
+          regionName: "Zone 3 — Coastal Waterfront",
+          assignedCenterId: "CTR-C",
+          demandKits: 60,
+          status: "active",
+        },
+      ],
+      120
+    );
+  };
+
+  // Filtered plan rows
+  const filteredPlan = useMemo(() => {
+    return currentPlan.filter((item) => {
+      // Search
+      const matchesSearch =
+        item.regionName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.regionId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.centerName.toLowerCase().includes(searchQuery.toLowerCase());
+
+      if (!matchesSearch) return false;
+
+      // Filter
+      if (filterMode === "deficit") return item.coveragePercentage < 99 && item.status !== "unserviceable";
+      if (filterMode === "bound") return item.isCappedByCapacity;
+      if (filterMode === "closed") return item.status === "unserviceable";
+      return true;
+    });
+  }, [currentPlan, searchQuery, filterMode]);
 
   const totalDemand = useMemo(
     () => stagedRegions.reduce((sum, r) => sum + r.demandKits, 0),
     [stagedRegions]
   );
 
-  // Impact analysis (Authoritative vs. Staged Preview)
-  const impactAnalysis = useMemo(() => {
-    const deltas = currentPlan.map((curr) => {
-      const delta = curr.allocatedKits - 40; // comparing against r4 baseline
-      return {
-        regionId: curr.regionId,
-        regionName: curr.regionName,
-        demand: curr.demandKits,
-        before: 40,
-        after: curr.allocatedKits,
-        delta: curr.allocatedKits - 40,
-        beforeCov: 66.7,
-        afterCov: curr.coveragePercentage,
-      };
-    });
+  const unallocatedStock = Math.max(0, stagedStock - totalAllocatedKits);
 
-    return deltas;
-  }, [currentPlan]);
-
-  // Apply deterministic scenario preset
-  const applyPreset = (preset: ScenarioPreset) => {
-    setStagedStock(preset.input.stockKits);
-    preset.input.regions.forEach((r) => {
-      updateRegionDemand(r.regionId, r.demandKits);
-      updateCenterCapacity(r.centerId, r.capacityKits);
-    });
+  const handleSaveCapacity = (centerId: string) => {
+    updateCenterCapacity(centerId, tempCapacityValue);
+    setEditingCapacityId(null);
   };
-
-  const isSurge = stagedStock > authoritativeStock;
 
   return (
     <div className="space-y-6 pb-20">
-      {/* 1. TOP STATS RIBBON (Distinguishing Physical vs. Staged) */}
-      <div className="bg-white rounded-xl border border-zinc-200 divide-y sm:divide-y-0 sm:divide-x divide-zinc-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 shadow-sm">
-        {/* KPI 1: Warehouse Stock */}
-        <div className="p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-              Warehouse Stock
+      {/* Scope & Control Bar */}
+      <div className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono">
+              Relief Scope
             </span>
-            <Package className="w-4 h-4 text-zinc-400" />
-          </div>
-          <div className="mt-2 flex items-baseline space-x-2">
-            <span className="text-2xl font-bold font-mono text-zinc-900">{stagedStock}</span>
-            <span className="text-xs text-zinc-500">standard kits</span>
-          </div>
-          {isSurge ? (
-            <span className="mt-2 inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200 w-fit">
-              +{stagedStock - authoritativeStock} Unconfirmed Surge
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="text-xs font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              {isStatewide ? "Statewide Disaster Response Grid" : "Metropolitan 3-Zone Sector"}
             </span>
-          ) : (
-            <span className="mt-2 text-[11px] text-zinc-400">Authoritative Physical Inventory</span>
-          )}
+          </div>
+          <h1 className="text-xl font-bold text-zinc-950 font-sans mt-1">
+            Food Aid Allocation Planner
+          </h1>
+          <p className="text-xs text-zinc-500 mt-0.5">
+            Progressive Max-Min allocation engine automatically guarantees equitable food distribution across all active relief centers.
+          </p>
         </div>
 
-        {/* KPI 2: Plan Reserved */}
-        <div className="p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-              Allocated Kits
-            </span>
-            <Layers className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="mt-2 flex items-baseline space-x-2">
-            <span className="text-2xl font-bold font-mono text-emerald-700">{totalAllocatedKits}</span>
-            <span className="text-xs text-zinc-500">of {stagedStock} reserved</span>
-          </div>
-          <div className="mt-2 w-full bg-zinc-100 rounded-full h-1.5 overflow-hidden">
-            <div
-              className="bg-emerald-600 h-1.5 rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(100, (totalAllocatedKits / (stagedStock || 1)) * 100)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* KPI 3: Unmet Need */}
-        <div className="p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-              Unmet Regional Need
-            </span>
-            <TrendingDown className="w-4 h-4 text-rose-500" />
-          </div>
-          <div className="mt-2 flex items-baseline space-x-2">
-            <span className="text-2xl font-bold font-mono text-rose-600">{totalUnmetKits}</span>
-            <span className="text-xs text-zinc-500">deficit ({totalDemand} demand)</span>
-          </div>
-          <span className="mt-2 text-[11px] text-zinc-400">
-            {averageCoveragePct.toFixed(1)}% average coverage across zones
-          </span>
-        </div>
-
-        {/* KPI 4: Active Centers */}
-        <div className="p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-              Active Nodes
-            </span>
-            <Building className="w-4 h-4 text-zinc-400" />
-          </div>
-          <div className="mt-2 flex items-baseline space-x-2">
-            <span className="text-2xl font-bold font-mono text-zinc-900">
-              {activeCentersCount} / {stagedCenters.length}
-            </span>
-            <span className="text-xs text-zinc-500">centers active</span>
-          </div>
-          <span className="mt-2 text-[11px] text-zinc-400">
-            {stagedCenters.length - activeCentersCount > 0
-              ? `${stagedCenters.length - activeCentersCount} node closed / offline`
-              : "All distribution nodes online"}
-          </span>
-        </div>
-      </div>
-
-      {/* 2. ALGORITHM BAR & CONTROLS */}
-      <div className="bg-white rounded-xl border border-zinc-200 p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center space-x-3">
-          <Scale className="w-5 h-5 text-emerald-600 shrink-0" />
-          <div>
-            <h2 className="text-sm font-semibold text-zinc-900 font-sans">
-              Fairness Engine & Policy Rule
-            </h2>
-            <p className="text-xs text-zinc-500">
-              Exact integer cross-product rational arithmetic (BigInt); zero floating point rounding.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Scope switcher & Action */}
+        <div className="flex flex-wrap items-center gap-2.5">
           <div className="inline-flex rounded-lg border border-zinc-200 p-0.5 bg-zinc-50 text-xs font-medium">
             <button
-              onClick={() => setSelectedAlgorithm("srs-progressive-maxmin")}
+              onClick={switchToStatewide}
               className={`px-3 py-1.5 rounded-md transition-colors ${
-                selectedAlgorithm === "srs-progressive-maxmin"
+                isStatewide
                   ? "bg-white text-zinc-900 font-semibold shadow-sm"
                   : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
-              SRS Progressive Max-Min (Primary)
+              Statewide (30 Districts)
             </button>
             <button
-              onClick={() => setSelectedAlgorithm("hamilton-proportional")}
+              onClick={switchToMetropolitan}
               className={`px-3 py-1.5 rounded-md transition-colors ${
-                selectedAlgorithm === "hamilton-proportional"
+                !isStatewide
                   ? "bg-white text-zinc-900 font-semibold shadow-sm"
                   : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
-              Hamilton Proportional (Baseline)
+              Metropolitan (3 Wards)
             </button>
           </div>
 
-          <label className="flex items-center space-x-2 text-xs text-zinc-700 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={compareBaseline}
-              onChange={(e) => setCompareBaseline(e.target.checked)}
-              className="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 h-3.5 w-3.5"
-            />
-            <span>Compare vs Hamilton Baseline</span>
-          </label>
+          <button
+            onClick={onOpenAcceptModal}
+            className="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+          >
+            <Lock className="w-3.5 h-3.5 mr-1.5" />
+            Commit Plan (Rev {authoritativeRevision + 1})
+          </button>
         </div>
       </div>
 
-      {/* 3. HERO COMPONENT: ALLOCATION MATRIX */}
-      <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-semibold text-zinc-900 font-sans">
-              Regional Allocation Matrix
-            </h3>
-            <p className="text-xs text-zinc-500">
-              Instant local practice desk recalculating on main thread in &lt;16ms.
-            </p>
+      {/* KPI Ribbon */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
+        {/* Available Stock */}
+        <div className="bg-white rounded-xl border border-zinc-200 p-4 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-zinc-500 text-xs">
+            <span className="font-semibold uppercase tracking-wider text-[11px]">Total Stock</span>
+            <Package className="w-4 h-4 text-zinc-400" />
           </div>
-          <span className="text-xs font-mono text-zinc-500 bg-zinc-100 px-2.5 py-1 rounded border border-zinc-200">
-            {currentPlan.length} Relief Zones Defined
-          </span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <div>
+              <span className="text-2xl font-bold font-mono text-zinc-950">
+                {stagedStock.toLocaleString()}
+              </span>
+              <span className="text-[11px] text-zinc-400 ml-1">kits</span>
+            </div>
+            <button
+              onClick={() => {
+                setTempStockInput(stagedStock.toString());
+                setShowStockModal(true);
+              }}
+              className="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
+            >
+              Adjust
+            </button>
+          </div>
+          <div className="text-[11px] text-zinc-400 mt-1">Confirmed central warehouse pool</div>
         </div>
 
+        {/* Allocated Stock */}
+        <div className="bg-white rounded-xl border border-zinc-200 p-4 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-zinc-500 text-xs">
+            <span className="font-semibold uppercase tracking-wider text-[11px]">Allocated Quota</span>
+            <Layers className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div className="mt-2 flex items-baseline justify-between">
+            <div>
+              <span className="text-2xl font-bold font-mono text-emerald-700">
+                {totalAllocatedKits.toLocaleString()}
+              </span>
+              <span className="text-[11px] text-zinc-400 ml-1">kits</span>
+            </div>
+            <span className="text-xs font-bold font-mono text-emerald-700">
+              {stagedStock > 0 ? ((totalAllocatedKits / stagedStock) * 100).toFixed(0) : 0}%
+            </span>
+          </div>
+          <div className="w-full bg-zinc-100 rounded-full h-1.5 mt-2 overflow-hidden">
+            <div
+              className="bg-emerald-600 h-1.5 rounded-full"
+              style={{
+                width: `${Math.min(100, (totalAllocatedKits / (stagedStock || 1)) * 100)}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Unallocated Reserve */}
+        <div className="bg-white rounded-xl border border-zinc-200 p-4 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-zinc-500 text-xs">
+            <span className="font-semibold uppercase tracking-wider text-[11px]">Buffer Reserve</span>
+            <Package className="w-4 h-4 text-zinc-400" />
+          </div>
+          <div className="mt-2 flex items-baseline">
+            <span className="text-2xl font-bold font-mono text-zinc-800">
+              {unallocatedStock.toLocaleString()}
+            </span>
+            <span className="text-[11px] text-zinc-400 ml-1">kits unassigned</span>
+          </div>
+          <div className="text-[11px] text-zinc-400 mt-1">Available for secondary surge</div>
+        </div>
+
+        {/* Total Census Demand */}
+        <div className="bg-white rounded-xl border border-zinc-200 p-4 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-zinc-500 text-xs">
+            <span className="font-semibold uppercase tracking-wider text-[11px]">Census Demand</span>
+            <TrendingDown className="w-4 h-4 text-rose-500" />
+          </div>
+          <div className="mt-2 flex items-baseline">
+            <span className="text-2xl font-bold font-mono text-zinc-950">
+              {totalDemand.toLocaleString()}
+            </span>
+            <span className="text-[11px] text-zinc-400 ml-1">kits total</span>
+          </div>
+          <div className="text-[11px] text-rose-600 font-medium mt-1">
+            {totalUnmetKits.toLocaleString()} kits shortfall ({averageCoveragePct.toFixed(1)}% avg coverage)
+          </div>
+        </div>
+
+        {/* Fairness Parity Minimum */}
+        <div className="bg-white rounded-xl border border-zinc-200 p-4 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between text-zinc-500 text-xs">
+            <span className="font-semibold uppercase tracking-wider text-[11px]">Fairness Floor</span>
+            <Scale className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div className="mt-2 flex items-baseline">
+            <span className="text-2xl font-bold font-mono text-zinc-950">
+              {minCoveragePct.toFixed(1)}%
+            </span>
+            <span className="text-[11px] text-zinc-400 ml-1">min coverage</span>
+          </div>
+          <div className="text-[11px] text-zinc-400 mt-1">Guaranteed minimum across all open nodes</div>
+        </div>
+      </div>
+
+      {/* Main Allocation Matrix Card */}
+      <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+        {/* Table Filter Toolbar */}
+        <div className="p-4 border-b border-zinc-100 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-zinc-50/50">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                placeholder="Search districts, hubs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-3 py-1.5 text-xs rounded-lg border border-zinc-300 bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500 w-56 font-sans"
+              />
+            </div>
+
+            {/* Filter buttons */}
+            <div className="flex items-center rounded-lg border border-zinc-200 p-0.5 bg-white text-xs">
+              <button
+                onClick={() => setFilterMode("all")}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  filterMode === "all" ? "bg-zinc-900 text-white" : "text-zinc-600 hover:text-zinc-900"
+                }`}
+              >
+                All ({currentPlan.length})
+              </button>
+              <button
+                onClick={() => setFilterMode("deficit")}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  filterMode === "deficit" ? "bg-zinc-900 text-white" : "text-zinc-600 hover:text-zinc-900"
+                }`}
+              >
+                Deficit
+              </button>
+              <button
+                onClick={() => setFilterMode("bound")}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  filterMode === "bound" ? "bg-zinc-900 text-white" : "text-zinc-600 hover:text-zinc-900"
+                }`}
+              >
+                Hub Bottlenecks
+              </button>
+              <button
+                onClick={() => setFilterMode("closed")}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  filterMode === "closed" ? "bg-zinc-900 text-white" : "text-zinc-600 hover:text-zinc-900"
+                }`}
+              >
+                Closed
+              </button>
+            </div>
+          </div>
+
+          <div className="text-xs text-zinc-500 font-mono">
+            Showing {filteredPlan.length} of {currentPlan.length} regions
+          </div>
+        </div>
+
+        {/* Matrix Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-zinc-200 text-left text-xs">
             <thead className="bg-zinc-50 font-semibold text-zinc-600 uppercase tracking-wider">
               <tr>
-                <th className="py-3 px-4">Distribution Zone</th>
-                <th className="py-3 px-4">Center Node</th>
+                <th className="py-3 px-4">Region / District</th>
+                <th className="py-3 px-4">Distribution Hub</th>
                 <th className="py-3 px-4 font-mono text-right">Demand</th>
-                <th className="py-3 px-4 font-mono text-right">Node Capacity</th>
+                <th className="py-3 px-4 font-mono text-right">Hub Capacity</th>
+                <th className="py-3 px-4 font-mono text-right">Prior Sent</th>
                 <th className="py-3 px-4 font-mono text-right font-bold text-zinc-900">
-                  Allocated Kits
+                  Allocated Quota
                 </th>
-                <th className="py-3 px-4 font-mono text-right">Coverage Ratio</th>
-                {compareBaseline && (
-                  <th className="py-3 px-4 font-mono text-right text-zinc-500">
-                    Hamilton Baseline
-                  </th>
-                )}
+                <th className="py-3 px-4 font-mono text-right">Coverage</th>
                 <th className="py-3 px-4 text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {currentPlan.map((item) => {
-                const baseItem = baselinePlan.find((b) => b.regionId === item.regionId);
-                const isUnserviceable = item.status === "unserviceable";
+              {filteredPlan.map((item) => {
+                const isClosed = item.status === "unserviceable";
+                const isEditing = editingCapacityId === item.assignedCenterId;
 
                 return (
                   <tr
                     key={item.regionId}
-                    className={`hover:bg-zinc-50/70 transition-colors ${
-                      isUnserviceable ? "bg-zinc-50/50 text-zinc-400" : ""
+                    className={`hover:bg-zinc-50/80 transition-colors ${
+                      isClosed ? "bg-zinc-50/60 text-zinc-400" : ""
                     }`}
                   >
+                    {/* Region */}
                     <td className="py-3 px-4">
                       <div className="font-semibold text-zinc-900">{item.regionName}</div>
-                      <div className="text-[11px] text-zinc-400 font-mono">ID: {item.regionId}</div>
+                      <div className="text-[11px] text-zinc-400 font-mono">{item.regionId}</div>
                     </td>
+
+                    {/* Center Hub */}
                     <td className="py-3 px-4">
-                      <div className="font-mono text-xs text-zinc-800">{item.assignedCenterId}</div>
-                      <div className="text-[11px] text-zinc-400">{item.centerName}</div>
+                      <div className="font-medium text-zinc-800">{item.centerName}</div>
+                      <div className="text-[11px] text-zinc-400 font-mono">{item.assignedCenterId}</div>
                     </td>
+
+                    {/* Demand */}
                     <td className="py-3 px-4 font-mono text-right text-zinc-700">
-                      {item.demandKits} kits
+                      {item.demandKits.toLocaleString()}
                     </td>
-                    <td className="py-3 px-4 font-mono text-right text-zinc-700">
-                      {item.centerCapacity} kits
+
+                    {/* Hub Capacity (with quick inline edit) */}
+                    <td className="py-3 px-4 font-mono text-right">
+                      {isEditing ? (
+                        <div className="inline-flex items-center space-x-1">
+                          <input
+                            type="number"
+                            value={tempCapacityValue}
+                            onChange={(e) => setTempCapacityValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                            className="w-20 px-1.5 py-0.5 border border-emerald-500 rounded text-xs font-mono text-right"
+                          />
+                          <button
+                            onClick={() => handleSaveCapacity(item.assignedCenterId)}
+                            className="px-1.5 py-0.5 bg-emerald-600 text-white rounded text-[10px] font-bold"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setEditingCapacityId(item.assignedCenterId);
+                            setTempCapacityValue(item.centerCapacity);
+                          }}
+                          className="hover:underline hover:text-emerald-700 font-mono text-zinc-700"
+                          title="Click to adjust center capacity"
+                        >
+                          {item.centerCapacity.toLocaleString()}
+                        </button>
+                      )}
                     </td>
-                    <td className="py-3 px-4 font-mono text-right font-bold text-sm text-zinc-900">
-                      {item.allocatedKits}
+
+                    {/* Prior Dispatched */}
+                    <td className="py-3 px-4 font-mono text-right text-zinc-500">
+                      {(item.priorDispatchedKits || 0) > 0 ? (
+                        <span className="text-zinc-700">{(item.priorDispatchedKits || 0).toLocaleString()}</span>
+                      ) : (
+                        <span className="text-zinc-300">—</span>
+                      )}
                     </td>
+
+                    {/* Allocated Quota */}
+                    <td className="py-3 px-4 font-mono text-right font-bold text-sm text-emerald-700">
+                      {item.allocatedKits.toLocaleString()}
+                    </td>
+
+                    {/* Coverage Ratio & Bar */}
                     <td className="py-3 px-4 font-mono text-right">
                       {item.demandKits > 0 ? (
-                        <div>
-                          <span className="font-bold text-zinc-900">
+                        <div className="flex flex-col items-end">
+                          <span
+                            className={`font-bold ${
+                              item.coveragePercentage >= 100
+                                ? "text-emerald-700"
+                                : item.coveragePercentage >= 50
+                                ? "text-zinc-900"
+                                : "text-amber-700"
+                            }`}
+                          >
                             {item.coveragePercentage.toFixed(1)}%
                           </span>
-                          <span className="text-[11px] text-zinc-400 ml-1.5">
-                            ({item.allocatedKits}/{item.demandKits})
-                          </span>
+                          <div className="w-16 bg-zinc-100 rounded-full h-1 mt-1 overflow-hidden">
+                            <div
+                              className={`h-1 rounded-full ${
+                                item.coveragePercentage >= 100
+                                  ? "bg-emerald-600"
+                                  : item.coveragePercentage >= 50
+                                  ? "bg-zinc-700"
+                                  : "bg-amber-500"
+                              }`}
+                              style={{ width: `${Math.min(100, item.coveragePercentage)}%` }}
+                            />
+                          </div>
                         </div>
                       ) : (
                         <span className="text-zinc-400">N/A</span>
                       )}
                     </td>
-                    {compareBaseline && (
-                      <td className="py-3 px-4 font-mono text-right text-xs text-zinc-500">
-                        {baseItem?.allocatedKits ?? 0} kits
-                        {baseItem && baseItem.allocatedKits !== item.allocatedKits && (
-                          <span className="ml-1 text-[11px] text-emerald-600 font-semibold">
-                            (diff: {item.allocatedKits - baseItem.allocatedKits})
-                          </span>
-                        )}
-                      </td>
-                    )}
+
+                    {/* Operational Status */}
                     <td className="py-3 px-4 text-center">
-                      {item.status === "unserviceable" ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                          Node Closed
+                      {isClosed ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-800 border border-rose-200">
+                          Hub Closed
                         </span>
-                      ) : item.status === "full" ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                          100% Demand Met
+                      ) : item.isCappedByCapacity ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                          Hub Bound
                         </span>
-                      ) : item.status === "capacity_capped" ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                          Capacity Bound
+                      ) : item.coveragePercentage >= 100 ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          Fulfilled
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                          Max-Min Share
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-100 text-zinc-700">
+                          Active
                         </span>
                       )}
                     </td>
@@ -332,233 +503,49 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
         </div>
       </div>
 
-      {/* 4. PROMINENT BEFORE / AFTER IMPACT COMPARISON */}
-      {hasStagedChanges && (
-        <div className="bg-white rounded-xl border border-amber-200 p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
-            <div className="flex items-center space-x-2">
-              <TrendingUp className="w-5 h-5 text-amber-600" />
-              <div>
-                <h3 className="text-sm font-semibold text-zinc-900 font-sans">
-                  Allocation Impact Analysis (r{authoritativeRevision} vs. Proposed Staged Changes)
-                </h3>
-                <p className="text-xs text-zinc-500">
-                  Visualizes exact distribution shifts, affected communities, and changes in minimum coverage.
-                </p>
-              </div>
-            </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded bg-amber-50 text-amber-800 border border-amber-200">
-              Uncommitted Practice Draft
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {impactAnalysis.map((d) => (
-              <div
-                key={d.regionId}
-                className="p-3.5 rounded-lg border border-zinc-200 bg-zinc-50/50 flex flex-col justify-between"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-xs text-zinc-800">{d.regionName}</span>
-                  <span className="text-[11px] font-mono text-zinc-500">Demand: {d.demand}</span>
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-zinc-400 block uppercase">Authoritative</span>
-                    <span className="text-sm font-bold font-mono text-zinc-700">{d.before} kits</span>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-zinc-400" />
-                  <div>
-                    <span className="text-[10px] text-zinc-400 block uppercase">Proposed</span>
-                    <span className="text-sm font-bold font-mono text-zinc-900">{d.after} kits</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] text-zinc-400 block uppercase">Net Shift</span>
-                    <span
-                      className={`text-sm font-bold font-mono ${
-                        d.delta > 0
-                          ? "text-emerald-600"
-                          : d.delta < 0
-                          ? "text-rose-600"
-                          : "text-zinc-500"
-                      }`}
-                    >
-                      {d.delta > 0 ? `+${d.delta}` : d.delta}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-2 pt-2 border-t border-zinc-200/60 text-[11px] text-zinc-500 flex justify-between font-mono">
-                  <span>Coverage:</span>
-                  <span>
-                    {d.beforeCov.toFixed(1)}% → {d.afterCov.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 5. INTERACTIVE CONTROLS: SCENARIO PRESETS & CAPACITY SLIDERS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Sub-Panel: Scenario Reset Presets */}
-        <div className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm space-y-4">
-          <div className="flex items-center space-x-2 pb-2 border-b border-zinc-100">
-            <Sparkles className="w-4 h-4 text-emerald-600" />
-            <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider font-sans">
-              Operational Scenarios
+      {/* Quick Stock Adjustment Modal */}
+      {showStockModal && (
+        <div className="fixed inset-0 z-50 bg-zinc-950/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-zinc-200 max-w-sm w-full p-6 space-y-4">
+            <h3 className="text-base font-bold text-zinc-900 font-sans">
+              Adjust Total Available Stock
             </h3>
-          </div>
-          <p className="text-xs text-zinc-500">
-            One-click scenario testing. Completely resets all constraints to verified starting parameters.
-          </p>
+            <p className="text-xs text-zinc-500">
+              Update central warehouse pool. Allocations will instantly recalculate across all active hubs according to Max-Min fairness.
+            </p>
 
-          <div className="space-y-2.5">
-            {SCENARIO_PRESETS.map((preset) => (
-              <button
-                key={preset.id}
-                onClick={() => applyPreset(preset)}
-                className="w-full text-left p-3 rounded-lg border border-zinc-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all text-xs group"
-              >
-                <div className="font-semibold text-zinc-900 group-hover:text-emerald-700 flex items-center justify-between">
-                  <span>{preset.name}</span>
-                  <span className="font-mono text-[11px] text-zinc-400 font-bold">
-                    {preset.input.stockKits} kits
-                  </span>
-                </div>
-                <p className="mt-1 text-[11px] text-zinc-500 leading-relaxed">
-                  {preset.description}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Sub-Panel: Center Capacity Breakdown Cards */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-zinc-200 p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
-            <div className="flex items-center space-x-2">
-              <Sliders className="w-4 h-4 text-zinc-500" />
-              <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider font-sans">
-                Distribution Center Capacity Breakdown
-              </h3>
+            <div>
+              <label className="text-xs font-semibold text-zinc-700 block mb-1">
+                Total Confirmed Stock (Kits)
+              </label>
+              <input
+                type="number"
+                value={tempStockInput}
+                onChange={(e) => setTempStockInput(e.target.value)}
+                className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm font-mono text-zinc-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
             </div>
-            <span className="text-[11px] text-zinc-400 font-mono">
-              Remaining = Capacity - Dispatched - Undispatched Reservations
-            </span>
-          </div>
 
-          <div className="space-y-4">
-            {stagedCenters.map((center) => {
-              const assignedReg = stagedRegions.find((r) => r.assignedCenterId === center.centerId);
-              const currentAlloc =
-                currentPlan.find((a) => a.regionId === assignedReg?.regionId)?.allocatedKits || 0;
-              const committed = center.committedDispatches;
-              const undispatchedReservation = Math.max(0, currentAlloc - committed);
-              const remainingAllocatable = Math.max(
-                0,
-                center.configuredCapacity - committed - undispatchedReservation
-              );
-              const isClosed = center.operatingStatus === "closed";
-
-              return (
-                <div
-                  key={center.centerId}
-                  className="p-4 rounded-lg border border-zinc-200 bg-zinc-50/50 space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-xs text-zinc-900 flex items-center space-x-2">
-                        <span>{center.centerName}</span>
-                        <span className="font-mono text-zinc-400">({center.centerId})</span>
-                      </div>
-                      <span className="text-[11px] text-zinc-500">
-                        Assigned Zone: {assignedReg?.regionName || "None"}
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => toggleCenterStatus(center.centerId)}
-                      className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
-                        center.operatingStatus === "active"
-                          ? "bg-zinc-100 text-zinc-700 border-zinc-300 hover:bg-zinc-200"
-                          : "bg-rose-50 text-rose-700 border-rose-200"
-                      }`}
-                    >
-                      {center.operatingStatus === "active" ? "Active" : "Closed (Capacity 0)"}
-                    </button>
-                  </div>
-
-                  {/* Slider Control */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-zinc-600 font-medium">Handling Capacity Limit:</span>
-                      <span className="font-mono font-bold text-zinc-900">
-                        {center.configuredCapacity} kits
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={120}
-                      step={5}
-                      disabled={isClosed}
-                      value={center.configuredCapacity}
-                      onChange={(e) =>
-                        updateCenterCapacity(center.centerId, parseInt(e.target.value, 10))
-                      }
-                      className="w-full accent-emerald-600 disabled:opacity-40 cursor-pointer"
-                    />
-                  </div>
-
-                  {/* Non-Double-Counting Breakdown */}
-                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-zinc-200 text-center text-[11px] font-mono">
-                    <div className="p-1.5 bg-white rounded border border-zinc-200">
-                      <span className="text-zinc-400 block text-[10px]">Dispatched</span>
-                      <span className="font-semibold text-zinc-700">{committed}</span>
-                    </div>
-                    <div className="p-1.5 bg-white rounded border border-zinc-200">
-                      <span className="text-zinc-400 block text-[10px]">Plan Reserved</span>
-                      <span className="font-semibold text-emerald-700">{undispatchedReservation}</span>
-                    </div>
-                    <div className="p-1.5 bg-white rounded border border-zinc-200">
-                      <span className="text-zinc-400 block text-[10px]">Remaining Usable</span>
-                      <span className="font-semibold text-zinc-900">{remainingAllocatable}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* 6. FLOATING BOTTOM BAR FOR STAGED DRAFTS */}
-      {hasStagedChanges && (
-        <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-zinc-200 py-3.5 px-4 sm:px-6 lg:px-8 shadow-lg z-30 flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-xs">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <span className="font-medium text-zinc-900">
-              Uncommitted Practice Draft active vs Authoritative Register r{authoritativeRevision}
-            </span>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={resetStudioToAuthoritative}
-              className="inline-flex items-center px-3.5 py-1.5 rounded-lg border border-zinc-300 bg-white text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors shadow-sm"
-            >
-              <RotateCcw className="w-3.5 h-3.5 mr-1.5 text-zinc-500" />
-              Discard Draft
-            </button>
-            <button
-              onClick={onOpenAcceptModal}
-              className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700 shadow-sm transition-colors"
-            >
-              <CheckCircle2 className="w-4 h-4 mr-1.5" />
-              Review & Publish to Register (r{authoritativeRevision + 1})
-            </button>
+            <div className="flex items-center justify-end space-x-2 pt-2">
+              <button
+                onClick={() => setShowStockModal(false)}
+                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-900 border border-zinc-200 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const val = parseInt(tempStockInput, 10);
+                  if (!isNaN(val) && val >= 0) {
+                    setStagedStock(val);
+                    setShowStockModal(false);
+                  }
+                }}
+                className="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm"
+              >
+                Apply New Pool
+              </button>
+            </div>
           </div>
         </div>
       )}

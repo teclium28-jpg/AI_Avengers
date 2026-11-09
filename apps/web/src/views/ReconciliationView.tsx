@@ -49,10 +49,10 @@ export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ onOpenRe
       <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-zinc-950 font-sans">
-            Two-Layer Physical Reconciliation Ledger
+            Physical Dispatches & Inventory Reconciliation
           </h1>
           <p className="text-xs text-zinc-500 mt-1">
-            Separates transit accountability from center warehouse balances. Zero double-counting.
+            Real-time waybill verification, transport fulfillment status, and distribution center physical stock tracking.
           </p>
         </div>
 

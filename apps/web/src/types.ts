@@ -73,6 +73,7 @@ export interface CalculatedAllocationItem {
   centerName: string;
   demandKits: number;
   centerCapacity: number;
+  priorDispatchedKits?: number;
   allocatedKits: number;
   coverageFraction: { numerator: number; denominator: number };
   coveragePercentage: number;
