@@ -1,15 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+export type UserRole = "admin" | "hub_operator" | "community_ngo";
+
 export interface UserProfile {
   id: string;
   name: string;
   email: string;
-  role: "coordinator" | "operator" | "reviewer";
+  role: UserRole;
   roleTitle: string;
   agency: string;
   department: string;
   badgeNumber: string;
   avatarColor: string;
+  assignedFacilityId?: string; // for hub operators e.g. "CTR-B"
+  assignedRegionId?: string;   // for community NGOs e.g. "B"
 }
 
 export const PRESET_PROFILES: UserProfile[] = [
@@ -17,34 +21,36 @@ export const PRESET_PROFILES: UserProfile[] = [
     id: "USR-SWAYAM",
     name: "Swayam Ruparel",
     email: "swayam.ruparel@relief.maharashtra.gov.in",
-    role: "coordinator",
-    roleTitle: "Chief Operations Coordinator",
+    role: "admin",
+    roleTitle: "State Relief Director",
     agency: "Maharashtra State Food Distribution Authority",
-    department: "Executive Logistics Directorate",
+    department: "State Disaster Operations Command",
     badgeNumber: "DIR-8812",
     avatarColor: "bg-emerald-600",
   },
   {
-    id: "USR-ISHAAN",
-    name: "Ishaan Deshmukh",
-    email: "ishaan.deshmukh@relief.maharashtra.gov.in",
-    role: "operator",
-    roleTitle: "Logistics & Fleet Dispatcher",
-    agency: "Maharashtra State Food Distribution Authority",
-    department: "Central Warehouse & Fleet Operations",
-    badgeNumber: "OPS-4421",
+    id: "USR-SUNITA",
+    name: "Sunita Kamble",
+    email: "sunita.kamble@depot.dharavi.gov.in",
+    role: "hub_operator",
+    roleTitle: "Dharavi Depot Warehouse Lead",
+    agency: "Central Staging Depot (CTR-B)",
+    department: "Ward G-North Warehouse & Transport",
+    badgeNumber: "HUB-4020",
     avatarColor: "bg-blue-600",
+    assignedFacilityId: "CTR-B",
   },
   {
-    id: "USR-ANANYA",
-    name: "Ananya Sharma",
-    email: "ananya.sharma@audit.gov.in",
-    role: "reviewer",
-    roleTitle: "Independent Integrity Auditor",
-    agency: "Humanitarian Oversight & Comptroller Commission",
-    department: "Forensic Audit & Public Transparency",
-    badgeNumber: "AUD-9018",
-    avatarColor: "bg-purple-600",
+    id: "USR-FARHAN",
+    name: "Dr. Farhan Shaikh",
+    email: "farhan.shaikh@sneha-relief.org",
+    role: "community_ngo",
+    roleTitle: "Community Relief Coordinator",
+    agency: "Sneha & Dharavi Community Relief NGO",
+    department: "Ground Census & Family Assistance",
+    badgeNumber: "NGO-7104",
+    avatarColor: "bg-amber-600",
+    assignedRegionId: "B",
   },
 ];
 
@@ -52,7 +58,7 @@ interface AuthContextValue {
   currentUser: UserProfile | null;
   isAuthenticated: boolean;
   login: (profile: UserProfile) => void;
-  loginCustom: (email: string, password?: string, agency?: string) => boolean;
+  loginCustom: (email: string, role: UserRole, agency?: string) => boolean;
   logout: () => void;
   switchProfile: (userId: string) => void;
 }
@@ -69,8 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
     }
-    // Default to Swayam (Coordinator) so the terminal is immediately operational,
-    // but the user can sign out anytime to see the login screen or switch users!
+    // Default to Swayam (State Admin) so the terminal is immediately operational
     return PRESET_PROFILES[0];
   });
 
@@ -86,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentUser(profile);
   };
 
-  const loginCustom = (email: string, _password?: string, agency?: string): boolean => {
+  const loginCustom = (email: string, role: UserRole, agency?: string): boolean => {
     if (!email || !email.includes("@")) return false;
     const namePart = email.split("@")[0].replace(/[._]/g, " ");
     const formattedName = namePart
@@ -98,12 +103,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: `USR-${Date.now().toString().slice(-4)}`,
       name: formattedName || "Authorized Officer",
       email,
-      role: email.toLowerCase().includes("audit") ? "reviewer" : email.toLowerCase().includes("ops") ? "operator" : "coordinator",
-      roleTitle: email.toLowerCase().includes("audit") ? "Integrity Auditor" : email.toLowerCase().includes("ops") ? "Fleet Operator" : "Relief Coordinator",
-      agency: agency || "State Disaster Response Agency",
-      department: "Logistics Operations Division",
+      role,
+      roleTitle:
+        role === "admin"
+          ? "State Logistics Director"
+          : role === "hub_operator"
+          ? "Warehouse Hub Manager"
+          : "Community Relief NGO Partner",
+      agency:
+        agency ||
+        (role === "admin"
+          ? "Maharashtra State Food Distribution Authority"
+          : role === "hub_operator"
+          ? "Central Node Depot (CTR-B)"
+          : "Community Food Relief Partner"),
+      department:
+        role === "admin"
+          ? "State Operations Command"
+          : role === "hub_operator"
+          ? "Depot Staging & Vehicle Receiving"
+          : "Community Aid Distribution",
       badgeNumber: `SEC-${Math.floor(1000 + Math.random() * 9000)}`,
-      avatarColor: "bg-emerald-700",
+      avatarColor:
+        role === "admin"
+          ? "bg-emerald-600"
+          : role === "hub_operator"
+          ? "bg-blue-600"
+          : "bg-amber-600",
+      assignedFacilityId: role === "hub_operator" ? "CTR-B" : undefined,
+      assignedRegionId: role === "community_ngo" ? "B" : undefined,
     };
 
     setCurrentUser(newProfile);

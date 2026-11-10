@@ -20,7 +20,7 @@ export const ReviewAcceptModal: React.FC<ReviewAcceptModalProps> = ({ isOpen, on
   } = useOperational();
 
   const { currentUser } = useAuth();
-  const isReviewer = currentUser?.role === "reviewer";
+  const canPublish = currentUser?.role === "admin";
 
   const [justification, setJustification] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,7 +50,7 @@ export const ReviewAcceptModal: React.FC<ReviewAcceptModalProps> = ({ isOpen, on
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isReviewer || justification.trim().length < 10) return;
+    if (!canPublish || justification.trim().length < 10) return;
 
     setIsSubmitting(true);
     try {
@@ -128,14 +128,14 @@ export const ReviewAcceptModal: React.FC<ReviewAcceptModalProps> = ({ isOpen, on
             </div>
           )}
 
-          {/* Reviewer Notice */}
-          {isReviewer && (
-            <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg flex items-start space-x-2.5 text-purple-900">
-              <ShieldAlert className="w-4 h-4 text-purple-600 mt-0.5 shrink-0" />
+          {/* Non-Admin Notice */}
+          {!canPublish && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start space-x-2.5 text-amber-900">
+              <ShieldAlert className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
               <div>
-                <span className="font-semibold">Auditor Credentials (Read-Only):</span>
+                <span className="font-semibold">State Admin Permissions Required:</span>
                 <p className="mt-0.5 leading-relaxed text-[11px]">
-                  You are authenticated with an Independent Auditor profile ({currentUser?.name}). You can review proposed allocations, but publishing regulatory revisions requires Coordinator credentials.
+                  You are signed in as {currentUser?.name} ({currentUser?.roleTitle}). Only State Relief Admin credentials can publish official regulatory revisions.
                 </p>
               </div>
             </div>
@@ -178,7 +178,7 @@ export const ReviewAcceptModal: React.FC<ReviewAcceptModalProps> = ({ isOpen, on
             </button>
             <button
               type="submit"
-              disabled={isReviewer || justification.trim().length < 10 || isSubmitting}
+              disabled={!canPublish || justification.trim().length < 10 || isSubmitting}
               className="inline-flex items-center px-4 py-2 font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 shadow-sm transition-colors"
             >
               <CheckCircle2 className="w-4 h-4 mr-1.5" />

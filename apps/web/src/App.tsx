@@ -9,6 +9,8 @@ import { DataIntakeView } from "./views/DataIntakeView";
 import { ReconciliationView } from "./views/ReconciliationView";
 import { AuditLedgerView } from "./views/AuditLedgerView";
 import { LoginView } from "./views/LoginView";
+import { HubOperatorPortal } from "./views/HubOperatorPortal";
+import { CommunityNgoPortal } from "./views/CommunityNgoPortal";
 import { ReviewAcceptModal } from "./components/modals/ReviewAcceptModal";
 import { RecordMovementModal } from "./components/modals/RecordMovementModal";
 
@@ -49,15 +51,17 @@ const AuthenticatedTerminal: React.FC = () => {
 };
 
 const RootRouter: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, currentUser } = useAuth();
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !currentUser) {
     return <LoginView />;
   }
 
   return (
     <OperationalProvider>
-      <AuthenticatedTerminal />
+      {currentUser.role === "admin" && <AuthenticatedTerminal />}
+      {currentUser.role === "hub_operator" && <HubOperatorPortal />}
+      {currentUser.role === "community_ngo" && <CommunityNgoPortal />}
     </OperationalProvider>
   );
 };
