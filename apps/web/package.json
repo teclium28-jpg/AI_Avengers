@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@fairshare/domain": "*",
+    "@supabase/supabase-js": "^2.119.0",
     "@tanstack/react-query": "^5.0.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.475.0",

@@ -16,6 +16,7 @@ import {
 import { useAuth, PRESET_PROFILES } from "../context/AuthContext";
 import { useOperational } from "../context/OperationalContext";
 import { FairShareLogo } from "../components/brand/FairShareLogo";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
 
 export const HubOperatorPortal: React.FC = () => {
   const { currentUser, logout, switchProfile } = useAuth();
@@ -51,6 +52,26 @@ export const HubOperatorPortal: React.FC = () => {
     e.preventDefault();
     updateCenterCapacity(facilityId, capacityInput);
     setSaveSuccess(true);
+
+    if (isSupabaseConfigured) {
+      void (async () => {
+        try {
+          const { error } = await supabase
+            .from("facilities")
+            .update({
+              daily_capacity: capacityInput,
+              disruption_note: disruptionNote.trim() || null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", facilityId);
+          if (error) console.warn("[Supabase Sync] facilities update error:", error.message);
+          else console.info("[Supabase Sync] Facility capacity updated in Supabase");
+        } catch (err) {
+          console.warn("[Supabase Sync] Network error:", err);
+        }
+      })();
+    }
+
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 

@@ -13,6 +13,7 @@ import type {
 } from "../types";
 import { allocateFairness, computeBaselineAllocation } from "@fairshare/domain";
 import { computeSha256Fingerprint } from "../lib/crypto";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
 
 // ==========================================
 // Initial Production Baseline Seed Data
@@ -558,6 +559,35 @@ export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setAuthoritativeCenters(stagedCenters.map((c) => ({ ...c })));
     setAuthoritativeRegions(stagedRegions.map((r) => ({ ...r })));
     setReceipts((prev) => [...prev, newReceipt]);
+
+    // Persist to Supabase if configured
+    if (isSupabaseConfigured) {
+      void (async () => {
+        try {
+          const { error } = await supabase.from("authoritative_ledger").insert({
+            receipt_id: newReceipt.receiptId,
+            cycle_id: newReceipt.periodId,
+            revision: newReceipt.revision,
+            parent_receipt_id: receipts.length > 0 ? receipts[receipts.length - 1].receiptId : null,
+            sha256_hash: canonicalHash,
+            idempotency_key: idempotencyKey,
+            actor_id: effectiveActorId,
+            actor_name: effectiveActorName,
+            actor_role: effectiveActorRole,
+            justification: justification,
+            stock_kits: stagedStock,
+            allocations: resultingAllocation,
+          });
+          if (error) {
+            console.warn("[Supabase Sync] authoritative_ledger insert failed:", error.message);
+          } else {
+            console.info("[Supabase Sync] Revision recorded in Supabase:", newReceipt.receiptId);
+          }
+        } catch (err) {
+          console.warn("[Supabase Sync] Network error:", err);
+        }
+      })();
+    }
   };
 
   const recordMovementEvent = (
@@ -595,6 +625,27 @@ export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
 
     setMovements((prev) => [newRecord, ...prev]);
+
+    // Persist to Supabase if configured
+    if (isSupabaseConfigured) {
+      void (async () => {
+        try {
+          const { error } = await supabase.from("inbound_shipments").upsert({
+            id: newRecord.waybillNumber,
+            destination_facility_id: newRecord.centerId,
+            destination_region_id: newRecord.centerId.replace("CTR-", ""),
+            kits_shipped: newRecord.quantityKits,
+            kits_received: newRecord.movementType === "receipt" ? newRecord.quantityKits : null,
+            status: newRecord.movementType === "receipt" ? "delivered" : "in_transit",
+            confirmed_by: newRecord.verifiedBy,
+            confirmed_at: newRecord.timestampUTC,
+          });
+          if (error) console.warn("[Supabase Sync] inbound_shipments upsert failed:", error.message);
+        } catch (err) {
+          console.warn("[Supabase Sync] Network error:", err);
+        }
+      })();
+    }
   };
 
   const applyBatchIntake = (newRegions: RegionEntity[], newStockKits: number) => {

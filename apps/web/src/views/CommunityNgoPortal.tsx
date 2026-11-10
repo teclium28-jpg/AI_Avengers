@@ -16,6 +16,7 @@ import {
 import { useAuth, PRESET_PROFILES } from "../context/AuthContext";
 import { useOperational } from "../context/OperationalContext";
 import { FairShareLogo } from "../components/brand/FairShareLogo";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
 
 export const CommunityNgoPortal: React.FC = () => {
   const { currentUser, logout, switchProfile } = useAuth();
@@ -40,6 +41,27 @@ export const CommunityNgoPortal: React.FC = () => {
     e.preventDefault();
     updateRegionDemand(regionId, demandInput);
     setIsSubmitted(true);
+
+    if (isSupabaseConfigured) {
+      void (async () => {
+        try {
+          const { error } = await supabase.from("community_demands").insert({
+            region_id: regionId,
+            cycle_id: "2026-W46",
+            family_headcount: familiesCount,
+            requested_kits: demandInput,
+            urgency: urgencyLevel,
+            notes: requestNotes.trim(),
+            submitted_by: currentUser?.name || "Community Aid Partner",
+          });
+          if (error) console.warn("[Supabase Sync] community_demands insert error:", error.message);
+          else console.info("[Supabase Sync] Community request stored in Supabase");
+        } catch (err) {
+          console.warn("[Supabase Sync] Network error:", err);
+        }
+      })();
+    }
+
     setTimeout(() => setIsSubmitted(false), 4000);
   };
 
