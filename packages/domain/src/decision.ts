@@ -60,7 +60,9 @@ export async function replayDecision(record: DecisionRecord, expectedHash: strin
   const old = new Map(record.snapshot.input.regions.map(r => [r.regionId, r]));
   const changes: { code: string; whyItMatters: string; regionIds: string[]; before: unknown; after: unknown }[] = [];
   if (current) {
-    if (current.revision !== record.snapshot.revision || canonicalJson(current.sources) !== canonicalJson(record.snapshot.sources)) changes.push({code:'EVIDENCE_CHANGED',whyItMatters:'The authoritative revision or source evidence changed; quantities may still produce the same allocation.',regionIds:current.input.regions.map(r=>r.regionId),before:{revision:record.snapshot.revision,sources:record.snapshot.sources},after:{revision:current.revision,sources:current.sources}});
+    // The revision counter also advances when this decision is accepted, so it is not evidence;
+    // changed stock, demand, capacity or dispatch records are, and they appear in `sources`.
+    if (canonicalJson(current.sources) !== canonicalJson(record.snapshot.sources)) changes.push({code:'EVIDENCE_CHANGED',whyItMatters:'The authoritative revision or source evidence changed; quantities may still produce the same allocation.',regionIds:current.input.regions.map(r=>r.regionId),before:{revision:record.snapshot.revision,sources:record.snapshot.sources},after:{revision:current.revision,sources:current.sources}});
     if (current.input.stockKits !== record.snapshot.input.stockKits) changes.push({ code: 'STOCK_CHANGED', whyItMatters: 'Changes the pool available for new allocation.', regionIds: current.input.regions.map(r => r.regionId), before: record.snapshot.input.stockKits, after: current.input.stockKits });
     for (const r of current.input.regions) {
       const previous = old.get(r.regionId);
@@ -71,5 +73,5 @@ export async function replayDecision(record: DecisionRecord, expectedHash: strin
   }
   const before = new Map(record.result.allocations.map(r => [r.regionId, r.allocatedKits]));
   const differences = fresh?.ok ? [...new Set([...before.keys(), ...fresh.result.allocations.map(a => a.regionId)])].sort().map(regionId => ({ regionId, before: before.get(regionId) ?? null, after: fresh.result.allocations.find(a => a.regionId === regionId)?.allocatedKits ?? null })) : [];
-  return { status: 'exact' as const, replayed, current: fresh, changed: !!current && canonicalJson(record.snapshot) !== canonicalJson(current), changes, differences };
+  return { status: 'exact' as const, replayed, current: fresh, changed: !!current && canonicalJson({ ...record.snapshot, revision: 0 }) !== canonicalJson({ ...current, revision: 0 }), changes, differences };
 }

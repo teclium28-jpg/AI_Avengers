@@ -21,7 +21,7 @@ export const LoginView: React.FC = () => {
 
   const [selectedUserKey, setSelectedUserKey] = useState<string>("swayam");
   const [identifier, setIdentifier] = useState<string>("swayam");
-  const [password, setPassword] = useState<string>("admin@123");
+  const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -29,17 +29,17 @@ export const LoginView: React.FC = () => {
   const handleSelectQuickUser = (userKey: string) => {
     setSelectedUserKey(userKey);
     setIdentifier(userKey);
-    setPassword("admin@123");
+    setPassword("");
     setError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
 
     try {
-      const res = loginWithCredentials(identifier, password);
+      const res = await loginWithCredentials(identifier, password);
       if (!res.success) {
         setError(res.error || "Authentication failed.");
       }
@@ -147,7 +147,6 @@ export const LoginView: React.FC = () => {
                 <label className="block text-xs font-semibold text-zinc-700">
                   Access Password
                 </label>
-                <span className="text-[10px] text-zinc-400 font-mono">Password: admin@123</span>
               </div>
               <div className="relative rounded-lg shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
@@ -204,6 +203,10 @@ export const LoginView: React.FC = () => {
               <ArrowRight className="w-3.5 h-3.5 ml-2" />
             </button>
           </form>
+
+          <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-center">
+            Demo build: this sign-in runs in the browser and is not a security boundary. Real access is enforced by the API.
+          </p>
 
           {/* Institutional Compliance Notice */}
           <div className="pt-4 border-t border-zinc-100 flex items-center justify-center space-x-1.5 text-[11px] text-zinc-400 font-mono">

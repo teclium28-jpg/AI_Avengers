@@ -17,11 +17,19 @@ export class DecisionService {
       const [row]=await tx`select *,fairshare.actor_membership() as actor from fairshare.idempotency_records where request_key=${key}::uuid`;
       if(!row) return null;
       if(row.actor_id!==row.actor) throw new ApiError(403,'FORBIDDEN','Idempotency key belongs to another actor');
-      if(row.payload_hash!==hash||row.period_id!==period) throw new ApiError(409,'KEY_CONFLICT','Idempotency key payload differs');
+      if(row.payload_hash!==hash||row.period_id!==period) throw new ApiError(422,'KEY_CONFLICT','Idempotency key was already used with a different payload');
       return row.state==='completed'?{status:row.response_status,body:row.response_body}:null;
     });
   }
   async mutate(c:RequestContext,key:string,period:string,hash:string,roles:string[],center:string|null,run:(tx:Transaction)=>Promise<WriteResult>) {
+    try { return await this.mutateOnce(c,key,period,hash,roles,center,run); }
+    catch(error) {
+      // Concurrent duplicate whose payload differs: same answer as the sequential path.
+      if((error as {code?:string}).code==='22023' && /key payload mismatch/.test((error as Error).message)) throw new ApiError(422,'KEY_CONFLICT','Idempotency key was already used with a different payload');
+      throw error;
+    }
+  }
+  async mutateOnce(c:RequestContext,key:string,period:string,hash:string,roles:string[],center:string|null,run:(tx:Transaction)=>Promise<WriteResult>) {
     return this.repository.transaction(c,async tx => {
       await this.repository.authorize(tx,roles,center);
       const saved=(await tx`select fairshare.claim_request(${period}::uuid,${key}::uuid,${hash}) as saved`)[0].saved;
@@ -38,7 +46,11 @@ export class DecisionService {
     await this.repository.transaction(c,tx=>this.repository.authorize(tx,['coordinator']));
     const saved=await this.prior(c,key,request.periodId,hash); if(saved) return saved;
     const snapshot=await this.snapshot(c,request.periodId);
-    if(snapshot.revision!==request.expectedRevision) throw new ApiError(409,'STALE_REVISION','Reload the current snapshot');
+    if(snapshot.revision!==request.expectedRevision) {
+      // Claim the key first so a key owned by another actor is refused (403) before staleness is
+      // reported; the thrown error rolls the claim back, leaving nothing behind.
+      await this.mutate(c,key,request.periodId,hash,['coordinator'],null,async()=>{throw new ApiError(409,'STALE_REVISION','Reload the current snapshot');});
+    }
     const choice={algorithm:request.algorithm,reason:request.reason,...(request.overrides?{overrides:request.overrides}:{})};
     const record=computeDecision(snapshot,choice);
     if(!record.ok) throw new ApiError(422,'INVALID_DECISION','Decision failed independent validation',record);

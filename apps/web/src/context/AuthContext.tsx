@@ -17,7 +17,18 @@ export interface UserProfile {
   assignedRegionId?: string;   // e.g. "B" for community NGOs
 }
 
-export const OFFICIAL_USERS: (UserProfile & { defaultPassword: string })[] = [
+// DEMO ONLY. This sign-in runs entirely in the browser and is NOT a security boundary: anyone
+// who can open the page can read or change this logic. Real access control is the Supabase JWT
+// and organization membership enforced by the API and row-level security. The shared demo
+// password is stored as a SHA-256 digest so it is not printed in the bundle or the interface.
+const DEMO_PASSWORD_SHA256 = "7676aaafb027c825bd9abab78b234070e702752f625b752e55e55b48e607e358";
+
+async function sha256Hex(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export const OFFICIAL_USERS: UserProfile[] = [
   {
     id: "swayam",
     username: "swayam",
@@ -29,7 +40,6 @@ export const OFFICIAL_USERS: (UserProfile & { defaultPassword: string })[] = [
     department: "State Logistics Command",
     badgeNumber: "DIR-01",
     avatarColor: "bg-emerald-600",
-    defaultPassword: "admin@123",
   },
   {
     id: "sunita",
@@ -43,7 +53,6 @@ export const OFFICIAL_USERS: (UserProfile & { defaultPassword: string })[] = [
     badgeNumber: "HUB-4020",
     avatarColor: "bg-blue-600",
     assignedFacilityId: "CTR-B",
-    defaultPassword: "admin@123",
   },
   {
     id: "farhan",
@@ -57,16 +66,15 @@ export const OFFICIAL_USERS: (UserProfile & { defaultPassword: string })[] = [
     badgeNumber: "NGO-7104",
     avatarColor: "bg-amber-600",
     assignedRegionId: "B",
-    defaultPassword: "admin@123",
   },
 ];
 
-export const PRESET_PROFILES: UserProfile[] = OFFICIAL_USERS.map(({ defaultPassword, ...profile }) => profile);
+export const PRESET_PROFILES: UserProfile[] = OFFICIAL_USERS;
 
 interface AuthContextValue {
   currentUser: UserProfile | null;
   isAuthenticated: boolean;
-  loginWithCredentials: (identifier: string, password: string) => { success: boolean; error?: string };
+  loginWithCredentials: (identifier: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -80,13 +88,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === "object") {
           // Normalize legacy id/username if needed
-          const matched = PRESET_PROFILES.find(
-            (p) =>
-              p.id === parsed.id ||
-              p.username.toLowerCase() === parsed.username?.toLowerCase() ||
-              p.name.toLowerCase() === parsed.name?.toLowerCase() ||
-              p.role === parsed.role
-          );
+          // Match the stored id exactly: a role or a partial name must never select a profile.
+          const matched = PRESET_PROFILES.find((p) => typeof parsed.id === "string" && p.id === parsed.id);
           if (matched) return matched;
         }
       } catch {
@@ -105,10 +108,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [currentUser]);
 
-  const loginWithCredentials = (
+  const loginWithCredentials = async (
     identifier: string,
     password: string
-  ): { success: boolean; error?: string } => {
+  ): Promise<{ success: boolean; error?: string }> => {
     const trimmedId = identifier.trim().toLowerCase();
     const trimmedPw = password.trim();
 
@@ -125,26 +128,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (u) =>
         u.username.toLowerCase() === trimmedId ||
         u.email.toLowerCase() === trimmedId ||
-        u.id.toLowerCase() === trimmedId ||
-        u.name.toLowerCase().includes(trimmedId)
+        u.id.toLowerCase() === trimmedId
     );
 
-    if (!matched) {
-      return {
-        success: false,
-        error: "User not recognized. Valid authorized logins: 'swayam', 'sunita', or 'farhan'.",
-      };
-    }
+    // One message for both cases, so the form does not reveal which accounts exist.
+    const rejected = { success: false, error: "Incorrect username or password." };
+    const passwordOk = (await sha256Hex(trimmedPw)) === DEMO_PASSWORD_SHA256;
+    if (!matched || !passwordOk) return rejected;
 
-    if (trimmedPw !== matched.defaultPassword) {
-      return {
-        success: false,
-        error: "Incorrect password. The authorized access password is: admin@123",
-      };
-    }
-
-    const { defaultPassword, ...profile } = matched;
-    setCurrentUser(profile);
+    setCurrentUser(matched);
     return { success: true };
   };
 

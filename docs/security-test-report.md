@@ -3,6 +3,24 @@
 Date: 10 November 2026. Code under test: `set-up-start-with-this` at `4bcfab4`
 (merged into this branch). All identities and data used were synthetic.
 
+## Status after fixes
+
+| Id | Status |
+| --- | --- |
+| F-01 overrides with non-manual algorithm | Fixed: 422 `INVALID_REQUEST` (`contracts.ts`) |
+| F-02 NUL character in text | Fixed: rejected by schema, 422 |
+| F-03 key reuse with different payload | Fixed: 422 `KEY_CONFLICT`, also on the concurrent path |
+| F-04 another actor replaying a key | Fixed: 403 before the stale-revision check |
+| F-05 far-future event timestamps | Fixed: more than 24 h ahead is rejected |
+| F-06 health headers | Fixed |
+| F-07 replay always "changed" | Fixed: revision counter no longer counts as evidence |
+| F-08 web login | Partly fixed. Password no longer printed, prefilled or stored in plain text; exact username matching; one generic error; role/partial-name session forgery closed; demo notice added. **Still not a security boundary**: setting `localStorage.fairshare_auth_user` to a valid user id still signs in. Real fix is Supabase Auth |
+| F-09 Supabase direct writes | Sign-up disabled in `supabase/config.toml`. Row-level security on the three browser-written tables still needs checking in the hosted project |
+| F-10 zod advisory | Open: needs the zod 4 upgrade |
+
+The regression tests for F-01 to F-07 are in `tests/backend/security-input-api.test.ts`
+(57 backend tests pass). The sections below describe the findings as first reported.
+
 ## What was run
 
 | Suite | Command | Result |

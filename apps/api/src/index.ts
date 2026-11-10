@@ -14,7 +14,7 @@ type AppEnvironment={Bindings:Bindings;Variables:{context:RequestContext;service
 
 export function createApp(options:Options={}) {
   const app = new Hono<AppEnvironment>();
-  app.get("/api/v1/health", (c) => c.json({ status: "ok", stage: "scaffold" }));
+  app.get("/api/v1/health", (c) => { c.header('Cache-Control','no-store'); c.header('X-Content-Type-Options','nosniff'); return c.json({ status: "ok", stage: "scaffold" }); });
   app.use('/api/v1/*',async(c,next)=>{
     c.set('context',{requestId:crypto.randomUUID(),organizationId:'',actorId:''});
     c.header('Cache-Control','no-store'); c.header('X-Content-Type-Options','nosniff');

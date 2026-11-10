@@ -2,9 +2,7 @@
 // Runs the real Hono app in-process against native PostgreSQL with every migration
 // applied and the restricted runtime role. All identities and data are SYNTHETIC.
 //
-// Tests marked `todo` reproduce defects that are open in the application: they
-// assert the contract's expected behaviour, currently fail, and are reported by the
-// runner without failing the suite. Remove the `todo` once the defect is fixed.
+// Regression tests for defects F-01..F-07 found by this campaign (docs/security-test-report.md).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -142,7 +140,7 @@ test('security, input, API flow and server response campaign', async t => {
       }
       assert.equal(ids.size, 3);
     });
-    await t.test('RESPONSE: health endpoint also sends no-store and nosniff', { todo: 'DEFECT F-06: /health is registered before the header middleware, so it has neither header' }, async () => {
+    await t.test('RESPONSE: health endpoint also sends no-store and nosniff', async () => {
       const health = await app.request('/api/v1/health');
       assert.equal(health.headers.get('cache-control'), 'no-store'); assert.equal(health.headers.get('x-content-type-options'), 'nosniff');
     });
@@ -248,11 +246,11 @@ test('security, input, API flow and server response campaign', async t => {
       const f = await fixture(); const r = await f.call('/plans/accept', { body: await f.accept({ algorithm: 'manual-override' }) });
       assert.equal(r.status, 422, await r.clone().text());
     });
-    await t.test('INPUT: overrides on a non-manual algorithm are a 422', { todo: 'DEFECT F-01: plain Error from computeDecision is mapped to 503 DEPENDENCY_UNAVAILABLE' }, async () => {
+    await t.test('INPUT: overrides on a non-manual algorithm are a 422', async () => {
       const f = await fixture(); const r = await f.call('/plans/accept', { body: await f.accept({ overrides: [{ regionId: f.rows[0].region_id, newlyAllocatedKits: 1 }] }) });
-      assert.equal(r.status, 422, await r.clone().text());
+      await assertError(r, 422, 'INVALID_REQUEST');
     });
-    await t.test('INPUT: NUL characters in free text are a 422', { todo: 'DEFECT F-02: PostgreSQL rejects \\u0000 (22P05/22021), which is unmapped and surfaces as 503' }, async () => {
+    await t.test('INPUT: NUL characters in free text are a 422', async () => {
       const f = await fixture(); const statuses: number[] = [];
       statuses.push((await f.call('/plans/accept', { body: await f.accept({ reason: 'SYNTHETIC \u0000 reason' }) })).status);
       const body = f.importBody(await f.revision()); body.stock.source = 'SYNTHETIC \u0000 source'; statuses.push((await f.call('/imports', { body })).status);
@@ -332,7 +330,7 @@ test('security, input, API flow and server response campaign', async t => {
       assert.equal((await f.call(`/movements/${movement}/events`, { body: f.event(a.id, 'dispatch', 5) })).status, 201);
       await assertError(await f.call(`/movements/${movement}/events`, { body: f.event(b.id, 'dispatch', 5) }), 409, 'CONFLICT');
     });
-    await t.test('INPUT: event timestamps far in the future are refused', { todo: 'DEFECT F-05: occurredAt is only format-checked; year 9999 events are accepted into the append-only ledger' }, async () => {
+    await t.test('INPUT: event timestamps far in the future are refused', async () => {
       const f = await fixture(); assert.equal((await f.call('/plans/accept', { body: await f.accept() })).status, 201);
       const [r] = await f.reservations();
       const response = await f.call(`/movements/${randomUUID()}/events`, { body: f.event(r.id, 'dispatch', 1, { occurredAt: '9999-12-31T23:59:59Z' }) });
@@ -410,7 +408,7 @@ test('security, input, API flow and server response campaign', async t => {
       assert.equal(theirs.status, 201); assert.notEqual((await theirs.json()).receiptId, (await first.json()).receiptId);
       assert.equal(await count('plans', f.periodId), 1);
     });
-    await t.test('AUTHZ: another actor replaying a completed acceptance key gets 403', { todo: 'DEFECT F-04: the stale-revision check runs before the key-owner check, so the answer is 409 STALE_REVISION instead of the documented 403' }, async () => {
+    await t.test('AUTHZ: another actor replaying a completed acceptance key gets 403', async () => {
       const f = await fixture(), key = randomUUID(), body = await f.accept(), colleague = await member(f.organizationId, 'coordinator');
       assert.equal((await f.call('/plans/accept', { body, headers: { 'Idempotency-Key': key } })).status, 201);
       const replay = await f.call('/plans/accept', { body, bearer: colleague.bearer, headers: { 'Idempotency-Key': key } });
@@ -514,11 +512,11 @@ test('security, input, API flow and server response campaign', async t => {
       await assertError(await f.call('/plans/accept', { body: { ...body, expectedRevision: 999 } }), 409, 'STALE_REVISION');
       assert.equal(await count('plans', f.periodId), 1);
     });
-    await t.test('FLOW: reusing an idempotency key with a different payload is 422', { todo: 'DEFECT F-03: returns 409 KEY_CONFLICT/CONFLICT; context.md and docs/integration-contract.md require 422' }, async () => {
+    await t.test('FLOW: reusing an idempotency key with a different payload is 422', async () => {
       const f = await fixture(), key = randomUUID(), body = await f.accept();
       assert.equal((await f.call('/plans/accept', { body, headers: { 'Idempotency-Key': key } })).status, 201);
       const changed = await f.call('/plans/accept', { body: { ...body, reason: 'SYNTHETIC different content' }, headers: { 'Idempotency-Key': key } });
-      assert.equal(changed.status, 422, await changed.clone().text());
+      await assertError(changed, 422, 'KEY_CONFLICT');
     });
     await t.test('FLOW: a changed payload under a used key is refused and changes nothing', async () => {
       const f = await fixture(), key = randomUUID(), body = await f.accept();
@@ -563,7 +561,7 @@ test('security, input, API flow and server response campaign', async t => {
       assert.ok(codes(later).includes('STOCK_CHANGED')); assert.ok(later.differences.some((d: { before: number; after: number }) => d.before !== d.after));
       await assertError(await f.call(`/receipts/${randomUUID()}/replay`), 404, 'NOT_FOUND');
     });
-    await t.test('FLOW: replaying a receipt right after acceptance reports no change', { todo: 'DEFECT F-07: acceptance itself advances the period revision, so every replay reports changed=true and EVIDENCE_CHANGED although no input changed' }, async () => {
+    await t.test('FLOW: replaying a receipt right after acceptance reports no change', async () => {
       const f = await fixture(); const accepted = await (await f.call('/plans/accept', { body: await f.accept() })).json();
       const exact = await (await f.call(`/receipts/${accepted.receiptId}/replay`)).json();
       assert.equal(exact.changed, false); assert.deepEqual(exact.changes, []);
