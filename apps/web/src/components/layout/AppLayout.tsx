@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   SlidersHorizontal,
@@ -17,11 +17,13 @@ import {
   RotateCcw,
   LogOut,
   UserCheck,
+  Server,
 } from "lucide-react";
 import { useOperational } from "../../context/OperationalContext";
 import { useAuth, PRESET_PROFILES } from "../../context/AuthContext";
 import type { NavigationPage } from "../../types";
 import { FairShareLogo, FairShareIcon } from "../brand/FairShareLogo";
+import { checkApiHealth } from "../../lib/api";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -48,6 +50,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [apiOnline, setApiOnline] = useState<boolean>(false);
+
+  useEffect(() => {
+    checkApiHealth().then((res) => setApiOnline(res.online));
+  }, []);
 
   const navItems: { id: NavigationPage; label: string; icon: React.ElementType; badge?: string }[] = [
     { id: "dashboard", label: "Operations Overview", icon: LayoutDashboard },
@@ -164,6 +171,19 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
                   <Lock className="w-3 h-3 text-emerald-600 mr-1" />
                   Official Register r{authoritativeRevision}
+                </span>
+              )}
+
+              {/* Edge API Status indicator */}
+              {apiOnline ? (
+                <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse" />
+                  Cloudflare API Connected
+                </span>
+              ) : (
+                <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-medium bg-zinc-50 text-zinc-600 border border-zinc-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 mr-1.5" />
+                  Edge API Offline (Browser Engine Active)
                 </span>
               )}
             </div>

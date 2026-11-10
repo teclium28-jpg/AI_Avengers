@@ -49,6 +49,10 @@ export const DashboardView: React.FC = () => {
               Active Relief Cycle
             </span>
             <span className="text-xs text-zinc-400 font-mono">Period 2026-W46</span>
+            <span className="h-3 w-px bg-zinc-200" />
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-blue-50 text-blue-700 border border-blue-200">
+              Provenance: Simulated Fixture
+            </span>
           </div>
           <h1 className="text-xl font-bold text-zinc-950 mt-1.5 font-sans">
             Humanitarian Food Allocation & Distribution Register
@@ -74,7 +78,7 @@ export const DashboardView: React.FC = () => {
         <div className="bg-white p-5 rounded-xl border border-zinc-200 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-              Confirmed Warehouse Stock
+              Confirmed Period Allocation Stock
             </span>
             <Package className="w-4 h-4 text-zinc-400" />
           </div>
@@ -83,7 +87,7 @@ export const DashboardView: React.FC = () => {
             <span className="text-xs text-zinc-500 font-medium">Standard Kits</span>
           </div>
           <span className="mt-2 text-[11px] text-zinc-400 font-medium">
-            100% physically verified inventory
+            Inclusive period pool (includes prior dispatches)
           </span>
         </div>
 

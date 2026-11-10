@@ -347,6 +347,7 @@ export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ c
             demandKits: reg.demandKits,
             centerCapacity: ctr?.configuredCapacity || 0,
             priorDispatchedKits: domainInput.regions.find((ir) => ir.regionId === reg.regionId)?.priorDispatchedKits || 0,
+            newlyAllocatedKits: a.newlyAllocatedKits,
             allocatedKits: a.allocatedKits,
             coverageFraction: { numerator: a.allocatedKits, denominator: reg.demandKits },
             coveragePercentage: reg.demandKits > 0 ? (a.allocatedKits / reg.demandKits) * 100 : 0,

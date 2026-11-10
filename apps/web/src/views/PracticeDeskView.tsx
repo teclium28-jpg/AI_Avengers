@@ -146,6 +146,10 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
             <span className="text-xs font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
               {isStatewide ? "Statewide Disaster Response Grid" : "Metropolitan 3-Zone Sector"}
             </span>
+            <span className="h-3 w-px bg-zinc-200" />
+            <span className="text-[11px] font-mono text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
+              Provenance: Simulated Fixture
+            </span>
           </div>
           <h1 className="text-xl font-bold text-zinc-950 font-sans mt-1">
             Food Aid Allocation Planner
@@ -195,7 +199,7 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
         {/* Available Stock */}
         <div className="bg-white rounded-xl border border-zinc-200 p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between text-zinc-500 text-xs">
-            <span className="font-semibold uppercase tracking-wider text-[11px]">Total Stock</span>
+            <span className="font-semibold uppercase tracking-wider text-[11px]">Period Total Stock</span>
             <Package className="w-4 h-4 text-zinc-400" />
           </div>
           <div className="mt-2 flex items-baseline justify-between">
@@ -215,7 +219,7 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
               Adjust
             </button>
           </div>
-          <div className="text-[11px] text-zinc-400 mt-1">Confirmed central warehouse pool</div>
+          <div className="text-[11px] text-zinc-400 mt-1">Confirmed inclusive allocation pool</div>
         </div>
 
         {/* Allocated Stock */}
