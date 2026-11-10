@@ -1,0 +1,5 @@
+# Test plan
+
+Add independently checked golden allocation fixtures, an independent validity evaluator, exhaustive small-case checks, reconciliation balances, and database integration tests for isolation, concurrent acceptance and idempotency. Do not treat placeholder directories as passing tests.
+
+The database suite now lives in `database/schema.test.mjs`: run `npm run test:db` to execute the actual migrations and synthetic seed in embedded PostgreSQL. `npm test` also runs the API and domain suites. Hosted Supabase and multiple-client acceptance/concurrency tests are still pending; see `docs/database.md`.

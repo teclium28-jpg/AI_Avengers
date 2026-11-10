@@ -1,0 +1,8 @@
+# Copy to .dev.vars; fill privately. Do not commit .dev.vars.
+# Use a restricted custom login, not postgres or a service role.
+# Copy the real transaction pooler host from Supabase Connect; don't guess it.
+DATABASE_URL="postgresql://fairshare_runtime.PROJECT_REF:ENCODED_PASSWORD@POOLER_HOST:6543/postgres"
+# Generate a long random token before enabling the diagnostic.
+DB_PROBE_TOKEN=""
+# Supabase project URL; JWT issuer is this URL + /auth/v1.
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co

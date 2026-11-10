@@ -1,0 +1,163 @@
+[
+  {
+    "name": "brainstorming",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/brainstorming",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "diagnosing-superpowers",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/diagnosing-superpowers",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "dispatching-parallel-agents",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/dispatching-parallel-agents",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "executing-plans",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/executing-plans",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "finishing-a-development-branch",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/finishing-a-development-branch",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "receiving-code-review",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/receiving-code-review",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "requesting-code-review",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/requesting-code-review",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "subagent-driven-development",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/subagent-driven-development",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "systematic-debugging",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/systematic-debugging",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "test-driven-development",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/test-driven-development",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "using-git-worktrees",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/using-git-worktrees",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "using-superpowers",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/using-superpowers",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "verification-before-completion",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/verification-before-completion",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "writing-plans",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/writing-plans",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "writing-skills",
+    "repository": "obra/superpowers",
+    "revision": "22f0b463e7a5e579904dd6211a520321035526f7",
+    "upstream_path": "skills/writing-skills",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "code-review",
+    "repository": "getsentry/skills",
+    "revision": "e94f22214528d69899d09c627b3315ddc3544816",
+    "upstream_path": "skills/code-review",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "find-bugs",
+    "repository": "getsentry/skills",
+    "revision": "e94f22214528d69899d09c627b3315ddc3544816",
+    "upstream_path": "skills/find-bugs",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "code-simplifier",
+    "repository": "getsentry/skills",
+    "revision": "e94f22214528d69899d09c627b3315ddc3544816",
+    "upstream_path": "skills/code-simplifier",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "iterate-pr",
+    "repository": "getsentry/skills",
+    "revision": "e94f22214528d69899d09c627b3315ddc3544816",
+    "upstream_path": "skills/iterate-pr",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "security-review",
+    "repository": "getsentry/skills",
+    "revision": "e94f22214528d69899d09c627b3315ddc3544816",
+    "upstream_path": "skills/security-review",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "secret-serialization",
+    "repository": "getsentry/skills",
+    "revision": "e94f22214528d69899d09c627b3315ddc3544816",
+    "upstream_path": "skills/secret-serialization",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "gha-security-review",
+    "repository": "getsentry/skills",
+    "revision": "e94f22214528d69899d09c627b3315ddc3544816",
+    "upstream_path": "skills/gha-security-review",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  },
+  {
+    "name": "pr-writer",
+    "repository": "getsentry/skills",
+    "revision": "e94f22214528d69899d09c627b3315ddc3544816",
+    "upstream_path": "skills/pr-writer",
+    "adaptation": "LOCAL_POLICY.md inserted after frontmatter"
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "fairshare-api-local",
+  "main": "src/local.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "dev": { "ip": "127.0.0.1", "port": 8787 }
+}

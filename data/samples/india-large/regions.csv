@@ -1,0 +1,1201 @@
+period_id,region_id,region_name,center_id,demand_kits,capacity_kits,prior_dispatched_kits,status,reported_or_simulated
+p01,OD-0001,Cuttack,CTR-0001,530,460,0,open,simulated
+p01,TN-0002,Chennai,CTR-0002,1525,965,0,open,simulated
+p01,KL-0003,Malappuram,CTR-0003,967,765,0,open,simulated
+p01,TN-0004,Tirunelveli,CTR-0004,769,755,0,open,simulated
+p01,GJ-0005,Dahod,CTR-0005,483,284,0,open,simulated
+p01,OD-0006,Sundargarh,CTR-0006,466,389,0,open,simulated
+p01,JH-0007,Dumka,CTR-0007,278,176,0,open,simulated
+p01,JH-0008,Ranchi,CTR-0008,613,543,0,open,simulated
+p01,AP-0009,Kurnool,CTR-0009,611,360,0,open,simulated
+p01,DL-0010,South Delhi,CTR-0010,510,374,0,open,simulated
+p01,JK-0011,Jammu,CTR-0011,323,324,0,open,simulated
+p01,AS-0012,Dibrugarh,CTR-0012,311,296,0,open,simulated
+p01,GA-0013,South Goa,CTR-0013,139,159,0,open,simulated
+p01,RJ-0014,Barmer,CTR-0014,512,421,0,open,simulated
+p01,HR-0015,Gurugram,CTR-0015,310,318,0,open,simulated
+p01,AP-0016,Chittoor,CTR-0016,453,300,0,open,simulated
+p01,JK-0017,Srinagar,CTR-0017,305,247,0,open,simulated
+p01,GJ-0018,Kutch,CTR-0018,496,354,0,open,simulated
+p01,WB-0019,North 24 Parganas,CTR-0019,2335,2171,0,open,simulated
+p01,RJ-0020,Kota,CTR-0020,401,408,0,open,simulated
+p01,KL-0021,Wayanad,CTR-0021,167,114,0,open,simulated
+p01,CG-0022,Bilaspur,CTR-0022,697,390,0,open,simulated
+p01,CG-0023,Bastar,CTR-0023,377,279,0,open,simulated
+p01,UK-0024,Nainital,CTR-0024,217,199,0,open,simulated
+p01,BR-0025,Kishanganj,CTR-0025,352,303,0,open,simulated
+p01,OD-0026,Koraput,CTR-0026,353,198,0,open,simulated
+p01,HP-0027,Kangra,CTR-0027,292,258,0,open,simulated
+p01,DL-0028,North West Delhi,CTR-0028,729,590,0,open,simulated
+p01,KA-0029,Mysuru,CTR-0029,667,0,0,closed,simulated
+p01,PB-0030,Jalandhar,CTR-0030,546,435,0,open,simulated
+p01,MH-0031,Solapur,CTR-0031,931,765,0,open,simulated
+p01,KA-0032,Dharwad,CTR-0032,363,319,0,open,simulated
+p01,DL-0033,East Delhi,CTR-0033,405,417,0,open,simulated
+p01,MP-0034,Bhopal,CTR-0034,638,509,0,open,simulated
+p01,TN-0035,Vellore,CTR-0035,982,856,0,open,simulated
+p01,GJ-0036,Rajkot,CTR-0036,744,769,0,open,simulated
+p01,UK-0037,Haridwar,CTR-0037,454,384,107,open,simulated
+p01,KA-0038,Raichur,CTR-0038,545,350,0,open,simulated
+p01,DL-0039,Central Delhi,CTR-0039,158,94,0,open,simulated
+p01,MH-0040,Mumbai City,CTR-0040,619,551,0,open,simulated
+p01,MH-0041,Nagpur,CTR-0041,1272,1311,0,open,simulated
+p01,AS-0042,Barpeta,CTR-0042,363,334,124,open,simulated
+p01,MH-0043,Nashik,CTR-0043,1576,1379,98,open,simulated
+p01,CG-0044,Surguja,CTR-0044,549,433,0,open,simulated
+p01,GJ-0045,Ahmedabad,CTR-0045,1533,1509,0,open,simulated
+p01,TN-0046,Coimbatore,CTR-0046,794,836,0,open,simulated
+p01,BR-0047,Gaya,CTR-0047,1039,1080,0,open,simulated
+p01,AP-0048,Anantapur,CTR-0048,490,501,0,open,simulated
+p01,RJ-0049,Jaipur,CTR-0049,1705,1769,0,open,simulated
+p01,JK-0050,Kupwara,CTR-0050,244,156,0,open,simulated
+p01,PB-0051,Bathinda,CTR-0051,352,327,0,open,simulated
+p01,WB-0052,Bankura,CTR-0052,912,672,0,open,simulated
+p01,JH-0053,Dhanbad,CTR-0053,515,364,0,open,simulated
+p01,KA-0054,Kalaburagi,CTR-0054,539,390,0,open,simulated
+p01,MP-0055,Gwalior,CTR-0055,410,349,0,open,simulated
+p01,JH-0056,East Singhbhum,CTR-0056,577,374,0,open,simulated
+p01,UK-0057,Dehradun,CTR-0057,322,193,0,open,simulated
+p01,OD-0058,Kalahandi,CTR-0058,383,409,0,open,simulated
+p01,HR-0059,Rohtak,CTR-0059,260,198,0,open,simulated
+p01,AP-0060,Guntur,CTR-0060,508,508,0,open,simulated
+p01,RJ-0061,Alwar,CTR-0061,762,663,0,open,simulated
+p01,GA-0062,North Goa,CTR-0062,151,103,0,open,simulated
+p01,MH-0063,Mumbai Suburban,CTR-0063,2155,2383,0,open,simulated
+p01,TS-0064,Hyderabad,CTR-0064,776,532,0,open,simulated
+p01,UP-0065,Gorakhpur,CTR-0065,1041,908,0,open,simulated
+p01,GJ-0066,Surat,CTR-0066,1553,1002,0,open,simulated
+p01,UP-0067,Prayagraj,CTR-0067,1572,1837,0,open,simulated
+p01,MP-0068,Jabalpur,CTR-0068,508,360,0,open,simulated
+p01,HR-0069,Faridabad,CTR-0069,467,487,94,open,simulated
+p01,BR-0070,Darbhanga,CTR-0070,776,895,0,open,simulated
+p01,UP-0071,Bahraich,CTR-0071,725,436,0,open,simulated
+p01,TS-0072,Rangareddy,CTR-0072,518,487,24,open,simulated
+p01,AS-0073,Kamrup Metropolitan,CTR-0073,272,254,0,open,simulated
+p01,WB-0074,Malda,CTR-0074,1039,1137,0,open,simulated
+p01,MH-0075,Thane,CTR-0075,2318,1363,0,open,simulated
+p01,WB-0076,Howrah,CTR-0076,1087,949,0,open,simulated
+p01,RJ-0077,Jodhpur,CTR-0077,714,746,0,open,simulated
+p01,CG-0078,Raipur,CTR-0078,848,878,0,open,simulated
+p01,MP-0079,Indore,CTR-0079,661,466,0,open,simulated
+p01,CG-0080,Durg,CTR-0080,665,635,138,open,simulated
+p01,UP-0081,Lucknow,CTR-0081,1047,701,0,open,simulated
+p01,WB-0082,Murshidabad,CTR-0082,1895,1190,0,open,simulated
+p01,PB-0083,Amritsar,CTR-0083,501,466,0,open,simulated
+p01,JK-0084,Anantnag,CTR-0084,266,234,0,open,simulated
+p01,UP-0085,Varanasi,CTR-0085,854,535,81,open,simulated
+p01,TN-0086,Tiruchirappalli,CTR-0086,652,575,0,open,simulated
+p01,BR-0087,Bhagalpur,CTR-0087,689,700,0,open,simulated
+p01,UK-0088,Pithoragarh,CTR-0088,110,111,0,open,simulated
+p01,MH-0089,Pune,CTR-0089,2016,1195,0,open,simulated
+p01,DL-0090,West Delhi,CTR-0090,573,584,0,open,simulated
+p01,RJ-0091,Bikaner,CTR-0091,561,470,0,open,simulated
+p01,MP-0092,Dhar,CTR-0092,561,568,0,open,simulated
+p01,KA-0093,Dakshina Kannada,CTR-0093,397,304,0,open,simulated
+p01,TS-0094,Khammam,CTR-0094,301,284,0,open,simulated
+p01,PB-0095,Ludhiana,CTR-0095,953,1079,0,open,simulated
+p01,UP-0096,Azamgarh,CTR-0096,1128,720,0,open,simulated
+p01,MH-0097,Raigad,CTR-0097,581,535,0,open,simulated
+p01,HR-0098,Hisar,CTR-0098,377,360,0,open,simulated
+p01,TS-0099,Medchal-Malkajgiri,CTR-0099,583,476,0,open,simulated
+p01,BR-0100,Muzaffarpur,CTR-0100,1142,1065,418,open,simulated
+p02,OD-0001,Cuttack,CTR-0001,608,532,0,open,simulated
+p02,TN-0002,Chennai,CTR-0002,1505,960,0,open,simulated
+p02,KL-0003,Malappuram,CTR-0003,1115,925,0,open,simulated
+p02,TN-0004,Tirunelveli,CTR-0004,783,779,0,open,simulated
+p02,GJ-0005,Dahod,CTR-0005,624,398,0,open,simulated
+p02,OD-0006,Sundargarh,CTR-0006,594,532,0,open,simulated
+p02,JH-0007,Dumka,CTR-0007,378,262,0,open,simulated
+p02,JH-0008,Ranchi,CTR-0008,875,716,0,open,simulated
+p02,AP-0009,Kurnool,CTR-0009,614,349,0,open,simulated
+p02,DL-0010,South Delhi,CTR-0010,766,566,0,open,simulated
+p02,JK-0011,Jammu,CTR-0011,394,383,0,open,simulated
+p02,AS-0012,Dibrugarh,CTR-0012,382,328,0,open,simulated
+p02,GA-0013,South Goa,CTR-0013,179,182,0,open,simulated
+p02,RJ-0014,Barmer,CTR-0014,566,523,0,open,simulated
+p02,HR-0015,Gurugram,CTR-0015,405,369,55,open,simulated
+p02,AP-0016,Chittoor,CTR-0016,489,307,0,open,simulated
+p02,JK-0017,Srinagar,CTR-0017,344,300,54,open,simulated
+p02,GJ-0018,Kutch,CTR-0018,530,337,0,open,simulated
+p02,WB-0019,North 24 Parganas,CTR-0019,3002,3149,0,open,simulated
+p02,RJ-0020,Kota,CTR-0020,576,506,0,open,simulated
+p02,KL-0021,Wayanad,CTR-0021,221,152,0,open,simulated
+p02,CG-0022,Bilaspur,CTR-0022,600,361,0,open,simulated
+p02,CG-0023,Bastar,CTR-0023,342,259,67,open,simulated
+p02,UK-0024,Nainital,CTR-0024,0,79,0,open,simulated
+p02,BR-0025,Kishanganj,CTR-0025,477,437,0,open,simulated
+p02,OD-0026,Koraput,CTR-0026,344,233,32,open,simulated
+p02,HP-0027,Kangra,CTR-0027,412,394,0,open,simulated
+p02,DL-0028,North West Delhi,CTR-0028,1043,839,0,open,simulated
+p02,KA-0029,Mysuru,CTR-0029,878,589,0,open,simulated
+p02,PB-0030,Jalandhar,CTR-0030,623,429,0,open,simulated
+p02,MH-0031,Solapur,CTR-0031,1216,1060,86,open,simulated
+p02,KA-0032,Dharwad,CTR-0032,494,384,0,open,simulated
+p02,DL-0033,East Delhi,CTR-0033,428,370,0,open,simulated
+p02,MP-0034,Bhopal,CTR-0034,506,422,0,open,simulated
+p02,TN-0035,Vellore,CTR-0035,912,716,0,open,simulated
+p02,GJ-0036,Rajkot,CTR-0036,1039,1097,0,open,simulated
+p02,UK-0037,Haridwar,CTR-0037,488,405,20,open,simulated
+p02,KA-0038,Raichur,CTR-0038,582,331,0,open,simulated
+p02,DL-0039,Central Delhi,CTR-0039,162,89,0,open,simulated
+p02,MH-0040,Mumbai City,CTR-0040,882,895,245,open,simulated
+p02,MH-0041,Nagpur,CTR-0041,1066,928,0,open,simulated
+p02,AS-0042,Barpeta,CTR-0042,388,413,0,open,simulated
+p02,MH-0043,Nashik,CTR-0043,1351,1279,0,open,simulated
+p02,CG-0044,Surguja,CTR-0044,534,409,0,open,simulated
+p02,GJ-0045,Ahmedabad,CTR-0045,1823,1590,0,open,simulated
+p02,TN-0046,Coimbatore,CTR-0046,774,778,0,open,simulated
+p02,BR-0047,Gaya,CTR-0047,1280,1215,0,open,simulated
+p02,AP-0048,Anantapur,CTR-0048,660,721,0,open,simulated
+p02,RJ-0049,Jaipur,CTR-0049,1837,1687,0,open,simulated
+p02,JK-0050,Kupwara,CTR-0050,212,132,0,open,simulated
+p02,PB-0051,Bathinda,CTR-0051,417,361,121,open,simulated
+p02,WB-0052,Bankura,CTR-0052,765,586,0,open,simulated
+p02,JH-0053,Dhanbad,CTR-0053,786,501,0,open,simulated
+p02,KA-0054,Kalaburagi,CTR-0054,541,0,0,closed,simulated
+p02,MP-0055,Gwalior,CTR-0055,567,502,0,open,simulated
+p02,JH-0056,East Singhbhum,CTR-0056,686,382,0,open,simulated
+p02,UK-0057,Dehradun,CTR-0057,428,287,0,open,simulated
+p02,OD-0058,Kalahandi,CTR-0058,460,508,0,open,simulated
+p02,HR-0059,Rohtak,CTR-0059,239,203,0,open,simulated
+p02,AP-0060,Guntur,CTR-0060,606,561,0,open,simulated
+p02,RJ-0061,Alwar,CTR-0061,1037,992,0,open,simulated
+p02,GA-0062,North Goa,CTR-0062,215,149,0,open,simulated
+p02,MH-0063,Mumbai Suburban,CTR-0063,2769,2807,0,open,simulated
+p02,TS-0064,Hyderabad,CTR-0064,829,532,0,open,simulated
+p02,UP-0065,Gorakhpur,CTR-0065,1199,1163,133,open,simulated
+p02,GJ-0066,Surat,CTR-0066,1714,1115,0,open,simulated
+p02,UP-0067,Prayagraj,CTR-0067,1586,1725,0,open,simulated
+p02,MP-0068,Jabalpur,CTR-0068,550,392,0,open,simulated
+p02,HR-0069,Faridabad,CTR-0069,504,545,0,open,simulated
+p02,BR-0070,Darbhanga,CTR-0070,1113,1109,0,open,simulated
+p02,UP-0071,Bahraich,CTR-0071,833,537,0,open,simulated
+p02,TS-0072,Rangareddy,CTR-0072,690,724,0,open,simulated
+p02,AS-0073,Kamrup Metropolitan,CTR-0073,286,287,0,open,simulated
+p02,WB-0074,Malda,CTR-0074,954,0,0,closed,simulated
+p02,MH-0075,Thane,CTR-0075,0,645,0,open,simulated
+p02,WB-0076,Howrah,CTR-0076,1210,0,0,closed,simulated
+p02,RJ-0077,Jodhpur,CTR-0077,863,785,0,open,simulated
+p02,CG-0078,Raipur,CTR-0078,923,955,0,open,simulated
+p02,MP-0079,Indore,CTR-0079,1002,649,0,open,simulated
+p02,CG-0080,Durg,CTR-0080,992,1055,0,open,simulated
+p02,UP-0081,Lucknow,CTR-0081,1252,829,0,open,simulated
+p02,WB-0082,Murshidabad,CTR-0082,1711,1187,0,open,simulated
+p02,PB-0083,Amritsar,CTR-0083,622,677,0,open,simulated
+p02,JK-0084,Anantnag,CTR-0084,0,100,0,open,simulated
+p02,UP-0085,Varanasi,CTR-0085,1004,596,0,open,simulated
+p02,TN-0086,Tiruchirappalli,CTR-0086,796,643,0,open,simulated
+p02,BR-0087,Bhagalpur,CTR-0087,860,770,0,open,simulated
+p02,UK-0088,Pithoragarh,CTR-0088,124,145,0,open,simulated
+p02,MH-0089,Pune,CTR-0089,2357,1384,0,open,simulated
+p02,DL-0090,West Delhi,CTR-0090,758,741,0,open,simulated
+p02,RJ-0091,Bikaner,CTR-0091,581,523,0,open,simulated
+p02,MP-0092,Dhar,CTR-0092,494,516,0,open,simulated
+p02,KA-0093,Dakshina Kannada,CTR-0093,583,432,0,open,simulated
+p02,TS-0094,Khammam,CTR-0094,313,287,0,open,simulated
+p02,PB-0095,Ludhiana,CTR-0095,821,952,0,open,simulated
+p02,UP-0096,Azamgarh,CTR-0096,1374,905,0,open,simulated
+p02,MH-0097,Raigad,CTR-0097,772,746,0,open,simulated
+p02,HR-0098,Hisar,CTR-0098,463,378,0,open,simulated
+p02,TS-0099,Medchal-Malkajgiri,CTR-0099,659,629,0,open,simulated
+p02,BR-0100,Muzaffarpur,CTR-0100,1210,1084,0,open,simulated
+p03,OD-0001,Cuttack,CTR-0001,742,650,247,open,simulated
+p03,TN-0002,Chennai,CTR-0002,1580,1003,0,open,simulated
+p03,KL-0003,Malappuram,CTR-0003,1178,845,0,open,simulated
+p03,TN-0004,Tirunelveli,CTR-0004,791,882,0,open,simulated
+p03,GJ-0005,Dahod,CTR-0005,547,372,0,open,simulated
+p03,OD-0006,Sundargarh,CTR-0006,582,458,0,open,simulated
+p03,JH-0007,Dumka,CTR-0007,295,201,0,open,simulated
+p03,JH-0008,Ranchi,CTR-0008,725,0,0,closed,simulated
+p03,AP-0009,Kurnool,CTR-0009,533,300,0,open,simulated
+p03,DL-0010,South Delhi,CTR-0010,588,396,0,open,simulated
+p03,JK-0011,Jammu,CTR-0011,364,337,0,open,simulated
+p03,AS-0012,Dibrugarh,CTR-0012,332,307,0,open,simulated
+p03,GA-0013,South Goa,CTR-0013,140,143,0,open,simulated
+p03,RJ-0014,Barmer,CTR-0014,786,700,130,open,simulated
+p03,HR-0015,Gurugram,CTR-0015,350,329,95,open,simulated
+p03,AP-0016,Chittoor,CTR-0016,500,361,0,open,simulated
+p03,JK-0017,Srinagar,CTR-0017,399,308,0,open,simulated
+p03,GJ-0018,Kutch,CTR-0018,457,307,0,open,simulated
+p03,WB-0019,North 24 Parganas,CTR-0019,2545,2565,0,open,simulated
+p03,RJ-0020,Kota,CTR-0020,548,488,88,open,simulated
+p03,KL-0021,Wayanad,CTR-0021,203,123,0,open,simulated
+p03,CG-0022,Bilaspur,CTR-0022,623,358,0,open,simulated
+p03,CG-0023,Bastar,CTR-0023,362,286,0,open,simulated
+p03,UK-0024,Nainital,CTR-0024,247,244,0,open,simulated
+p03,BR-0025,Kishanganj,CTR-0025,385,334,0,open,simulated
+p03,OD-0026,Koraput,CTR-0026,382,250,0,open,simulated
+p03,HP-0027,Kangra,CTR-0027,401,374,0,open,simulated
+p03,DL-0028,North West Delhi,CTR-0028,1063,864,0,open,simulated
+p03,KA-0029,Mysuru,CTR-0029,773,511,0,open,simulated
+p03,PB-0030,Jalandhar,CTR-0030,651,457,0,open,simulated
+p03,MH-0031,Solapur,CTR-0031,1114,941,0,open,simulated
+p03,KA-0032,Dharwad,CTR-0032,451,350,0,open,simulated
+p03,DL-0033,East Delhi,CTR-0033,497,519,0,open,simulated
+p03,MP-0034,Bhopal,CTR-0034,530,438,0,open,simulated
+p03,TN-0035,Vellore,CTR-0035,1162,923,0,open,simulated
+p03,GJ-0036,Rajkot,CTR-0036,1083,1125,0,open,simulated
+p03,UK-0037,Haridwar,CTR-0037,415,351,0,open,simulated
+p03,KA-0038,Raichur,CTR-0038,528,306,0,open,simulated
+p03,DL-0039,Central Delhi,CTR-0039,152,81,0,open,simulated
+p03,MH-0040,Mumbai City,CTR-0040,714,686,0,open,simulated
+p03,MH-0041,Nagpur,CTR-0041,1208,1063,0,open,simulated
+p03,AS-0042,Barpeta,CTR-0042,482,486,0,open,simulated
+p03,MH-0043,Nashik,CTR-0043,1506,1568,0,open,simulated
+p03,CG-0044,Surguja,CTR-0044,564,454,0,open,simulated
+p03,GJ-0045,Ahmedabad,CTR-0045,1513,1500,0,open,simulated
+p03,TN-0046,Coimbatore,CTR-0046,828,791,0,open,simulated
+p03,BR-0047,Gaya,CTR-0047,1079,1084,0,open,simulated
+p03,AP-0048,Anantapur,CTR-0048,527,502,0,open,simulated
+p03,RJ-0049,Jaipur,CTR-0049,1713,0,0,closed,simulated
+p03,JK-0050,Kupwara,CTR-0050,269,163,0,open,simulated
+p03,PB-0051,Bathinda,CTR-0051,409,372,0,open,simulated
+p03,WB-0052,Bankura,CTR-0052,1039,814,0,open,simulated
+p03,JH-0053,Dhanbad,CTR-0053,761,522,0,open,simulated
+p03,KA-0054,Kalaburagi,CTR-0054,657,479,90,open,simulated
+p03,MP-0055,Gwalior,CTR-0055,553,491,0,open,simulated
+p03,JH-0056,East Singhbhum,CTR-0056,677,378,0,open,simulated
+p03,UK-0057,Dehradun,CTR-0057,387,222,61,open,simulated
+p03,OD-0058,Kalahandi,CTR-0058,427,472,0,open,simulated
+p03,HR-0059,Rohtak,CTR-0059,322,240,0,open,simulated
+p03,AP-0060,Guntur,CTR-0060,438,417,0,open,simulated
+p03,RJ-0061,Alwar,CTR-0061,1063,1068,113,open,simulated
+p03,GA-0062,North Goa,CTR-0062,201,125,0,open,simulated
+p03,MH-0063,Mumbai Suburban,CTR-0063,2150,2315,0,open,simulated
+p03,TS-0064,Hyderabad,CTR-0064,1107,774,0,open,simulated
+p03,UP-0065,Gorakhpur,CTR-0065,1315,1088,120,open,simulated
+p03,GJ-0066,Surat,CTR-0066,1296,836,0,open,simulated
+p03,UP-0067,Prayagraj,CTR-0067,1288,1326,0,open,simulated
+p03,MP-0068,Jabalpur,CTR-0068,564,439,0,open,simulated
+p03,HR-0069,Faridabad,CTR-0069,414,436,0,open,simulated
+p03,BR-0070,Darbhanga,CTR-0070,1072,1092,0,open,simulated
+p03,UP-0071,Bahraich,CTR-0071,808,498,0,open,simulated
+p03,TS-0072,Rangareddy,CTR-0072,586,624,0,open,simulated
+p03,AS-0073,Kamrup Metropolitan,CTR-0073,303,0,0,closed,simulated
+p03,WB-0074,Malda,CTR-0074,1098,1004,0,open,simulated
+p03,MH-0075,Thane,CTR-0075,3013,2019,0,open,simulated
+p03,WB-0076,Howrah,CTR-0076,1323,995,0,open,simulated
+p03,RJ-0077,Jodhpur,CTR-0077,930,927,0,open,simulated
+p03,CG-0078,Raipur,CTR-0078,976,858,0,open,simulated
+p03,MP-0079,Indore,CTR-0079,798,555,0,open,simulated
+p03,CG-0080,Durg,CTR-0080,960,917,0,open,simulated
+p03,UP-0081,Lucknow,CTR-0081,1351,862,0,open,simulated
+p03,WB-0082,Murshidabad,CTR-0082,1889,1133,0,open,simulated
+p03,PB-0083,Amritsar,CTR-0083,710,761,0,open,simulated
+p03,JK-0084,Anantnag,CTR-0084,246,209,0,open,simulated
+p03,UP-0085,Varanasi,CTR-0085,1009,564,0,open,simulated
+p03,TN-0086,Tiruchirappalli,CTR-0086,604,531,0,open,simulated
+p03,BR-0087,Bhagalpur,CTR-0087,822,707,0,open,simulated
+p03,UK-0088,Pithoragarh,CTR-0088,125,139,0,open,simulated
+p03,MH-0089,Pune,CTR-0089,2393,1351,0,open,simulated
+p03,DL-0090,West Delhi,CTR-0090,679,677,0,open,simulated
+p03,RJ-0091,Bikaner,CTR-0091,508,443,0,open,simulated
+p03,MP-0092,Dhar,CTR-0092,584,581,0,open,simulated
+p03,KA-0093,Dakshina Kannada,CTR-0093,518,392,0,open,simulated
+p03,TS-0094,Khammam,CTR-0094,323,270,22,open,simulated
+p03,PB-0095,Ludhiana,CTR-0095,993,1006,0,open,simulated
+p03,UP-0096,Azamgarh,CTR-0096,1320,791,0,open,simulated
+p03,MH-0097,Raigad,CTR-0097,709,639,0,open,simulated
+p03,HR-0098,Hisar,CTR-0098,378,0,0,closed,simulated
+p03,TS-0099,Medchal-Malkajgiri,CTR-0099,690,648,0,open,simulated
+p03,BR-0100,Muzaffarpur,CTR-0100,1379,1277,0,open,simulated
+p04,OD-0001,Cuttack,CTR-0001,485,403,0,open,simulated
+p04,TN-0002,Chennai,CTR-0002,1372,879,0,open,simulated
+p04,KL-0003,Malappuram,CTR-0003,724,577,0,open,simulated
+p04,TN-0004,Tirunelveli,CTR-0004,698,660,0,open,simulated
+p04,GJ-0005,Dahod,CTR-0005,354,252,0,open,simulated
+p04,OD-0006,Sundargarh,CTR-0006,421,379,0,open,simulated
+p04,JH-0007,Dumka,CTR-0007,309,195,0,open,simulated
+p04,JH-0008,Ranchi,CTR-0008,536,412,71,open,simulated
+p04,AP-0009,Kurnool,CTR-0009,439,250,0,open,simulated
+p04,DL-0010,South Delhi,CTR-0010,450,310,0,open,simulated
+p04,JK-0011,Jammu,CTR-0011,283,267,0,open,simulated
+p04,AS-0012,Dibrugarh,CTR-0012,302,263,0,open,simulated
+p04,GA-0013,South Goa,CTR-0013,100,111,0,open,simulated
+p04,RJ-0014,Barmer,CTR-0014,485,447,0,open,simulated
+p04,HR-0015,Gurugram,CTR-0015,345,358,0,open,simulated
+p04,AP-0016,Chittoor,CTR-0016,334,210,33,open,simulated
+p04,JK-0017,Srinagar,CTR-0017,283,248,0,open,simulated
+p04,GJ-0018,Kutch,CTR-0018,431,317,0,open,simulated
+p04,WB-0019,North 24 Parganas,CTR-0019,1879,1771,0,open,simulated
+p04,RJ-0020,Kota,CTR-0020,372,369,0,open,simulated
+p04,KL-0021,Wayanad,CTR-0021,172,111,0,open,simulated
+p04,CG-0022,Bilaspur,CTR-0022,540,293,0,open,simulated
+p04,CG-0023,Bastar,CTR-0023,323,211,0,open,simulated
+p04,UK-0024,Nainital,CTR-0024,181,172,0,open,simulated
+p04,BR-0025,Kishanganj,CTR-0025,339,307,0,open,simulated
+p04,OD-0026,Koraput,CTR-0026,331,219,0,open,simulated
+p04,HP-0027,Kangra,CTR-0027,309,0,0,closed,simulated
+p04,DL-0028,North West Delhi,CTR-0028,804,552,0,open,simulated
+p04,KA-0029,Mysuru,CTR-0029,713,503,0,open,simulated
+p04,PB-0030,Jalandhar,CTR-0030,373,278,0,open,simulated
+p04,MH-0031,Solapur,CTR-0031,902,686,0,open,simulated
+p04,KA-0032,Dharwad,CTR-0032,325,276,0,open,simulated
+p04,DL-0033,East Delhi,CTR-0033,306,288,0,open,simulated
+p04,MP-0034,Bhopal,CTR-0034,451,346,0,open,simulated
+p04,TN-0035,Vellore,CTR-0035,752,663,0,open,simulated
+p04,GJ-0036,Rajkot,CTR-0036,830,856,0,open,simulated
+p04,UK-0037,Haridwar,CTR-0037,424,368,0,open,simulated
+p04,KA-0038,Raichur,CTR-0038,468,284,0,open,simulated
+p04,DL-0039,Central Delhi,CTR-0039,130,73,0,open,simulated
+p04,MH-0040,Mumbai City,CTR-0040,612,579,0,open,simulated
+p04,MH-0041,Nagpur,CTR-0041,1065,1094,0,open,simulated
+p04,AS-0042,Barpeta,CTR-0042,330,335,0,open,simulated
+p04,MH-0043,Nashik,CTR-0043,1127,1147,0,open,simulated
+p04,CG-0044,Surguja,CTR-0044,422,322,0,open,simulated
+p04,GJ-0045,Ahmedabad,CTR-0045,1495,1360,348,open,simulated
+p04,TN-0046,Coimbatore,CTR-0046,596,582,0,open,simulated
+p04,BR-0047,Gaya,CTR-0047,951,840,0,open,simulated
+p04,AP-0048,Anantapur,CTR-0048,378,348,0,open,simulated
+p04,RJ-0049,Jaipur,CTR-0049,1461,1342,0,open,simulated
+p04,JK-0050,Kupwara,CTR-0050,179,119,0,open,simulated
+p04,PB-0051,Bathinda,CTR-0051,320,0,0,closed,simulated
+p04,WB-0052,Bankura,CTR-0052,659,501,0,open,simulated
+p04,JH-0053,Dhanbad,CTR-0053,536,324,0,open,simulated
+p04,KA-0054,Kalaburagi,CTR-0054,538,438,0,open,simulated
+p04,MP-0055,Gwalior,CTR-0055,375,325,0,open,simulated
+p04,JH-0056,East Singhbhum,CTR-0056,479,294,0,open,simulated
+p04,UK-0057,Dehradun,CTR-0057,298,186,0,open,simulated
+p04,OD-0058,Kalahandi,CTR-0058,319,319,0,open,simulated
+p04,HR-0059,Rohtak,CTR-0059,261,218,0,open,simulated
+p04,AP-0060,Guntur,CTR-0060,344,341,0,open,simulated
+p04,RJ-0061,Alwar,CTR-0061,790,724,247,open,simulated
+p04,GA-0062,North Goa,CTR-0062,151,105,0,open,simulated
+p04,MH-0063,Mumbai Suburban,CTR-0063,1738,2012,0,open,simulated
+p04,TS-0064,Hyderabad,CTR-0064,738,541,0,open,simulated
+p04,UP-0065,Gorakhpur,CTR-0065,826,792,0,open,simulated
+p04,GJ-0066,Surat,CTR-0066,1225,764,0,open,simulated
+p04,UP-0067,Prayagraj,CTR-0067,1013,1069,0,open,simulated
+p04,MP-0068,Jabalpur,CTR-0068,558,420,0,open,simulated
+p04,HR-0069,Faridabad,CTR-0069,309,337,0,open,simulated
+p04,BR-0070,Darbhanga,CTR-0070,908,955,0,open,simulated
+p04,UP-0071,Bahraich,CTR-0071,625,421,0,open,simulated
+p04,TS-0072,Rangareddy,CTR-0072,508,483,0,open,simulated
+p04,AS-0073,Kamrup Metropolitan,CTR-0073,230,235,0,open,simulated
+p04,WB-0074,Malda,CTR-0074,941,888,0,open,simulated
+p04,MH-0075,Thane,CTR-0075,2575,1508,0,open,simulated
+p04,WB-0076,Howrah,CTR-0076,845,709,0,open,simulated
+p04,RJ-0077,Jodhpur,CTR-0077,705,659,0,open,simulated
+p04,CG-0078,Raipur,CTR-0078,798,817,0,open,simulated
+p04,MP-0079,Indore,CTR-0079,697,528,0,open,simulated
+p04,CG-0080,Durg,CTR-0080,771,774,0,open,simulated
+p04,UP-0081,Lucknow,CTR-0081,1046,711,0,open,simulated
+p04,WB-0082,Murshidabad,CTR-0082,1366,801,0,open,simulated
+p04,PB-0083,Amritsar,CTR-0083,520,502,0,open,simulated
+p04,JK-0084,Anantnag,CTR-0084,192,161,0,open,simulated
+p04,UP-0085,Varanasi,CTR-0085,620,361,0,open,simulated
+p04,TN-0086,Tiruchirappalli,CTR-0086,539,423,0,open,simulated
+p04,BR-0087,Bhagalpur,CTR-0087,551,533,64,open,simulated
+p04,UK-0088,Pithoragarh,CTR-0088,107,109,0,open,simulated
+p04,MH-0089,Pune,CTR-0089,1607,908,0,open,simulated
+p04,DL-0090,West Delhi,CTR-0090,454,409,0,open,simulated
+p04,RJ-0091,Bikaner,CTR-0091,421,335,0,open,simulated
+p04,MP-0092,Dhar,CTR-0092,351,343,0,open,simulated
+p04,KA-0093,Dakshina Kannada,CTR-0093,448,319,0,open,simulated
+p04,TS-0094,Khammam,CTR-0094,333,314,0,open,simulated
+p04,PB-0095,Ludhiana,CTR-0095,781,774,0,open,simulated
+p04,UP-0096,Azamgarh,CTR-0096,940,582,0,open,simulated
+p04,MH-0097,Raigad,CTR-0097,542,487,0,open,simulated
+p04,HR-0098,Hisar,CTR-0098,288,246,0,open,simulated
+p04,TS-0099,Medchal-Malkajgiri,CTR-0099,548,470,0,open,simulated
+p04,BR-0100,Muzaffarpur,CTR-0100,1060,940,0,open,simulated
+p05,OD-0001,Cuttack,CTR-0001,537,446,0,open,simulated
+p05,TN-0002,Chennai,CTR-0002,1298,0,0,closed,simulated
+p05,KL-0003,Malappuram,CTR-0003,856,696,0,open,simulated
+p05,TN-0004,Tirunelveli,CTR-0004,735,696,0,open,simulated
+p05,GJ-0005,Dahod,CTR-0005,496,324,0,open,simulated
+p05,OD-0006,Sundargarh,CTR-0006,456,362,0,open,simulated
+p05,JH-0007,Dumka,CTR-0007,306,201,0,open,simulated
+p05,JH-0008,Ranchi,CTR-0008,659,608,0,open,simulated
+p05,AP-0009,Kurnool,CTR-0009,561,331,0,open,simulated
+p05,DL-0010,South Delhi,CTR-0010,588,439,0,open,simulated
+p05,JK-0011,Jammu,CTR-0011,304,303,0,open,simulated
+p05,AS-0012,Dibrugarh,CTR-0012,270,229,0,open,simulated
+p05,GA-0013,South Goa,CTR-0013,118,123,0,open,simulated
+p05,RJ-0014,Barmer,CTR-0014,476,456,0,open,simulated
+p05,HR-0015,Gurugram,CTR-0015,279,299,0,open,simulated
+p05,AP-0016,Chittoor,CTR-0016,354,243,0,open,simulated
+p05,JK-0017,Srinagar,CTR-0017,291,246,0,open,simulated
+p05,GJ-0018,Kutch,CTR-0018,530,341,0,open,simulated
+p05,WB-0019,North 24 Parganas,CTR-0019,2369,2259,0,open,simulated
+p05,RJ-0020,Kota,CTR-0020,487,477,0,open,simulated
+p05,KL-0021,Wayanad,CTR-0021,173,121,0,open,simulated
+p05,CG-0022,Bilaspur,CTR-0022,556,311,0,open,simulated
+p05,CG-0023,Bastar,CTR-0023,269,191,0,open,simulated
+p05,UK-0024,Nainital,CTR-0024,218,202,0,open,simulated
+p05,BR-0025,Kishanganj,CTR-0025,392,363,0,open,simulated
+p05,OD-0026,Koraput,CTR-0026,325,182,0,open,simulated
+p05,HP-0027,Kangra,CTR-0027,345,291,0,open,simulated
+p05,DL-0028,North West Delhi,CTR-0028,802,625,0,open,simulated
+p05,KA-0029,Mysuru,CTR-0029,639,460,0,open,simulated
+p05,PB-0030,Jalandhar,CTR-0030,461,317,0,open,simulated
+p05,MH-0031,Solapur,CTR-0031,1052,940,0,open,simulated
+p05,KA-0032,Dharwad,CTR-0032,458,363,0,open,simulated
+p05,DL-0033,East Delhi,CTR-0033,316,331,0,open,simulated
+p05,MP-0034,Bhopal,CTR-0034,503,363,0,open,simulated
+p05,TN-0035,Vellore,CTR-0035,987,744,0,open,simulated
+p05,GJ-0036,Rajkot,CTR-0036,876,822,0,open,simulated
+p05,UK-0037,Haridwar,CTR-0037,396,343,0,open,simulated
+p05,KA-0038,Raichur,CTR-0038,511,305,76,open,simulated
+p05,DL-0039,Central Delhi,CTR-0039,117,59,0,open,simulated
+p05,MH-0040,Mumbai City,CTR-0040,727,675,0,open,simulated
+p05,MH-0041,Nagpur,CTR-0041,1151,1161,0,open,simulated
+p05,AS-0042,Barpeta,CTR-0042,409,387,0,open,simulated
+p05,MH-0043,Nashik,CTR-0043,1171,1102,0,open,simulated
+p05,CG-0044,Surguja,CTR-0044,600,445,0,open,simulated
+p05,GJ-0045,Ahmedabad,CTR-0045,1663,0,0,closed,simulated
+p05,TN-0046,Coimbatore,CTR-0046,0,335,0,open,simulated
+p05,BR-0047,Gaya,CTR-0047,1036,969,0,open,simulated
+p05,AP-0048,Anantapur,CTR-0048,455,490,115,open,simulated
+p05,RJ-0049,Jaipur,CTR-0049,1506,1628,0,open,simulated
+p05,JK-0050,Kupwara,CTR-0050,236,159,0,open,simulated
+p05,PB-0051,Bathinda,CTR-0051,353,340,0,open,simulated
+p05,WB-0052,Bankura,CTR-0052,655,561,0,open,simulated
+p05,JH-0053,Dhanbad,CTR-0053,530,367,0,open,simulated
+p05,KA-0054,Kalaburagi,CTR-0054,550,401,0,open,simulated
+p05,MP-0055,Gwalior,CTR-0055,421,374,67,open,simulated
+p05,JH-0056,East Singhbhum,CTR-0056,434,243,0,open,simulated
+p05,UK-0057,Dehradun,CTR-0057,383,253,0,open,simulated
+p05,OD-0058,Kalahandi,CTR-0058,297,327,0,open,simulated
+p05,HR-0059,Rohtak,CTR-0059,240,193,0,open,simulated
+p05,AP-0060,Guntur,CTR-0060,522,433,0,open,simulated
+p05,RJ-0061,Alwar,CTR-0061,878,885,0,open,simulated
+p05,GA-0062,North Goa,CTR-0062,171,100,0,open,simulated
+p05,MH-0063,Mumbai Suburban,CTR-0063,1773,2051,0,open,simulated
+p05,TS-0064,Hyderabad,CTR-0064,768,490,0,open,simulated
+p05,UP-0065,Gorakhpur,CTR-0065,1101,1044,0,open,simulated
+p05,GJ-0066,Surat,CTR-0066,1325,831,0,open,simulated
+p05,UP-0067,Prayagraj,CTR-0067,1338,1362,0,open,simulated
+p05,MP-0068,Jabalpur,CTR-0068,621,431,0,open,simulated
+p05,HR-0069,Faridabad,CTR-0069,464,458,0,open,simulated
+p05,BR-0070,Darbhanga,CTR-0070,741,797,0,open,simulated
+p05,UP-0071,Bahraich,CTR-0071,808,452,0,open,simulated
+p05,TS-0072,Rangareddy,CTR-0072,585,611,0,open,simulated
+p05,AS-0073,Kamrup Metropolitan,CTR-0073,289,301,0,open,simulated
+p05,WB-0074,Malda,CTR-0074,791,809,0,open,simulated
+p05,MH-0075,Thane,CTR-0075,2376,1444,0,open,simulated
+p05,WB-0076,Howrah,CTR-0076,937,776,0,open,simulated
+p05,RJ-0077,Jodhpur,CTR-0077,731,734,0,open,simulated
+p05,CG-0078,Raipur,CTR-0078,896,798,0,open,simulated
+p05,MP-0079,Indore,CTR-0079,724,459,0,open,simulated
+p05,CG-0080,Durg,CTR-0080,734,0,0,closed,simulated
+p05,UP-0081,Lucknow,CTR-0081,967,656,0,open,simulated
+p05,WB-0082,Murshidabad,CTR-0082,1583,1035,0,open,simulated
+p05,PB-0083,Amritsar,CTR-0083,570,561,0,open,simulated
+p05,JK-0084,Anantnag,CTR-0084,264,215,0,open,simulated
+p05,UP-0085,Varanasi,CTR-0085,813,509,0,open,simulated
+p05,TN-0086,Tiruchirappalli,CTR-0086,612,532,0,open,simulated
+p05,BR-0087,Bhagalpur,CTR-0087,644,663,0,open,simulated
+p05,UK-0088,Pithoragarh,CTR-0088,128,150,0,open,simulated
+p05,MH-0089,Pune,CTR-0089,2327,1392,0,open,simulated
+p05,DL-0090,West Delhi,CTR-0090,629,596,0,open,simulated
+p05,RJ-0091,Bikaner,CTR-0091,513,444,0,open,simulated
+p05,MP-0092,Dhar,CTR-0092,528,608,0,open,simulated
+p05,KA-0093,Dakshina Kannada,CTR-0093,392,273,0,open,simulated
+p05,TS-0094,Khammam,CTR-0094,260,215,0,open,simulated
+p05,PB-0095,Ludhiana,CTR-0095,647,720,0,open,simulated
+p05,UP-0096,Azamgarh,CTR-0096,1033,672,0,open,simulated
+p05,MH-0097,Raigad,CTR-0097,516,530,0,open,simulated
+p05,HR-0098,Hisar,CTR-0098,438,378,0,open,simulated
+p05,TS-0099,Medchal-Malkajgiri,CTR-0099,653,558,0,open,simulated
+p05,BR-0100,Muzaffarpur,CTR-0100,954,884,0,open,simulated
+p06,OD-0001,Cuttack,CTR-0001,639,532,0,open,simulated
+p06,TN-0002,Chennai,CTR-0002,1562,1011,0,open,simulated
+p06,KL-0003,Malappuram,CTR-0003,916,692,0,open,simulated
+p06,TN-0004,Tirunelveli,CTR-0004,540,585,0,open,simulated
+p06,GJ-0005,Dahod,CTR-0005,491,342,0,open,simulated
+p06,OD-0006,Sundargarh,CTR-0006,473,405,0,open,simulated
+p06,JH-0007,Dumka,CTR-0007,318,229,0,open,simulated
+p06,JH-0008,Ranchi,CTR-0008,618,496,0,open,simulated
+p06,AP-0009,Kurnool,CTR-0009,457,283,0,open,simulated
+p06,DL-0010,South Delhi,CTR-0010,508,374,0,open,simulated
+p06,JK-0011,Jammu,CTR-0011,354,306,0,open,simulated
+p06,AS-0012,Dibrugarh,CTR-0012,297,281,0,open,simulated
+p06,GA-0013,South Goa,CTR-0013,108,115,0,open,simulated
+p06,RJ-0014,Barmer,CTR-0014,630,572,0,open,simulated
+p06,HR-0015,Gurugram,CTR-0015,345,0,0,closed,simulated
+p06,AP-0016,Chittoor,CTR-0016,447,282,0,open,simulated
+p06,JK-0017,Srinagar,CTR-0017,250,204,0,open,simulated
+p06,GJ-0018,Kutch,CTR-0018,497,358,0,open,simulated
+p06,WB-0019,North 24 Parganas,CTR-0019,1818,1816,0,open,simulated
+p06,RJ-0020,Kota,CTR-0020,497,486,0,open,simulated
+p06,KL-0021,Wayanad,CTR-0021,163,120,0,open,simulated
+p06,CG-0022,Bilaspur,CTR-0022,608,332,0,open,simulated
+p06,CG-0023,Bastar,CTR-0023,303,232,0,open,simulated
+p06,UK-0024,Nainital,CTR-0024,164,163,0,open,simulated
+p06,BR-0025,Kishanganj,CTR-0025,385,350,0,open,simulated
+p06,OD-0026,Koraput,CTR-0026,0,79,0,open,simulated
+p06,HP-0027,Kangra,CTR-0027,273,227,0,open,simulated
+p06,DL-0028,North West Delhi,CTR-0028,796,548,0,open,simulated
+p06,KA-0029,Mysuru,CTR-0029,658,417,108,open,simulated
+p06,PB-0030,Jalandhar,CTR-0030,393,310,0,open,simulated
+p06,MH-0031,Solapur,CTR-0031,921,733,0,open,simulated
+p06,KA-0032,Dharwad,CTR-0032,357,315,0,open,simulated
+p06,DL-0033,East Delhi,CTR-0033,403,413,0,open,simulated
+p06,MP-0034,Bhopal,CTR-0034,550,441,0,open,simulated
+p06,TN-0035,Vellore,CTR-0035,849,723,0,open,simulated
+p06,GJ-0036,Rajkot,CTR-0036,782,853,0,open,simulated
+p06,UK-0037,Haridwar,CTR-0037,456,337,87,open,simulated
+p06,KA-0038,Raichur,CTR-0038,486,302,0,open,simulated
+p06,DL-0039,Central Delhi,CTR-0039,112,55,0,open,simulated
+p06,MH-0040,Mumbai City,CTR-0040,580,584,0,open,simulated
+p06,MH-0041,Nagpur,CTR-0041,1059,1072,0,open,simulated
+p06,AS-0042,Barpeta,CTR-0042,397,402,0,open,simulated
+p06,MH-0043,Nashik,CTR-0043,1322,1175,0,open,simulated
+p06,CG-0044,Surguja,CTR-0044,472,328,0,open,simulated
+p06,GJ-0045,Ahmedabad,CTR-0045,1840,1720,0,open,simulated
+p06,TN-0046,Coimbatore,CTR-0046,848,927,0,open,simulated
+p06,BR-0047,Gaya,CTR-0047,884,799,0,open,simulated
+p06,AP-0048,Anantapur,CTR-0048,525,554,0,open,simulated
+p06,RJ-0049,Jaipur,CTR-0049,1321,1431,0,open,simulated
+p06,JK-0050,Kupwara,CTR-0050,192,127,0,open,simulated
+p06,PB-0051,Bathinda,CTR-0051,327,281,25,open,simulated
+p06,WB-0052,Bankura,CTR-0052,890,721,0,open,simulated
+p06,JH-0053,Dhanbad,CTR-0053,647,391,0,open,simulated
+p06,KA-0054,Kalaburagi,CTR-0054,564,449,0,open,simulated
+p06,MP-0055,Gwalior,CTR-0055,439,350,0,open,simulated
+p06,JH-0056,East Singhbhum,CTR-0056,437,289,0,open,simulated
+p06,UK-0057,Dehradun,CTR-0057,355,216,76,open,simulated
+p06,OD-0058,Kalahandi,CTR-0058,291,268,0,open,simulated
+p06,HR-0059,Rohtak,CTR-0059,263,189,0,open,simulated
+p06,AP-0060,Guntur,CTR-0060,388,371,0,open,simulated
+p06,RJ-0061,Alwar,CTR-0061,825,781,273,open,simulated
+p06,GA-0062,North Goa,CTR-0062,165,113,0,open,simulated
+p06,MH-0063,Mumbai Suburban,CTR-0063,1888,2093,0,open,simulated
+p06,TS-0064,Hyderabad,CTR-0064,724,482,164,open,simulated
+p06,UP-0065,Gorakhpur,CTR-0065,854,734,0,open,simulated
+p06,GJ-0066,Surat,CTR-0066,1541,1044,0,open,simulated
+p06,UP-0067,Prayagraj,CTR-0067,1079,1186,0,open,simulated
+p06,MP-0068,Jabalpur,CTR-0068,431,347,0,open,simulated
+p06,HR-0069,Faridabad,CTR-0069,377,362,0,open,simulated
+p06,BR-0070,Darbhanga,CTR-0070,962,1077,0,open,simulated
+p06,UP-0071,Bahraich,CTR-0071,803,527,0,open,simulated
+p06,TS-0072,Rangareddy,CTR-0072,464,526,0,open,simulated
+p06,AS-0073,Kamrup Metropolitan,CTR-0073,246,214,0,open,simulated
+p06,WB-0074,Malda,CTR-0074,941,966,0,open,simulated
+p06,MH-0075,Thane,CTR-0075,2828,1704,0,open,simulated
+p06,WB-0076,Howrah,CTR-0076,1213,972,0,open,simulated
+p06,RJ-0077,Jodhpur,CTR-0077,843,871,0,open,simulated
+p06,CG-0078,Raipur,CTR-0078,781,678,0,open,simulated
+p06,MP-0079,Indore,CTR-0079,654,470,0,open,simulated
+p06,CG-0080,Durg,CTR-0080,770,816,0,open,simulated
+p06,UP-0081,Lucknow,CTR-0081,953,586,0,open,simulated
+p06,WB-0082,Murshidabad,CTR-0082,1487,978,0,open,simulated
+p06,PB-0083,Amritsar,CTR-0083,550,581,0,open,simulated
+p06,JK-0084,Anantnag,CTR-0084,217,179,0,open,simulated
+p06,UP-0085,Varanasi,CTR-0085,851,476,0,open,simulated
+p06,TN-0086,Tiruchirappalli,CTR-0086,538,393,41,open,simulated
+p06,BR-0087,Bhagalpur,CTR-0087,612,0,0,closed,simulated
+p06,UK-0088,Pithoragarh,CTR-0088,97,102,0,open,simulated
+p06,MH-0089,Pune,CTR-0089,1835,997,0,open,simulated
+p06,DL-0090,West Delhi,CTR-0090,485,473,0,open,simulated
+p06,RJ-0091,Bikaner,CTR-0091,607,536,0,open,simulated
+p06,MP-0092,Dhar,CTR-0092,488,555,0,open,simulated
+p06,KA-0093,Dakshina Kannada,CTR-0093,485,323,0,open,simulated
+p06,TS-0094,Khammam,CTR-0094,295,250,14,open,simulated
+p06,PB-0095,Ludhiana,CTR-0095,812,823,0,open,simulated
+p06,UP-0096,Azamgarh,CTR-0096,950,582,0,open,simulated
+p06,MH-0097,Raigad,CTR-0097,619,616,0,open,simulated
+p06,HR-0098,Hisar,CTR-0098,351,347,0,open,simulated
+p06,TS-0099,Medchal-Malkajgiri,CTR-0099,455,392,0,open,simulated
+p06,BR-0100,Muzaffarpur,CTR-0100,923,0,0,closed,simulated
+p07,OD-0001,Cuttack,CTR-0001,584,494,0,open,simulated
+p07,TN-0002,Chennai,CTR-0002,1326,904,0,open,simulated
+p07,KL-0003,Malappuram,CTR-0003,1085,900,0,open,simulated
+p07,TN-0004,Tirunelveli,CTR-0004,735,822,261,open,simulated
+p07,GJ-0005,Dahod,CTR-0005,532,0,0,closed,simulated
+p07,OD-0006,Sundargarh,CTR-0006,426,386,0,open,simulated
+p07,JH-0007,Dumka,CTR-0007,340,236,0,open,simulated
+p07,JH-0008,Ranchi,CTR-0008,708,614,0,open,simulated
+p07,AP-0009,Kurnool,CTR-0009,439,274,0,open,simulated
+p07,DL-0010,South Delhi,CTR-0010,641,456,0,open,simulated
+p07,JK-0011,Jammu,CTR-0011,370,315,72,open,simulated
+p07,AS-0012,Dibrugarh,CTR-0012,317,277,0,open,simulated
+p07,GA-0013,South Goa,CTR-0013,143,144,0,open,simulated
+p07,RJ-0014,Barmer,CTR-0014,502,440,0,open,simulated
+p07,HR-0015,Gurugram,CTR-0015,337,321,0,open,simulated
+p07,AP-0016,Chittoor,CTR-0016,359,230,0,open,simulated
+p07,JK-0017,Srinagar,CTR-0017,290,246,34,open,simulated
+p07,GJ-0018,Kutch,CTR-0018,517,335,0,open,simulated
+p07,WB-0019,North 24 Parganas,CTR-0019,1949,2021,0,open,simulated
+p07,RJ-0020,Kota,CTR-0020,499,469,0,open,simulated
+p07,KL-0021,Wayanad,CTR-0021,206,145,0,open,simulated
+p07,CG-0022,Bilaspur,CTR-0022,566,327,100,open,simulated
+p07,CG-0023,Bastar,CTR-0023,376,260,0,open,simulated
+p07,UK-0024,Nainital,CTR-0024,169,171,0,open,simulated
+p07,BR-0025,Kishanganj,CTR-0025,348,306,0,open,simulated
+p07,OD-0026,Koraput,CTR-0026,293,186,0,open,simulated
+p07,HP-0027,Kangra,CTR-0027,289,277,0,open,simulated
+p07,DL-0028,North West Delhi,CTR-0028,958,701,0,open,simulated
+p07,KA-0029,Mysuru,CTR-0029,717,518,0,open,simulated
+p07,PB-0030,Jalandhar,CTR-0030,584,474,0,open,simulated
+p07,MH-0031,Solapur,CTR-0031,991,843,0,open,simulated
+p07,KA-0032,Dharwad,CTR-0032,446,388,0,open,simulated
+p07,DL-0033,East Delhi,CTR-0033,375,381,0,open,simulated
+p07,MP-0034,Bhopal,CTR-0034,591,458,0,open,simulated
+p07,TN-0035,Vellore,CTR-0035,1056,878,0,open,simulated
+p07,GJ-0036,Rajkot,CTR-0036,823,774,0,open,simulated
+p07,UK-0037,Haridwar,CTR-0037,500,440,0,open,simulated
+p07,KA-0038,Raichur,CTR-0038,457,256,0,open,simulated
+p07,DL-0039,Central Delhi,CTR-0039,154,79,0,open,simulated
+p07,MH-0040,Mumbai City,CTR-0040,792,842,0,open,simulated
+p07,MH-0041,Nagpur,CTR-0041,1149,1046,0,open,simulated
+p07,AS-0042,Barpeta,CTR-0042,424,375,0,open,simulated
+p07,MH-0043,Nashik,CTR-0043,1182,1152,0,open,simulated
+p07,CG-0044,Surguja,CTR-0044,611,423,0,open,simulated
+p07,GJ-0045,Ahmedabad,CTR-0045,1607,1509,0,open,simulated
+p07,TN-0046,Coimbatore,CTR-0046,802,787,0,open,simulated
+p07,BR-0047,Gaya,CTR-0047,929,865,107,open,simulated
+p07,AP-0048,Anantapur,CTR-0048,593,610,0,open,simulated
+p07,RJ-0049,Jaipur,CTR-0049,1675,1670,0,open,simulated
+p07,JK-0050,Kupwara,CTR-0050,208,118,0,open,simulated
+p07,PB-0051,Bathinda,CTR-0051,317,283,0,open,simulated
+p07,WB-0052,Bankura,CTR-0052,774,551,0,open,simulated
+p07,JH-0053,Dhanbad,CTR-0053,499,303,0,open,simulated
+p07,KA-0054,Kalaburagi,CTR-0054,534,453,93,open,simulated
+p07,MP-0055,Gwalior,CTR-0055,423,330,0,open,simulated
+p07,JH-0056,East Singhbhum,CTR-0056,556,330,0,open,simulated
+p07,UK-0057,Dehradun,CTR-0057,344,229,0,open,simulated
+p07,OD-0058,Kalahandi,CTR-0058,360,373,0,open,simulated
+p07,HR-0059,Rohtak,CTR-0059,263,213,0,open,simulated
+p07,AP-0060,Guntur,CTR-0060,529,478,0,open,simulated
+p07,RJ-0061,Alwar,CTR-0061,724,764,236,open,simulated
+p07,GA-0062,North Goa,CTR-0062,156,108,0,open,simulated
+p07,MH-0063,Mumbai Suburban,CTR-0063,2438,2367,0,open,simulated
+p07,TS-0064,Hyderabad,CTR-0064,810,544,0,open,simulated
+p07,UP-0065,Gorakhpur,CTR-0065,1151,930,289,open,simulated
+p07,GJ-0066,Surat,CTR-0066,1410,1000,0,open,simulated
+p07,UP-0067,Prayagraj,CTR-0067,1404,1376,0,open,simulated
+p07,MP-0068,Jabalpur,CTR-0068,508,364,0,open,simulated
+p07,HR-0069,Faridabad,CTR-0069,398,390,0,open,simulated
+p07,BR-0070,Darbhanga,CTR-0070,1014,1181,0,open,simulated
+p07,UP-0071,Bahraich,CTR-0071,882,537,0,open,simulated
+p07,TS-0072,Rangareddy,CTR-0072,520,572,0,open,simulated
+p07,AS-0073,Kamrup Metropolitan,CTR-0073,302,290,0,open,simulated
+p07,WB-0074,Malda,CTR-0074,818,862,0,open,simulated
+p07,MH-0075,Thane,CTR-0075,2871,1920,0,open,simulated
+p07,WB-0076,Howrah,CTR-0076,1193,942,0,open,simulated
+p07,RJ-0077,Jodhpur,CTR-0077,941,923,0,open,simulated
+p07,CG-0078,Raipur,CTR-0078,883,826,0,open,simulated
+p07,MP-0079,Indore,CTR-0079,847,546,0,open,simulated
+p07,CG-0080,Durg,CTR-0080,763,736,0,open,simulated
+p07,UP-0081,Lucknow,CTR-0081,1072,673,0,open,simulated
+p07,WB-0082,Murshidabad,CTR-0082,1723,1095,0,open,simulated
+p07,PB-0083,Amritsar,CTR-0083,489,506,0,open,simulated
+p07,JK-0084,Anantnag,CTR-0084,226,178,0,open,simulated
+p07,UP-0085,Varanasi,CTR-0085,966,536,0,open,simulated
+p07,TN-0086,Tiruchirappalli,CTR-0086,694,610,0,open,simulated
+p07,BR-0087,Bhagalpur,CTR-0087,787,771,0,open,simulated
+p07,UK-0088,Pithoragarh,CTR-0088,130,133,0,open,simulated
+p07,MH-0089,Pune,CTR-0089,2156,1200,0,open,simulated
+p07,DL-0090,West Delhi,CTR-0090,560,518,0,open,simulated
+p07,RJ-0091,Bikaner,CTR-0091,522,396,0,open,simulated
+p07,MP-0092,Dhar,CTR-0092,561,545,0,open,simulated
+p07,KA-0093,Dakshina Kannada,CTR-0093,488,344,0,open,simulated
+p07,TS-0094,Khammam,CTR-0094,344,312,0,open,simulated
+p07,PB-0095,Ludhiana,CTR-0095,691,689,0,open,simulated
+p07,UP-0096,Azamgarh,CTR-0096,877,528,0,open,simulated
+p07,MH-0097,Raigad,CTR-0097,520,453,0,open,simulated
+p07,HR-0098,Hisar,CTR-0098,416,381,0,open,simulated
+p07,TS-0099,Medchal-Malkajgiri,CTR-0099,601,583,0,open,simulated
+p07,BR-0100,Muzaffarpur,CTR-0100,1253,1179,0,open,simulated
+p08,OD-0001,Cuttack,CTR-0001,634,567,0,open,simulated
+p08,TN-0002,Chennai,CTR-0002,2044,1342,145,open,simulated
+p08,KL-0003,Malappuram,CTR-0003,865,745,0,open,simulated
+p08,TN-0004,Tirunelveli,CTR-0004,678,719,0,open,simulated
+p08,GJ-0005,Dahod,CTR-0005,498,305,0,open,simulated
+p08,OD-0006,Sundargarh,CTR-0006,453,348,0,open,simulated
+p08,JH-0007,Dumka,CTR-0007,291,209,0,open,simulated
+p08,JH-0008,Ranchi,CTR-0008,815,731,0,open,simulated
+p08,AP-0009,Kurnool,CTR-0009,623,377,0,open,simulated
+p08,DL-0010,South Delhi,CTR-0010,602,463,0,open,simulated
+p08,JK-0011,Jammu,CTR-0011,446,380,0,open,simulated
+p08,AS-0012,Dibrugarh,CTR-0012,343,322,0,open,simulated
+p08,GA-0013,South Goa,CTR-0013,158,152,0,open,simulated
+p08,RJ-0014,Barmer,CTR-0014,551,514,0,open,simulated
+p08,HR-0015,Gurugram,CTR-0015,397,423,0,open,simulated
+p08,AP-0016,Chittoor,CTR-0016,416,313,69,open,simulated
+p08,JK-0017,Srinagar,CTR-0017,306,244,0,open,simulated
+p08,GJ-0018,Kutch,CTR-0018,0,148,0,open,simulated
+p08,WB-0019,North 24 Parganas,CTR-0019,2926,2806,0,open,simulated
+p08,RJ-0020,Kota,CTR-0020,437,402,0,open,simulated
+p08,KL-0021,Wayanad,CTR-0021,238,156,0,open,simulated
+p08,CG-0022,Bilaspur,CTR-0022,700,358,0,open,simulated
+p08,CG-0023,Bastar,CTR-0023,388,279,0,open,simulated
+p08,UK-0024,Nainital,CTR-0024,234,243,0,open,simulated
+p08,BR-0025,Kishanganj,CTR-0025,508,462,0,open,simulated
+p08,OD-0026,Koraput,CTR-0026,309,208,0,open,simulated
+p08,HP-0027,Kangra,CTR-0027,406,348,0,open,simulated
+p08,DL-0028,North West Delhi,CTR-0028,825,670,0,open,simulated
+p08,KA-0029,Mysuru,CTR-0029,705,498,26,open,simulated
+p08,PB-0030,Jalandhar,CTR-0030,509,423,0,open,simulated
+p08,MH-0031,Solapur,CTR-0031,1261,971,0,open,simulated
+p08,KA-0032,Dharwad,CTR-0032,519,444,0,open,simulated
+p08,DL-0033,East Delhi,CTR-0033,369,324,0,open,simulated
+p08,MP-0034,Bhopal,CTR-0034,530,440,0,open,simulated
+p08,TN-0035,Vellore,CTR-0035,1016,856,0,open,simulated
+p08,GJ-0036,Rajkot,CTR-0036,1077,1214,0,open,simulated
+p08,UK-0037,Haridwar,CTR-0037,437,353,0,open,simulated
+p08,KA-0038,Raichur,CTR-0038,483,275,0,open,simulated
+p08,DL-0039,Central Delhi,CTR-0039,131,78,0,open,simulated
+p08,MH-0040,Mumbai City,CTR-0040,851,873,0,open,simulated
+p08,MH-0041,Nagpur,CTR-0041,1094,1117,0,open,simulated
+p08,AS-0042,Barpeta,CTR-0042,431,381,0,open,simulated
+p08,MH-0043,Nashik,CTR-0043,1707,1513,0,open,simulated
+p08,CG-0044,Surguja,CTR-0044,627,509,0,open,simulated
+p08,GJ-0045,Ahmedabad,CTR-0045,1668,1602,0,open,simulated
+p08,TN-0046,Coimbatore,CTR-0046,786,864,0,open,simulated
+p08,BR-0047,Gaya,CTR-0047,1158,1031,0,open,simulated
+p08,AP-0048,Anantapur,CTR-0048,507,528,0,open,simulated
+p08,RJ-0049,Jaipur,CTR-0049,1385,1358,0,open,simulated
+p08,JK-0050,Kupwara,CTR-0050,202,120,0,open,simulated
+p08,PB-0051,Bathinda,CTR-0051,379,335,0,open,simulated
+p08,WB-0052,Bankura,CTR-0052,813,667,0,open,simulated
+p08,JH-0053,Dhanbad,CTR-0053,655,394,132,open,simulated
+p08,KA-0054,Kalaburagi,CTR-0054,632,453,0,open,simulated
+p08,MP-0055,Gwalior,CTR-0055,454,371,0,open,simulated
+p08,JH-0056,East Singhbhum,CTR-0056,520,296,0,open,simulated
+p08,UK-0057,Dehradun,CTR-0057,400,272,0,open,simulated
+p08,OD-0058,Kalahandi,CTR-0058,358,381,0,open,simulated
+p08,HR-0059,Rohtak,CTR-0059,273,226,0,open,simulated
+p08,AP-0060,Guntur,CTR-0060,548,466,0,open,simulated
+p08,RJ-0061,Alwar,CTR-0061,986,903,295,open,simulated
+p08,GA-0062,North Goa,CTR-0062,190,115,0,open,simulated
+p08,MH-0063,Mumbai Suburban,CTR-0063,2617,2532,0,open,simulated
+p08,TS-0064,Hyderabad,CTR-0064,1152,769,0,open,simulated
+p08,UP-0065,Gorakhpur,CTR-0065,1043,913,203,open,simulated
+p08,GJ-0066,Surat,CTR-0066,1692,1065,0,open,simulated
+p08,UP-0067,Prayagraj,CTR-0067,1326,1430,0,open,simulated
+p08,MP-0068,Jabalpur,CTR-0068,588,424,0,open,simulated
+p08,HR-0069,Faridabad,CTR-0069,507,514,0,open,simulated
+p08,BR-0070,Darbhanga,CTR-0070,1035,1148,0,open,simulated
+p08,UP-0071,Bahraich,CTR-0071,895,605,0,open,simulated
+p08,TS-0072,Rangareddy,CTR-0072,604,616,0,open,simulated
+p08,AS-0073,Kamrup Metropolitan,CTR-0073,0,115,0,open,simulated
+p08,WB-0074,Malda,CTR-0074,851,791,146,open,simulated
+p08,MH-0075,Thane,CTR-0075,2662,1480,0,open,simulated
+p08,WB-0076,Howrah,CTR-0076,1201,1027,202,open,simulated
+p08,RJ-0077,Jodhpur,CTR-0077,775,827,0,open,simulated
+p08,CG-0078,Raipur,CTR-0078,1178,1012,0,open,simulated
+p08,MP-0079,Indore,CTR-0079,723,524,0,open,simulated
+p08,CG-0080,Durg,CTR-0080,825,907,0,open,simulated
+p08,UP-0081,Lucknow,CTR-0081,1279,898,0,open,simulated
+p08,WB-0082,Murshidabad,CTR-0082,2036,1239,0,open,simulated
+p08,PB-0083,Amritsar,CTR-0083,0,230,0,open,simulated
+p08,JK-0084,Anantnag,CTR-0084,285,217,0,open,simulated
+p08,UP-0085,Varanasi,CTR-0085,993,583,0,open,simulated
+p08,TN-0086,Tiruchirappalli,CTR-0086,584,500,0,open,simulated
+p08,BR-0087,Bhagalpur,CTR-0087,657,682,0,open,simulated
+p08,UK-0088,Pithoragarh,CTR-0088,125,147,0,open,simulated
+p08,MH-0089,Pune,CTR-0089,2397,1299,512,open,simulated
+p08,DL-0090,West Delhi,CTR-0090,640,648,0,open,simulated
+p08,RJ-0091,Bikaner,CTR-0091,667,532,0,open,simulated
+p08,MP-0092,Dhar,CTR-0092,483,556,0,open,simulated
+p08,KA-0093,Dakshina Kannada,CTR-0093,602,419,48,open,simulated
+p08,TS-0094,Khammam,CTR-0094,327,261,0,open,simulated
+p08,PB-0095,Ludhiana,CTR-0095,863,843,0,open,simulated
+p08,UP-0096,Azamgarh,CTR-0096,1223,837,0,open,simulated
+p08,MH-0097,Raigad,CTR-0097,625,559,0,open,simulated
+p08,HR-0098,Hisar,CTR-0098,499,423,0,open,simulated
+p08,TS-0099,Medchal-Malkajgiri,CTR-0099,607,597,0,open,simulated
+p08,BR-0100,Muzaffarpur,CTR-0100,1397,1381,0,open,simulated
+p09,OD-0001,Cuttack,CTR-0001,481,398,0,open,simulated
+p09,TN-0002,Chennai,CTR-0002,1274,949,0,open,simulated
+p09,KL-0003,Malappuram,CTR-0003,690,495,0,open,simulated
+p09,TN-0004,Tirunelveli,CTR-0004,524,591,0,open,simulated
+p09,GJ-0005,Dahod,CTR-0005,455,293,0,open,simulated
+p09,OD-0006,Sundargarh,CTR-0006,408,0,0,closed,simulated
+p09,JH-0007,Dumka,CTR-0007,282,0,0,closed,simulated
+p09,JH-0008,Ranchi,CTR-0008,499,431,171,open,simulated
+p09,AP-0009,Kurnool,CTR-0009,405,227,56,open,simulated
+p09,DL-0010,South Delhi,CTR-0010,590,406,161,open,simulated
+p09,JK-0011,Jammu,CTR-0011,293,252,0,open,simulated
+p09,AS-0012,Dibrugarh,CTR-0012,211,166,0,open,simulated
+p09,GA-0013,South Goa,CTR-0013,125,121,0,open,simulated
+p09,RJ-0014,Barmer,CTR-0014,440,389,0,open,simulated
+p09,HR-0015,Gurugram,CTR-0015,275,261,0,open,simulated
+p09,AP-0016,Chittoor,CTR-0016,359,240,0,open,simulated
+p09,JK-0017,Srinagar,CTR-0017,228,202,0,open,simulated
+p09,GJ-0018,Kutch,CTR-0018,429,287,107,open,simulated
+p09,WB-0019,North 24 Parganas,CTR-0019,0,963,0,open,simulated
+p09,RJ-0020,Kota,CTR-0020,407,0,0,closed,simulated
+p09,KL-0021,Wayanad,CTR-0021,164,113,0,open,simulated
+p09,CG-0022,Bilaspur,CTR-0022,569,308,0,open,simulated
+p09,CG-0023,Bastar,CTR-0023,297,218,0,open,simulated
+p09,UK-0024,Nainital,CTR-0024,140,122,0,open,simulated
+p09,BR-0025,Kishanganj,CTR-0025,331,307,0,open,simulated
+p09,OD-0026,Koraput,CTR-0026,309,175,0,open,simulated
+p09,HP-0027,Kangra,CTR-0027,319,301,0,open,simulated
+p09,DL-0028,North West Delhi,CTR-0028,758,527,0,open,simulated
+p09,KA-0029,Mysuru,CTR-0029,473,308,0,open,simulated
+p09,PB-0030,Jalandhar,CTR-0030,429,303,0,open,simulated
+p09,MH-0031,Solapur,CTR-0031,709,630,0,open,simulated
+p09,KA-0032,Dharwad,CTR-0032,393,340,0,open,simulated
+p09,DL-0033,East Delhi,CTR-0033,345,331,0,open,simulated
+p09,MP-0034,Bhopal,CTR-0034,458,0,0,closed,simulated
+p09,TN-0035,Vellore,CTR-0035,847,716,0,open,simulated
+p09,GJ-0036,Rajkot,CTR-0036,703,729,0,open,simulated
+p09,UK-0037,Haridwar,CTR-0037,334,250,0,open,simulated
+p09,KA-0038,Raichur,CTR-0038,420,243,0,open,simulated
+p09,DL-0039,Central Delhi,CTR-0039,132,71,0,open,simulated
+p09,MH-0040,Mumbai City,CTR-0040,573,559,0,open,simulated
+p09,MH-0041,Nagpur,CTR-0041,995,991,0,open,simulated
+p09,AS-0042,Barpeta,CTR-0042,370,337,0,open,simulated
+p09,MH-0043,Nashik,CTR-0043,1076,1026,0,open,simulated
+p09,CG-0044,Surguja,CTR-0044,402,289,0,open,simulated
+p09,GJ-0045,Ahmedabad,CTR-0045,1215,1167,0,open,simulated
+p09,TN-0046,Coimbatore,CTR-0046,660,677,0,open,simulated
+p09,BR-0047,Gaya,CTR-0047,695,643,0,open,simulated
+p09,AP-0048,Anantapur,CTR-0048,376,342,0,open,simulated
+p09,RJ-0049,Jaipur,CTR-0049,1151,0,0,closed,simulated
+p09,JK-0050,Kupwara,CTR-0050,194,121,0,open,simulated
+p09,PB-0051,Bathinda,CTR-0051,296,252,0,open,simulated
+p09,WB-0052,Bankura,CTR-0052,553,434,0,open,simulated
+p09,JH-0053,Dhanbad,CTR-0053,559,378,0,open,simulated
+p09,KA-0054,Kalaburagi,CTR-0054,450,317,0,open,simulated
+p09,MP-0055,Gwalior,CTR-0055,0,169,0,open,simulated
+p09,JH-0056,East Singhbhum,CTR-0056,364,206,0,open,simulated
+p09,UK-0057,Dehradun,CTR-0057,335,212,0,open,simulated
+p09,OD-0058,Kalahandi,CTR-0058,322,318,0,open,simulated
+p09,HR-0059,Rohtak,CTR-0059,217,184,25,open,simulated
+p09,AP-0060,Guntur,CTR-0060,419,365,0,open,simulated
+p09,RJ-0061,Alwar,CTR-0061,699,716,0,open,simulated
+p09,GA-0062,North Goa,CTR-0062,162,101,0,open,simulated
+p09,MH-0063,Mumbai Suburban,CTR-0063,1572,1605,0,open,simulated
+p09,TS-0064,Hyderabad,CTR-0064,669,446,129,open,simulated
+p09,UP-0065,Gorakhpur,CTR-0065,863,793,0,open,simulated
+p09,GJ-0066,Surat,CTR-0066,1302,916,0,open,simulated
+p09,UP-0067,Prayagraj,CTR-0067,1166,1191,0,open,simulated
+p09,MP-0068,Jabalpur,CTR-0068,431,300,0,open,simulated
+p09,HR-0069,Faridabad,CTR-0069,278,273,0,open,simulated
+p09,BR-0070,Darbhanga,CTR-0070,599,593,0,open,simulated
+p09,UP-0071,Bahraich,CTR-0071,700,424,0,open,simulated
+p09,TS-0072,Rangareddy,CTR-0072,460,492,0,open,simulated
+p09,AS-0073,Kamrup Metropolitan,CTR-0073,238,226,0,open,simulated
+p09,WB-0074,Malda,CTR-0074,859,879,0,open,simulated
+p09,MH-0075,Thane,CTR-0075,2175,1399,0,open,simulated
+p09,WB-0076,Howrah,CTR-0076,946,844,0,open,simulated
+p09,RJ-0077,Jodhpur,CTR-0077,690,746,0,open,simulated
+p09,CG-0078,Raipur,CTR-0078,869,818,0,open,simulated
+p09,MP-0079,Indore,CTR-0079,627,471,0,open,simulated
+p09,CG-0080,Durg,CTR-0080,592,619,0,open,simulated
+p09,UP-0081,Lucknow,CTR-0081,941,610,0,open,simulated
+p09,WB-0082,Murshidabad,CTR-0082,1568,1074,0,open,simulated
+p09,PB-0083,Amritsar,CTR-0083,426,459,0,open,simulated
+p09,JK-0084,Anantnag,CTR-0084,193,157,0,open,simulated
+p09,UP-0085,Varanasi,CTR-0085,776,508,100,open,simulated
+p09,TN-0086,Tiruchirappalli,CTR-0086,506,422,0,open,simulated
+p09,BR-0087,Bhagalpur,CTR-0087,485,457,0,open,simulated
+p09,UK-0088,Pithoragarh,CTR-0088,89,88,0,open,simulated
+p09,MH-0089,Pune,CTR-0089,2027,1213,0,open,simulated
+p09,DL-0090,West Delhi,CTR-0090,497,462,0,open,simulated
+p09,RJ-0091,Bikaner,CTR-0091,407,364,0,open,simulated
+p09,MP-0092,Dhar,CTR-0092,420,422,0,open,simulated
+p09,KA-0093,Dakshina Kannada,CTR-0093,456,340,0,open,simulated
+p09,TS-0094,Khammam,CTR-0094,216,186,0,open,simulated
+p09,PB-0095,Ludhiana,CTR-0095,676,710,0,open,simulated
+p09,UP-0096,Azamgarh,CTR-0096,896,610,0,open,simulated
+p09,MH-0097,Raigad,CTR-0097,518,481,0,open,simulated
+p09,HR-0098,Hisar,CTR-0098,346,335,0,open,simulated
+p09,TS-0099,Medchal-Malkajgiri,CTR-0099,417,375,0,open,simulated
+p09,BR-0100,Muzaffarpur,CTR-0100,768,748,0,open,simulated
+p10,OD-0001,Cuttack,CTR-0001,521,491,0,open,simulated
+p10,TN-0002,Chennai,CTR-0002,1461,1060,0,open,simulated
+p10,KL-0003,Malappuram,CTR-0003,966,700,0,open,simulated
+p10,TN-0004,Tirunelveli,CTR-0004,645,677,0,open,simulated
+p10,GJ-0005,Dahod,CTR-0005,539,373,0,open,simulated
+p10,OD-0006,Sundargarh,CTR-0006,438,327,0,open,simulated
+p10,JH-0007,Dumka,CTR-0007,336,220,0,open,simulated
+p10,JH-0008,Ranchi,CTR-0008,565,470,0,open,simulated
+p10,AP-0009,Kurnool,CTR-0009,449,246,0,open,simulated
+p10,DL-0010,South Delhi,CTR-0010,721,547,0,open,simulated
+p10,JK-0011,Jammu,CTR-0011,403,371,0,open,simulated
+p10,AS-0012,Dibrugarh,CTR-0012,307,250,0,open,simulated
+p10,GA-0013,South Goa,CTR-0013,140,141,0,open,simulated
+p10,RJ-0014,Barmer,CTR-0014,547,527,0,open,simulated
+p10,HR-0015,Gurugram,CTR-0015,391,388,0,open,simulated
+p10,AP-0016,Chittoor,CTR-0016,383,289,0,open,simulated
+p10,JK-0017,Srinagar,CTR-0017,373,308,0,open,simulated
+p10,GJ-0018,Kutch,CTR-0018,547,396,0,open,simulated
+p10,WB-0019,North 24 Parganas,CTR-0019,2179,2307,0,open,simulated
+p10,RJ-0020,Kota,CTR-0020,428,381,0,open,simulated
+p10,KL-0021,Wayanad,CTR-0021,193,129,0,open,simulated
+p10,CG-0022,Bilaspur,CTR-0022,694,370,0,open,simulated
+p10,CG-0023,Bastar,CTR-0023,300,207,0,open,simulated
+p10,UK-0024,Nainital,CTR-0024,239,250,55,open,simulated
+p10,BR-0025,Kishanganj,CTR-0025,443,411,0,open,simulated
+p10,OD-0026,Koraput,CTR-0026,301,197,0,open,simulated
+p10,HP-0027,Kangra,CTR-0027,346,331,0,open,simulated
+p10,DL-0028,North West Delhi,CTR-0028,783,529,0,open,simulated
+p10,KA-0029,Mysuru,CTR-0029,625,414,0,open,simulated
+p10,PB-0030,Jalandhar,CTR-0030,590,442,0,open,simulated
+p10,MH-0031,Solapur,CTR-0031,1077,945,0,open,simulated
+p10,KA-0032,Dharwad,CTR-0032,411,317,0,open,simulated
+p10,DL-0033,East Delhi,CTR-0033,367,330,0,open,simulated
+p10,MP-0034,Bhopal,CTR-0034,629,442,0,open,simulated
+p10,TN-0035,Vellore,CTR-0035,973,871,91,open,simulated
+p10,GJ-0036,Rajkot,CTR-0036,803,798,0,open,simulated
+p10,UK-0037,Haridwar,CTR-0037,407,349,0,open,simulated
+p10,KA-0038,Raichur,CTR-0038,382,239,0,open,simulated
+p10,DL-0039,Central Delhi,CTR-0039,138,79,0,open,simulated
+p10,MH-0040,Mumbai City,CTR-0040,704,709,0,open,simulated
+p10,MH-0041,Nagpur,CTR-0041,1266,1256,0,open,simulated
+p10,AS-0042,Barpeta,CTR-0042,367,340,0,open,simulated
+p10,MH-0043,Nashik,CTR-0043,1438,1415,0,open,simulated
+p10,CG-0044,Surguja,CTR-0044,542,448,0,open,simulated
+p10,GJ-0045,Ahmedabad,CTR-0045,1703,1572,0,open,simulated
+p10,TN-0046,Coimbatore,CTR-0046,829,886,0,open,simulated
+p10,BR-0047,Gaya,CTR-0047,974,980,0,open,simulated
+p10,AP-0048,Anantapur,CTR-0048,555,583,0,open,simulated
+p10,RJ-0049,Jaipur,CTR-0049,1282,1218,0,open,simulated
+p10,JK-0050,Kupwara,CTR-0050,178,103,0,open,simulated
+p10,PB-0051,Bathinda,CTR-0051,377,338,0,open,simulated
+p10,WB-0052,Bankura,CTR-0052,804,589,0,open,simulated
+p10,JH-0053,Dhanbad,CTR-0053,554,366,0,open,simulated
+p10,KA-0054,Kalaburagi,CTR-0054,537,459,0,open,simulated
+p10,MP-0055,Gwalior,CTR-0055,375,345,0,open,simulated
+p10,JH-0056,East Singhbhum,CTR-0056,607,374,130,open,simulated
+p10,UK-0057,Dehradun,CTR-0057,423,269,0,open,simulated
+p10,OD-0058,Kalahandi,CTR-0058,347,355,0,open,simulated
+p10,HR-0059,Rohtak,CTR-0059,266,206,0,open,simulated
+p10,AP-0060,Guntur,CTR-0060,398,366,113,open,simulated
+p10,RJ-0061,Alwar,CTR-0061,720,697,0,open,simulated
+p10,GA-0062,North Goa,CTR-0062,152,106,0,open,simulated
+p10,MH-0063,Mumbai Suburban,CTR-0063,2296,2636,0,open,simulated
+p10,TS-0064,Hyderabad,CTR-0064,933,640,0,open,simulated
+p10,UP-0065,Gorakhpur,CTR-0065,861,749,0,open,simulated
+p10,GJ-0066,Surat,CTR-0066,1386,885,0,open,simulated
+p10,UP-0067,Prayagraj,CTR-0067,1570,1736,0,open,simulated
+p10,MP-0068,Jabalpur,CTR-0068,586,435,0,open,simulated
+p10,HR-0069,Faridabad,CTR-0069,447,473,0,open,simulated
+p10,BR-0070,Darbhanga,CTR-0070,952,982,99,open,simulated
+p10,UP-0071,Bahraich,CTR-0071,714,410,0,open,simulated
+p10,TS-0072,Rangareddy,CTR-0072,467,486,0,open,simulated
+p10,AS-0073,Kamrup Metropolitan,CTR-0073,275,284,0,open,simulated
+p10,WB-0074,Malda,CTR-0074,810,838,0,open,simulated
+p10,MH-0075,Thane,CTR-0075,2246,1299,0,open,simulated
+p10,WB-0076,Howrah,CTR-0076,1234,1007,0,open,simulated
+p10,RJ-0077,Jodhpur,CTR-0077,905,967,0,open,simulated
+p10,CG-0078,Raipur,CTR-0078,802,832,0,open,simulated
+p10,MP-0079,Indore,CTR-0079,709,460,0,open,simulated
+p10,CG-0080,Durg,CTR-0080,791,836,0,open,simulated
+p10,UP-0081,Lucknow,CTR-0081,1151,722,0,open,simulated
+p10,WB-0082,Murshidabad,CTR-0082,1342,0,0,closed,simulated
+p10,PB-0083,Amritsar,CTR-0083,508,494,0,open,simulated
+p10,JK-0084,Anantnag,CTR-0084,281,238,0,open,simulated
+p10,UP-0085,Varanasi,CTR-0085,868,559,0,open,simulated
+p10,TN-0086,Tiruchirappalli,CTR-0086,645,550,0,open,simulated
+p10,BR-0087,Bhagalpur,CTR-0087,712,718,0,open,simulated
+p10,UK-0088,Pithoragarh,CTR-0088,109,130,0,open,simulated
+p10,MH-0089,Pune,CTR-0089,2327,1262,0,open,simulated
+p10,DL-0090,West Delhi,CTR-0090,657,662,0,open,simulated
+p10,RJ-0091,Bikaner,CTR-0091,572,491,0,open,simulated
+p10,MP-0092,Dhar,CTR-0092,523,573,0,open,simulated
+p10,KA-0093,Dakshina Kannada,CTR-0093,432,313,0,open,simulated
+p10,TS-0094,Khammam,CTR-0094,300,236,0,open,simulated
+p10,PB-0095,Ludhiana,CTR-0095,908,1037,0,open,simulated
+p10,UP-0096,Azamgarh,CTR-0096,872,618,0,open,simulated
+p10,MH-0097,Raigad,CTR-0097,595,579,0,open,simulated
+p10,HR-0098,Hisar,CTR-0098,340,289,0,open,simulated
+p10,TS-0099,Medchal-Malkajgiri,CTR-0099,522,505,0,open,simulated
+p10,BR-0100,Muzaffarpur,CTR-0100,1098,971,0,open,simulated
+p11,OD-0001,Cuttack,CTR-0001,747,640,153,open,simulated
+p11,TN-0002,Chennai,CTR-0002,1876,1301,0,open,simulated
+p11,KL-0003,Malappuram,CTR-0003,840,669,0,open,simulated
+p11,TN-0004,Tirunelveli,CTR-0004,743,739,0,open,simulated
+p11,GJ-0005,Dahod,CTR-0005,514,302,0,open,simulated
+p11,OD-0006,Sundargarh,CTR-0006,525,404,0,open,simulated
+p11,JH-0007,Dumka,CTR-0007,333,221,0,open,simulated
+p11,JH-0008,Ranchi,CTR-0008,696,557,0,open,simulated
+p11,AP-0009,Kurnool,CTR-0009,496,296,108,open,simulated
+p11,DL-0010,South Delhi,CTR-0010,585,454,161,open,simulated
+p11,JK-0011,Jammu,CTR-0011,343,303,0,open,simulated
+p11,AS-0012,Dibrugarh,CTR-0012,330,295,0,open,simulated
+p11,GA-0013,South Goa,CTR-0013,148,162,0,open,simulated
+p11,RJ-0014,Barmer,CTR-0014,588,486,0,open,simulated
+p11,HR-0015,Gurugram,CTR-0015,309,278,0,open,simulated
+p11,AP-0016,Chittoor,CTR-0016,453,330,0,open,simulated
+p11,JK-0017,Srinagar,CTR-0017,397,325,0,open,simulated
+p11,GJ-0018,Kutch,CTR-0018,453,310,0,open,simulated
+p11,WB-0019,North 24 Parganas,CTR-0019,2105,1927,0,open,simulated
+p11,RJ-0020,Kota,CTR-0020,517,447,0,open,simulated
+p11,KL-0021,Wayanad,CTR-0021,190,128,0,open,simulated
+p11,CG-0022,Bilaspur,CTR-0022,584,364,0,open,simulated
+p11,CG-0023,Bastar,CTR-0023,335,238,0,open,simulated
+p11,UK-0024,Nainital,CTR-0024,238,251,0,open,simulated
+p11,BR-0025,Kishanganj,CTR-0025,408,380,109,open,simulated
+p11,OD-0026,Koraput,CTR-0026,330,221,0,open,simulated
+p11,HP-0027,Kangra,CTR-0027,397,391,0,open,simulated
+p11,DL-0028,North West Delhi,CTR-0028,1006,809,0,open,simulated
+p11,KA-0029,Mysuru,CTR-0029,773,476,0,open,simulated
+p11,PB-0030,Jalandhar,CTR-0030,603,495,0,open,simulated
+p11,MH-0031,Solapur,CTR-0031,1171,985,49,open,simulated
+p11,KA-0032,Dharwad,CTR-0032,490,409,0,open,simulated
+p11,DL-0033,East Delhi,CTR-0033,422,414,0,open,simulated
+p11,MP-0034,Bhopal,CTR-0034,676,555,0,open,simulated
+p11,TN-0035,Vellore,CTR-0035,998,884,0,open,simulated
+p11,GJ-0036,Rajkot,CTR-0036,783,867,0,open,simulated
+p11,UK-0037,Haridwar,CTR-0037,472,361,0,open,simulated
+p11,KA-0038,Raichur,CTR-0038,475,281,53,open,simulated
+p11,DL-0039,Central Delhi,CTR-0039,165,88,0,open,simulated
+p11,MH-0040,Mumbai City,CTR-0040,830,794,0,open,simulated
+p11,MH-0041,Nagpur,CTR-0041,1087,1095,0,open,simulated
+p11,AS-0042,Barpeta,CTR-0042,426,435,0,open,simulated
+p11,MH-0043,Nashik,CTR-0043,1244,1311,0,open,simulated
+p11,CG-0044,Surguja,CTR-0044,521,364,0,open,simulated
+p11,GJ-0045,Ahmedabad,CTR-0045,1841,1835,0,open,simulated
+p11,TN-0046,Coimbatore,CTR-0046,819,803,0,open,simulated
+p11,BR-0047,Gaya,CTR-0047,1060,995,0,open,simulated
+p11,AP-0048,Anantapur,CTR-0048,630,641,0,open,simulated
+p11,RJ-0049,Jaipur,CTR-0049,1507,1603,0,open,simulated
+p11,JK-0050,Kupwara,CTR-0050,245,153,0,open,simulated
+p11,PB-0051,Bathinda,CTR-0051,384,368,0,open,simulated
+p11,WB-0052,Bankura,CTR-0052,933,712,0,open,simulated
+p11,JH-0053,Dhanbad,CTR-0053,651,399,0,open,simulated
+p11,KA-0054,Kalaburagi,CTR-0054,689,559,0,open,simulated
+p11,MP-0055,Gwalior,CTR-0055,438,397,0,open,simulated
+p11,JH-0056,East Singhbhum,CTR-0056,538,330,0,open,simulated
+p11,UK-0057,Dehradun,CTR-0057,354,212,0,open,simulated
+p11,OD-0058,Kalahandi,CTR-0058,378,401,0,open,simulated
+p11,HR-0059,Rohtak,CTR-0059,240,189,0,open,simulated
+p11,AP-0060,Guntur,CTR-0060,471,422,0,open,simulated
+p11,RJ-0061,Alwar,CTR-0061,854,818,0,open,simulated
+p11,GA-0062,North Goa,CTR-0062,222,152,0,open,simulated
+p11,MH-0063,Mumbai Suburban,CTR-0063,2105,2447,0,open,simulated
+p11,TS-0064,Hyderabad,CTR-0064,822,575,0,open,simulated
+p11,UP-0065,Gorakhpur,CTR-0065,1269,1096,0,open,simulated
+p11,GJ-0066,Surat,CTR-0066,1555,991,0,open,simulated
+p11,UP-0067,Prayagraj,CTR-0067,1688,1942,0,open,simulated
+p11,MP-0068,Jabalpur,CTR-0068,572,426,0,open,simulated
+p11,HR-0069,Faridabad,CTR-0069,509,483,0,open,simulated
+p11,BR-0070,Darbhanga,CTR-0070,1041,1054,0,open,simulated
+p11,UP-0071,Bahraich,CTR-0071,983,554,0,open,simulated
+p11,TS-0072,Rangareddy,CTR-0072,491,563,0,open,simulated
+p11,AS-0073,Kamrup Metropolitan,CTR-0073,339,308,0,open,simulated
+p11,WB-0074,Malda,CTR-0074,868,872,0,open,simulated
+p11,MH-0075,Thane,CTR-0075,2881,1853,0,open,simulated
+p11,WB-0076,Howrah,CTR-0076,1364,1136,0,open,simulated
+p11,RJ-0077,Jodhpur,CTR-0077,874,945,0,open,simulated
+p11,CG-0078,Raipur,CTR-0078,1004,920,0,open,simulated
+p11,MP-0079,Indore,CTR-0079,768,581,0,open,simulated
+p11,CG-0080,Durg,CTR-0080,713,699,150,open,simulated
+p11,UP-0081,Lucknow,CTR-0081,1108,660,0,open,simulated
+p11,WB-0082,Murshidabad,CTR-0082,1897,1309,0,open,simulated
+p11,PB-0083,Amritsar,CTR-0083,558,541,0,open,simulated
+p11,JK-0084,Anantnag,CTR-0084,304,244,0,open,simulated
+p11,UP-0085,Varanasi,CTR-0085,876,534,0,open,simulated
+p11,TN-0086,Tiruchirappalli,CTR-0086,780,659,0,open,simulated
+p11,BR-0087,Bhagalpur,CTR-0087,831,821,0,open,simulated
+p11,UK-0088,Pithoragarh,CTR-0088,111,111,0,open,simulated
+p11,MH-0089,Pune,CTR-0089,2227,1366,0,open,simulated
+p11,DL-0090,West Delhi,CTR-0090,662,661,0,open,simulated
+p11,RJ-0091,Bikaner,CTR-0091,514,419,0,open,simulated
+p11,MP-0092,Dhar,CTR-0092,458,459,0,open,simulated
+p11,KA-0093,Dakshina Kannada,CTR-0093,591,409,0,open,simulated
+p11,TS-0094,Khammam,CTR-0094,311,296,0,open,simulated
+p11,PB-0095,Ludhiana,CTR-0095,776,796,0,open,simulated
+p11,UP-0096,Azamgarh,CTR-0096,1077,728,0,open,simulated
+p11,MH-0097,Raigad,CTR-0097,744,774,165,open,simulated
+p11,HR-0098,Hisar,CTR-0098,435,377,39,open,simulated
+p11,TS-0099,Medchal-Malkajgiri,CTR-0099,723,615,0,open,simulated
+p11,BR-0100,Muzaffarpur,CTR-0100,1096,1073,0,open,simulated
+p12,OD-0001,Cuttack,CTR-0001,713,603,0,open,simulated
+p12,TN-0002,Chennai,CTR-0002,2147,1484,0,open,simulated
+p12,KL-0003,Malappuram,CTR-0003,1199,0,0,closed,simulated
+p12,TN-0004,Tirunelveli,CTR-0004,722,705,0,open,simulated
+p12,GJ-0005,Dahod,CTR-0005,526,333,63,open,simulated
+p12,OD-0006,Sundargarh,CTR-0006,461,418,0,open,simulated
+p12,JH-0007,Dumka,CTR-0007,294,185,0,open,simulated
+p12,JH-0008,Ranchi,CTR-0008,688,603,0,open,simulated
+p12,AP-0009,Kurnool,CTR-0009,562,333,0,open,simulated
+p12,DL-0010,South Delhi,CTR-0010,711,539,0,open,simulated
+p12,JK-0011,Jammu,CTR-0011,456,428,0,open,simulated
+p12,AS-0012,Dibrugarh,CTR-0012,280,254,0,open,simulated
+p12,GA-0013,South Goa,CTR-0013,129,136,0,open,simulated
+p12,RJ-0014,Barmer,CTR-0014,791,746,0,open,simulated
+p12,HR-0015,Gurugram,CTR-0015,339,357,0,open,simulated
+p12,AP-0016,Chittoor,CTR-0016,577,360,0,open,simulated
+p12,JK-0017,Srinagar,CTR-0017,381,289,0,open,simulated
+p12,GJ-0018,Kutch,CTR-0018,472,311,0,open,simulated
+p12,WB-0019,North 24 Parganas,CTR-0019,2368,2387,0,open,simulated
+p12,RJ-0020,Kota,CTR-0020,444,438,0,open,simulated
+p12,KL-0021,Wayanad,CTR-0021,244,169,0,open,simulated
+p12,CG-0022,Bilaspur,CTR-0022,814,419,0,open,simulated
+p12,CG-0023,Bastar,CTR-0023,422,328,88,open,simulated
+p12,UK-0024,Nainital,CTR-0024,232,0,0,closed,simulated
+p12,BR-0025,Kishanganj,CTR-0025,515,526,0,open,simulated
+p12,OD-0026,Koraput,CTR-0026,423,240,0,open,simulated
+p12,HP-0027,Kangra,CTR-0027,414,376,0,open,simulated
+p12,DL-0028,North West Delhi,CTR-0028,923,702,0,open,simulated
+p12,KA-0029,Mysuru,CTR-0029,800,497,0,open,simulated
+p12,PB-0030,Jalandhar,CTR-0030,508,363,0,open,simulated
+p12,MH-0031,Solapur,CTR-0031,1196,1088,326,open,simulated
+p12,KA-0032,Dharwad,CTR-0032,428,317,0,open,simulated
+p12,DL-0033,East Delhi,CTR-0033,404,369,0,open,simulated
+p12,MP-0034,Bhopal,CTR-0034,713,547,0,open,simulated
+p12,TN-0035,Vellore,CTR-0035,872,720,0,open,simulated
+p12,GJ-0036,Rajkot,CTR-0036,823,827,0,open,simulated
+p12,UK-0037,Haridwar,CTR-0037,568,484,0,open,simulated
+p12,KA-0038,Raichur,CTR-0038,547,327,0,open,simulated
+p12,DL-0039,Central Delhi,CTR-0039,128,77,0,open,simulated
+p12,MH-0040,Mumbai City,CTR-0040,844,875,0,open,simulated
+p12,MH-0041,Nagpur,CTR-0041,1358,1423,0,open,simulated
+p12,AS-0042,Barpeta,CTR-0042,368,380,0,open,simulated
+p12,MH-0043,Nashik,CTR-0043,1407,1274,0,open,simulated
+p12,CG-0044,Surguja,CTR-0044,705,490,0,open,simulated
+p12,GJ-0045,Ahmedabad,CTR-0045,1870,1885,559,open,simulated
+p12,TN-0046,Coimbatore,CTR-0046,812,785,0,open,simulated
+p12,BR-0047,Gaya,CTR-0047,959,875,0,open,simulated
+p12,AP-0048,Anantapur,CTR-0048,659,715,0,open,simulated
+p12,RJ-0049,Jaipur,CTR-0049,1712,1780,0,open,simulated
+p12,JK-0050,Kupwara,CTR-0050,199,115,0,open,simulated
+p12,PB-0051,Bathinda,CTR-0051,314,301,0,open,simulated
+p12,WB-0052,Bankura,CTR-0052,1090,832,0,open,simulated
+p12,JH-0053,Dhanbad,CTR-0053,609,370,0,open,simulated
+p12,KA-0054,Kalaburagi,CTR-0054,570,423,0,open,simulated
+p12,MP-0055,Gwalior,CTR-0055,450,415,0,open,simulated
+p12,JH-0056,East Singhbhum,CTR-0056,626,364,0,open,simulated
+p12,UK-0057,Dehradun,CTR-0057,438,285,63,open,simulated
+p12,OD-0058,Kalahandi,CTR-0058,404,385,0,open,simulated
+p12,HR-0059,Rohtak,CTR-0059,291,224,0,open,simulated
+p12,AP-0060,Guntur,CTR-0060,560,477,0,open,simulated
+p12,RJ-0061,Alwar,CTR-0061,878,780,0,open,simulated
+p12,GA-0062,North Goa,CTR-0062,198,120,26,open,simulated
+p12,MH-0063,Mumbai Suburban,CTR-0063,2573,2774,0,open,simulated
+p12,TS-0064,Hyderabad,CTR-0064,1076,662,0,open,simulated
+p12,UP-0065,Gorakhpur,CTR-0065,1045,842,0,open,simulated
+p12,GJ-0066,Surat,CTR-0066,1811,1280,0,open,simulated
+p12,UP-0067,Prayagraj,CTR-0067,1293,1484,0,open,simulated
+p12,MP-0068,Jabalpur,CTR-0068,656,533,0,open,simulated
+p12,HR-0069,Faridabad,CTR-0069,522,575,0,open,simulated
+p12,BR-0070,Darbhanga,CTR-0070,876,878,0,open,simulated
+p12,UP-0071,Bahraich,CTR-0071,1040,579,0,open,simulated
+p12,TS-0072,Rangareddy,CTR-0072,732,691,0,open,simulated
+p12,AS-0073,Kamrup Metropolitan,CTR-0073,354,0,0,closed,simulated
+p12,WB-0074,Malda,CTR-0074,1076,1012,0,open,simulated
+p12,MH-0075,Thane,CTR-0075,2430,1516,0,open,simulated
+p12,WB-0076,Howrah,CTR-0076,1437,1270,0,open,simulated
+p12,RJ-0077,Jodhpur,CTR-0077,981,973,0,open,simulated
+p12,CG-0078,Raipur,CTR-0078,919,937,0,open,simulated
+p12,MP-0079,Indore,CTR-0079,745,576,0,open,simulated
+p12,CG-0080,Durg,CTR-0080,965,895,0,open,simulated
+p12,UP-0081,Lucknow,CTR-0081,1151,728,0,open,simulated
+p12,WB-0082,Murshidabad,CTR-0082,1690,1175,0,open,simulated
+p12,PB-0083,Amritsar,CTR-0083,576,636,0,open,simulated
+p12,JK-0084,Anantnag,CTR-0084,279,225,0,open,simulated
+p12,UP-0085,Varanasi,CTR-0085,896,485,0,open,simulated
+p12,TN-0086,Tiruchirappalli,CTR-0086,825,641,0,open,simulated
+p12,BR-0087,Bhagalpur,CTR-0087,652,575,0,open,simulated
+p12,UK-0088,Pithoragarh,CTR-0088,112,133,0,open,simulated
+p12,MH-0089,Pune,CTR-0089,2512,1462,0,open,simulated
+p12,DL-0090,West Delhi,CTR-0090,670,586,0,open,simulated
+p12,RJ-0091,Bikaner,CTR-0091,666,522,0,open,simulated
+p12,MP-0092,Dhar,CTR-0092,536,579,150,open,simulated
+p12,KA-0093,Dakshina Kannada,CTR-0093,577,403,0,open,simulated
+p12,TS-0094,Khammam,CTR-0094,373,337,0,open,simulated
+p12,PB-0095,Ludhiana,CTR-0095,1051,1011,0,open,simulated
+p12,UP-0096,Azamgarh,CTR-0096,1298,813,0,open,simulated
+p12,MH-0097,Raigad,CTR-0097,687,697,0,open,simulated
+p12,HR-0098,Hisar,CTR-0098,460,0,0,closed,simulated
+p12,TS-0099,Medchal-Malkajgiri,CTR-0099,700,637,0,open,simulated
+p12,BR-0100,Muzaffarpur,CTR-0100,1379,1268,0,open,simulated

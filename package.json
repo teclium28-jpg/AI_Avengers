@@ -1,0 +1,25 @@
+{
+  "name": "fairshare",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @fairshare/web",
+    "dev:api": "npm run dev -w @fairshare/api",
+    "check:db": "node scripts/check-database.mjs",
+    "test": "npm run test --workspaces --if-present && npm run test:db",
+    "test:db": "node --test tests/database/*.test.mjs",
+    "test:backend": "node --experimental-strip-types --test tests/backend/*.test.*",
+    "test:mutations": "node tests/backend/mutations.mjs",
+    "build": "npm run build -w @fairshare/web",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
+    "embedded-postgres": "^17.11.0-beta.19",
+    "fast-check": "^4.10.2"
+  }
+}

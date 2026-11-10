@@ -1,0 +1,6 @@
+period_id,donation_id,donor_type,received_at,donated_kits,stock_type,as_of_date
+p1,D001,Corporate CSR,Chennai,5432,confirmed,2026-11-10
+p1,D002,Individual drive,Pune,2328,confirmed,2026-11-10
+p1,D003,Retail surplus,Kolkata,3880,confirmed,2026-11-10
+p1,D004,Government scheme,Pune,3104,confirmed,2026-11-10
+p1,D005,NGO partner,Mumbai,776,confirmed,2026-11-10
