@@ -1,0 +1,63 @@
+{
+  "name": "04-extra-stock",
+  "input": {
+    "periodId": "p1",
+    "stockKits": 140,
+    "regions": [
+      {
+        "periodId": "p1",
+        "regionId": "A",
+        "regionName": "A",
+        "centerId": "center-0",
+        "demandKits": 60,
+        "capacityKits": 60,
+        "priorDispatchedKits": 0,
+        "status": "open",
+        "provenance": "simulated"
+      },
+      {
+        "periodId": "p1",
+        "regionId": "B",
+        "regionName": "B",
+        "centerId": "center-1",
+        "demandKits": 60,
+        "capacityKits": 20,
+        "priorDispatchedKits": 0,
+        "status": "open",
+        "provenance": "simulated"
+      },
+      {
+        "periodId": "p1",
+        "regionId": "C",
+        "regionName": "C",
+        "centerId": "center-2",
+        "demandKits": 60,
+        "capacityKits": 60,
+        "priorDispatchedKits": 0,
+        "status": "open",
+        "provenance": "simulated"
+      }
+    ]
+  },
+  "expected": {
+    "allocations": [
+      {
+        "regionId": "A",
+        "allocatedKits": 60,
+        "newlyAllocatedKits": 60
+      },
+      {
+        "regionId": "B",
+        "allocatedKits": 20,
+        "newlyAllocatedKits": 20
+      },
+      {
+        "regionId": "C",
+        "allocatedKits": 60,
+        "newlyAllocatedKits": 60
+      }
+    ],
+    "totalAllocatedKits": 140,
+    "unallocatedKits": 0
+  }
+}

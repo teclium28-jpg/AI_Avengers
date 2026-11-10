@@ -1,0 +1,63 @@
+{
+  "name": "07-closed",
+  "input": {
+    "periodId": "p1",
+    "stockKits": 120,
+    "regions": [
+      {
+        "periodId": "p1",
+        "regionId": "A",
+        "regionName": "A",
+        "centerId": "center-0",
+        "demandKits": 60,
+        "capacityKits": 60,
+        "priorDispatchedKits": 0,
+        "status": "open",
+        "provenance": "simulated"
+      },
+      {
+        "periodId": "p1",
+        "regionId": "B",
+        "regionName": "B",
+        "centerId": "center-1",
+        "demandKits": 60,
+        "capacityKits": 40,
+        "priorDispatchedKits": 0,
+        "status": "open",
+        "provenance": "simulated"
+      },
+      {
+        "periodId": "p1",
+        "regionId": "C",
+        "regionName": "C",
+        "centerId": "center-2",
+        "demandKits": 60,
+        "capacityKits": 0,
+        "priorDispatchedKits": 0,
+        "status": "closed",
+        "provenance": "simulated"
+      }
+    ]
+  },
+  "expected": {
+    "allocations": [
+      {
+        "regionId": "A",
+        "allocatedKits": 60,
+        "newlyAllocatedKits": 60
+      },
+      {
+        "regionId": "B",
+        "allocatedKits": 40,
+        "newlyAllocatedKits": 40
+      },
+      {
+        "regionId": "C",
+        "allocatedKits": 0,
+        "newlyAllocatedKits": 0
+      }
+    ],
+    "totalAllocatedKits": 100,
+    "unallocatedKits": 20
+  }
+}

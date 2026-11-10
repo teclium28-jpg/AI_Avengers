@@ -1,0 +1,63 @@
+{
+  "name": "10-exact-ties",
+  "input": {
+    "periodId": "p1",
+    "stockKits": 5,
+    "regions": [
+      {
+        "periodId": "p1",
+        "regionId": "A",
+        "regionName": "A",
+        "centerId": "center-0",
+        "demandKits": 4,
+        "capacityKits": 4,
+        "priorDispatchedKits": 2,
+        "status": "open",
+        "provenance": "simulated"
+      },
+      {
+        "periodId": "p1",
+        "regionId": "B",
+        "regionName": "B",
+        "centerId": "center-1",
+        "demandKits": 2,
+        "capacityKits": 2,
+        "priorDispatchedKits": 1,
+        "status": "open",
+        "provenance": "simulated"
+      },
+      {
+        "periodId": "p1",
+        "regionId": "C",
+        "regionName": "C",
+        "centerId": "center-2",
+        "demandKits": 2,
+        "capacityKits": 2,
+        "priorDispatchedKits": 1,
+        "status": "open",
+        "provenance": "simulated"
+      }
+    ]
+  },
+  "expected": {
+    "allocations": [
+      {
+        "regionId": "A",
+        "allocatedKits": 2,
+        "newlyAllocatedKits": 0
+      },
+      {
+        "regionId": "B",
+        "allocatedKits": 2,
+        "newlyAllocatedKits": 1
+      },
+      {
+        "regionId": "C",
+        "allocatedKits": 1,
+        "newlyAllocatedKits": 0
+      }
+    ],
+    "totalAllocatedKits": 5,
+    "unallocatedKits": 0
+  }
+}

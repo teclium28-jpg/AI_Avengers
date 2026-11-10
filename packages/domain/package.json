@@ -5,7 +5,8 @@
   "exports": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test test/*.test.ts"
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "bench": "node --experimental-strip-types bench/optimization.bench.ts"
   },
   "devDependencies": { "typescript": "^5.0.0" }
 }

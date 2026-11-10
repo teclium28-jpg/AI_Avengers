@@ -1,0 +1,63 @@
+{
+  "name": "08-saturation",
+  "input": {
+    "periodId": "p1",
+    "stockKits": 100,
+    "regions": [
+      {
+        "periodId": "p1",
+        "regionId": "A",
+        "regionName": "A",
+        "centerId": "center-0",
+        "demandKits": 3,
+        "capacityKits": 10,
+        "priorDispatchedKits": 0,
+        "status": "open",
+        "provenance": "simulated"
+      },
+      {
+        "periodId": "p1",
+        "regionId": "B",
+        "regionName": "B",
+        "centerId": "center-1",
+        "demandKits": 4,
+        "capacityKits": 2,
+        "priorDispatchedKits": 0,
+        "status": "open",
+        "provenance": "simulated"
+      },
+      {
+        "periodId": "p1",
+        "regionId": "C",
+        "regionName": "C",
+        "centerId": "center-2",
+        "demandKits": 0,
+        "capacityKits": 8,
+        "priorDispatchedKits": 0,
+        "status": "open",
+        "provenance": "simulated"
+      }
+    ]
+  },
+  "expected": {
+    "allocations": [
+      {
+        "regionId": "A",
+        "allocatedKits": 3,
+        "newlyAllocatedKits": 3
+      },
+      {
+        "regionId": "B",
+        "allocatedKits": 2,
+        "newlyAllocatedKits": 2
+      },
+      {
+        "regionId": "C",
+        "allocatedKits": 0,
+        "newlyAllocatedKits": 0
+      }
+    ],
+    "totalAllocatedKits": 5,
+    "unallocatedKits": 95
+  }
+}

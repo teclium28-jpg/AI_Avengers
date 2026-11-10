@@ -8,8 +8,11 @@
     "test": "node --experimental-strip-types --test test/*.test.ts"
   },
   "dependencies": {
+    "@fairshare/domain": "*",
     "hono": "^4.0.0",
-    "postgres": "^3.4.9"
+    "jose": "^6.2.17",
+    "postgres": "^3.4.9",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "typescript": "^5.0.0",

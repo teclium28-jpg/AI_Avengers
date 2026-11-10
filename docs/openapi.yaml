@@ -1,0 +1,86 @@
+openapi: 3.1.0
+info:
+  title: FairShare backend
+  version: 1.0.0
+  description: Concise route index. Strict request schemas are apps/api/src/contracts.ts; response details are docs/backend-handoff.md.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+    organization: []
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}
+    organization: {type: apiKey, in: header, name: X-Organization-Id}
+  parameters:
+    id: {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    key: {name: Idempotency-Key, in: header, required: true, schema: {type: string, format: uuid}}
+  responses:
+    error:
+      description: Structured error with code, message, requestId and optional details. Status 401/403/404/409/413/422/429/503.
+paths:
+  /health:
+    get:
+      security: []
+      responses: {'200': {description: Liveness}}
+  /periods/{id}/snapshot:
+    parameters: [{$ref: '#/components/parameters/id'}]
+    get:
+      responses: {'200': {description: AuthoritativeSnapshot}, default: {$ref: '#/components/responses/error'}}
+  /imports:
+    post:
+      parameters: [{$ref: '#/components/parameters/key'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, required: [periodId, expectedRevision, provenance, regions, stock], description: ImportRequest in contracts.ts}
+      responses: {'201': {description: Committed revision}, default: {$ref: '#/components/responses/error'}}
+  /plans/accept:
+    post:
+      parameters: [{$ref: '#/components/parameters/key'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, required: [periodId, expectedRevision, algorithm, reason], description: AcceptRequest in contracts.ts}
+      responses: {'201': {description: Plan ID, receipt ID, revision, fingerprint}, default: {$ref: '#/components/responses/error'}}
+  /movements/{id}/events:
+    parameters: [{$ref: '#/components/parameters/id'}]
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, required: [reservationId, eventKey, eventType, quantityKits, reason, source, reference, provenance, occurredAt], description: EventRequest in contracts.ts}
+      responses: {'201': {description: Event and reconciled balances}, '422': {description: Invalid request or preserved conflicting report}, default: {$ref: '#/components/responses/error'}}
+  /movements/{id}:
+    parameters: [{$ref: '#/components/parameters/id'}]
+    get:
+      responses: {'200': {description: Movement evidence and balances}, default: {$ref: '#/components/responses/error'}}
+  /reviews/{id}:
+    parameters: [{$ref: '#/components/parameters/id'}]
+    patch:
+      parameters: [{$ref: '#/components/parameters/key'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, required: [periodId, status, reason, provenance], description: ReviewRequest in contracts.ts}
+      responses: {'200': {description: Updated review and audit}, default: {$ref: '#/components/responses/error'}}
+  /periods/{id}/summary:
+    parameters: [{$ref: '#/components/parameters/id'}]
+    get:
+      parameters:
+        - {name: cursor, in: query, schema: {type: string, format: uuid}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 25}}
+      responses: {'200': {description: Reservations and nextCursor}, default: {$ref: '#/components/responses/error'}}
+  /receipts/{id}/replay:
+    parameters: [{$ref: '#/components/parameters/id'}]
+    get:
+      responses: {'200': {description: Exact replay, mismatch, tampered or engine_unavailable}, default: {$ref: '#/components/responses/error'}}
+  /receipts/{id}/export:
+    parameters: [{$ref: '#/components/parameters/id'}]
+    get:
+      parameters: [{name: format, in: query, required: true, schema: {enum: [csv, html]}}]
+      responses: {'200': {description: Escaped downloadable receipt}, default: {$ref: '#/components/responses/error'}}

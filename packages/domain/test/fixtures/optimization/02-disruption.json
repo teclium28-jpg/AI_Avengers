@@ -1,0 +1,63 @@
+{
+  "name": "02-disruption",
+  "input": {
+    "periodId": "p1",
+    "stockKits": 120,
+    "regions": [
+      {
+        "periodId": "p1",
+        "regionId": "A",
+        "regionName": "A",
+        "centerId": "center-0",
+        "demandKits": 60,
+        "capacityKits": 60,
+        "priorDispatchedKits": 0,
+        "status": "open",
+        "provenance": "simulated"
+      },
+      {
+        "periodId": "p1",
+        "regionId": "B",
+        "regionName": "B",
+        "centerId": "center-1",
+        "demandKits": 60,
+        "capacityKits": 20,
+        "priorDispatchedKits": 0,
+        "status": "open",
+        "provenance": "simulated"
+      },
+      {
+        "periodId": "p1",
+        "regionId": "C",
+        "regionName": "C",
+        "centerId": "center-2",
+        "demandKits": 60,
+        "capacityKits": 60,
+        "priorDispatchedKits": 0,
+        "status": "open",
+        "provenance": "simulated"
+      }
+    ]
+  },
+  "expected": {
+    "allocations": [
+      {
+        "regionId": "A",
+        "allocatedKits": 50,
+        "newlyAllocatedKits": 50
+      },
+      {
+        "regionId": "B",
+        "allocatedKits": 20,
+        "newlyAllocatedKits": 20
+      },
+      {
+        "regionId": "C",
+        "allocatedKits": 50,
+        "newlyAllocatedKits": 50
+      }
+    ],
+    "totalAllocatedKits": 120,
+    "unallocatedKits": 0
+  }
+}
