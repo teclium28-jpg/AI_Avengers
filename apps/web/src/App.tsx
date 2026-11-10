@@ -13,6 +13,7 @@ import { HubOperatorPortal } from "./views/HubOperatorPortal";
 import { CommunityNgoPortal } from "./views/CommunityNgoPortal";
 import { ReviewAcceptModal } from "./components/modals/ReviewAcceptModal";
 import { RecordMovementModal } from "./components/modals/RecordMovementModal";
+import { ErrorBoundary } from "./components/common/ErrorBoundary";
 
 const AuthenticatedTerminal: React.FC = () => {
   const { activePage } = useOperational();
@@ -57,20 +58,28 @@ const RootRouter: React.FC = () => {
     return <LoginView />;
   }
 
+  const role = currentUser.role;
+
   return (
     <OperationalProvider>
-      {currentUser.role === "admin" && <AuthenticatedTerminal />}
-      {currentUser.role === "hub_operator" && <HubOperatorPortal />}
-      {currentUser.role === "community_ngo" && <CommunityNgoPortal />}
+      {role === "hub_operator" ? (
+        <HubOperatorPortal />
+      ) : role === "community_ngo" ? (
+        <CommunityNgoPortal />
+      ) : (
+        <AuthenticatedTerminal />
+      )}
     </OperationalProvider>
   );
 };
 
 export const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <RootRouter />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <RootRouter />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
 

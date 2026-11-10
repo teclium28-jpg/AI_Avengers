@@ -70,9 +70,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const saved = localStorage.getItem("fairshare_auth_user");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === "object") {
+          // Normalize legacy roles
+          if (parsed.role === "coordinator") parsed.role = "admin";
+          if (parsed.role === "operator") parsed.role = "hub_operator";
+          if (parsed.role === "reviewer") parsed.role = "community_ngo";
+
+          if (["admin", "hub_operator", "community_ngo"].includes(parsed.role)) {
+            return parsed as UserProfile;
+          }
+        }
       } catch {
-        return null;
+        return PRESET_PROFILES[0];
       }
     }
     // Default to Swayam (State Admin) so the terminal is immediately operational

@@ -224,13 +224,21 @@ export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ c
   });
 
   const [authoritativeCenters, setAuthoritativeCenters] = useState<CenterEntity[]>(() => {
-    const saved = localStorage.getItem("fairshare_centers");
-    return saved ? JSON.parse(saved) : SEED_CENTERS;
+    try {
+      const saved = localStorage.getItem("fairshare_centers");
+      return saved ? JSON.parse(saved) : SEED_CENTERS;
+    } catch {
+      return SEED_CENTERS;
+    }
   });
 
   const [authoritativeRegions, setAuthoritativeRegions] = useState<RegionEntity[]>(() => {
-    const saved = localStorage.getItem("fairshare_regions");
-    return saved ? JSON.parse(saved) : SEED_REGIONS;
+    try {
+      const saved = localStorage.getItem("fairshare_regions");
+      return saved ? JSON.parse(saved) : SEED_REGIONS;
+    } catch {
+      return SEED_REGIONS;
+    }
   });
 
   const [receipts, setReceipts] = useState<DecisionReceiptEntity[]>(() => {
@@ -250,8 +258,12 @@ export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ c
   });
 
   const [movements, setMovements] = useState<MovementRecord[]>(() => {
-    const saved = localStorage.getItem("fairshare_movements");
-    return saved ? JSON.parse(saved) : SEED_MOVEMENTS;
+    try {
+      const saved = localStorage.getItem("fairshare_movements");
+      return saved ? JSON.parse(saved) : SEED_MOVEMENTS;
+    } catch {
+      return SEED_MOVEMENTS;
+    }
   });
 
   // Staged Studio state
