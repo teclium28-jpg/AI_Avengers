@@ -11,12 +11,15 @@ import {
   Info,
 } from "lucide-react";
 import { useOperational } from "../context/OperationalContext";
+import { useAuth } from "../context/AuthContext";
 
 interface ReconciliationViewProps {
   onOpenRecordModal: () => void;
 }
 
 export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ onOpenRecordModal }) => {
+  const { currentUser } = useAuth();
+  const role = currentUser?.role || "admin";
   const { dispatchReconciliation, centerReconciliation, movements } = useOperational();
 
   // Formula-safe CSV exporter
@@ -57,13 +60,31 @@ export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ onOpenRe
         </div>
 
         <div className="flex items-center space-x-3 no-print">
-          <button
-            onClick={onOpenRecordModal}
-            className="inline-flex items-center px-3.5 py-2 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow-sm"
-          >
-            <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
-            Record Movement Waybill
-          </button>
+          {role === "admin" && (
+            <button
+              onClick={onOpenRecordModal}
+              className="inline-flex items-center px-3.5 py-2 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow-sm"
+            >
+              <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
+              Record Movement Waybill
+            </button>
+          )}
+
+          {role === "hub_operator" && (
+            <button
+              onClick={onOpenRecordModal}
+              className="inline-flex items-center px-3.5 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm"
+            >
+              <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
+              Confirm Truck Arrival (CTR-B)
+            </button>
+          )}
+
+          {role === "community_ngo" && (
+            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-mono text-amber-800 bg-amber-50 border border-amber-200">
+              Ward B Inbound Supply Monitor
+            </span>
+          )}
           <button
             onClick={handleExportSafeCsv}
             className="inline-flex items-center px-3.5 py-2 text-xs font-medium text-zinc-700 bg-white border border-zinc-300 rounded-lg hover:bg-zinc-50 shadow-sm"

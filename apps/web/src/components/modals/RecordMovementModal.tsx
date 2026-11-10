@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Truck, X, CheckCircle2 } from "lucide-react";
 import { useOperational } from "../../context/OperationalContext";
+import { useAuth } from "../../context/AuthContext";
 import type { MovementType } from "../../types";
 
 interface RecordMovementModalProps {
@@ -13,11 +14,24 @@ export const RecordMovementModal: React.FC<RecordMovementModalProps> = ({
   onClose,
 }) => {
   const { authoritativeCenters, recordMovementEvent } = useOperational();
+  const { currentUser } = useAuth();
 
   const [centerId, setCenterId] = useState(
-    authoritativeCenters.length > 0 ? authoritativeCenters[0].centerId : "CTR-A"
+    currentUser?.assignedFacilityId ||
+      (authoritativeCenters.length > 0 ? authoritativeCenters[0].centerId : "CTR-A")
   );
-  const [movementType, setMovementType] = useState<MovementType>("dispatch");
+  const [movementType, setMovementType] = useState<MovementType>(
+    currentUser?.role === "hub_operator" ? "receipt" : "dispatch"
+  );
+
+  useEffect(() => {
+    if (currentUser?.assignedFacilityId) {
+      setCenterId(currentUser.assignedFacilityId);
+    }
+    if (currentUser?.role === "hub_operator") {
+      setMovementType("receipt");
+    }
+  }, [currentUser]);
   const [quantity, setQuantity] = useState<number>(20);
   const [waybill, setWaybill] = useState<string>(`WB-MMR-${Math.floor(1000 + Math.random() * 9000)}`);
   const [carrier, setCarrier] = useState<string>("State Logistics Fleet #MH-04-E-8821");
@@ -37,7 +51,7 @@ export const RecordMovementModal: React.FC<RecordMovementModalProps> = ({
       quantityKits: quantity,
       waybillNumber: waybill.trim() || `WB-MMR-${Date.now().toString().slice(-4)}`,
       carrierOrAgent: carrier.trim() || "Local Transport Service",
-      verifiedBy: "Swayam (Chief Operations Coordinator)",
+      verifiedBy: `${currentUser?.name || "Authorized Officer"} (${currentUser?.roleTitle || "Operations"})`,
       notes: notes.trim() || "Operational transit logged via terminal.",
     });
 

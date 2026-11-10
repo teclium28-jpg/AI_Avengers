@@ -31,7 +31,8 @@ export type NavigationPage =
   | "centers"
   | "intake"
   | "reconciliation"
-  | "audit";
+  | "audit"
+  | "community_request";
 
 export type RegionOperatingStatus = "active" | "ineligible";
 export type CenterOperatingStatus = "active" | "constrained" | "closed";

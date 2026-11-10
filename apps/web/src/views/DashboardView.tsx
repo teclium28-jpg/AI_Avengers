@@ -13,6 +13,7 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { useOperational } from "../context/OperationalContext";
+import { useAuth } from "../context/AuthContext";
 import type { CalculatedAllocationItem, DecisionReceiptEntity } from "../types";
 
 export const DashboardView: React.FC = () => {
@@ -30,6 +31,9 @@ export const DashboardView: React.FC = () => {
     movements,
     setActivePage,
   } = useOperational();
+
+  const { currentUser } = useAuth();
+  const role = currentUser?.role || "admin";
 
   const totalDemand = currentPlan.reduce(
     (sum: number, item: CalculatedAllocationItem) => sum + item.demandKits,
@@ -53,23 +57,59 @@ export const DashboardView: React.FC = () => {
             <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-blue-50 text-blue-700 border border-blue-200">
               Provenance: Simulated Fixture
             </span>
+            {role === "hub_operator" && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-blue-100 text-blue-900 border border-blue-300">
+                Depot CTR-B Scoped
+              </span>
+            )}
+            {role === "community_ngo" && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-amber-100 text-amber-900 border border-amber-300">
+                Ward B Scoped
+              </span>
+            )}
           </div>
           <h1 className="text-xl font-bold text-zinc-950 mt-1.5 font-sans">
-            Humanitarian Food Allocation & Distribution Register
+            {role === "hub_operator"
+              ? "Dharavi Logistics Hub Terminal (Depot CTR-B)"
+              : role === "community_ngo"
+              ? "Dharavi Community Aid Station (Ward B Relief)"
+              : "Humanitarian Food Allocation & Distribution Register"}
           </h1>
           <p className="text-xs text-zinc-500 mt-1">
-            Authoritative decision-support terminal for State Disaster Food Relief & Humanitarian Logistics.
+            {role === "hub_operator"
+              ? "Warehouse operations terminal for vehicle receiving, physical kit handling capacity, and ground disruption reporting."
+              : role === "community_ngo"
+              ? "Humanitarian aid partner portal for family census tracking, ration requests, and Progressive Max-Min fairness verification."
+              : "Authoritative decision-support terminal for State Disaster Food Relief & Humanitarian Logistics."}
           </p>
         </div>
 
         <div className="flex items-center space-x-3">
-          <button
-            onClick={() => setActivePage("studio")}
-            className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700 shadow-sm transition-colors"
-          >
-            Launch Allocation Planner
-            <ArrowRight className="w-4 h-4 ml-1.5" />
-          </button>
+          {role === "hub_operator" ? (
+            <button
+              onClick={() => setActivePage("centers")}
+              className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-xs font-semibold text-white hover:bg-blue-700 shadow-sm transition-colors"
+            >
+              Manage Depot Capacity
+              <ArrowRight className="w-4 h-4 ml-1.5" />
+            </button>
+          ) : role === "community_ngo" ? (
+            <button
+              onClick={() => setActivePage("community_request")}
+              className="inline-flex items-center px-4 py-2 rounded-lg bg-amber-600 text-xs font-semibold text-white hover:bg-amber-700 shadow-sm transition-colors"
+            >
+              Submit Food Request
+              <ArrowRight className="w-4 h-4 ml-1.5" />
+            </button>
+          ) : (
+            <button
+              onClick={() => setActivePage("studio")}
+              className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700 shadow-sm transition-colors"
+            >
+              Launch Allocation Planner
+              <ArrowRight className="w-4 h-4 ml-1.5" />
+            </button>
+          )}
         </div>
       </div>
 

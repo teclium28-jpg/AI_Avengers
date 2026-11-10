@@ -4,6 +4,7 @@ export type UserRole = "admin" | "hub_operator" | "community_ngo";
 
 export interface UserProfile {
   id: string;
+  username: string;
   name: string;
   email: string;
   role: UserRole;
@@ -12,55 +13,61 @@ export interface UserProfile {
   department: string;
   badgeNumber: string;
   avatarColor: string;
-  assignedFacilityId?: string; // for hub operators e.g. "CTR-B"
-  assignedRegionId?: string;   // for community NGOs e.g. "B"
+  assignedFacilityId?: string; // e.g. "CTR-B" for hub operators
+  assignedRegionId?: string;   // e.g. "B" for community NGOs
 }
 
-export const PRESET_PROFILES: UserProfile[] = [
+export const OFFICIAL_USERS: (UserProfile & { defaultPassword: string })[] = [
   {
-    id: "USR-SWAYAM",
+    id: "swayam",
+    username: "swayam",
     name: "Swayam Ruparel",
-    email: "swayam.ruparel@relief.maharashtra.gov.in",
+    email: "swayam@fairshare.gov.in",
     role: "admin",
     roleTitle: "State Relief Director",
-    agency: "Maharashtra State Food Distribution Authority",
-    department: "State Disaster Operations Command",
-    badgeNumber: "DIR-8812",
+    agency: "State Disaster Management & Food Relief Authority",
+    department: "State Logistics Command",
+    badgeNumber: "DIR-01",
     avatarColor: "bg-emerald-600",
+    defaultPassword: "admin@123",
   },
   {
-    id: "USR-SUNITA",
+    id: "sunita",
+    username: "sunita",
     name: "Sunita Kamble",
-    email: "sunita.kamble@depot.dharavi.gov.in",
+    email: "sunita@depot.dharavi.gov.in",
     role: "hub_operator",
-    roleTitle: "Dharavi Depot Warehouse Lead",
+    roleTitle: "Dharavi Logistics Hub Lead",
     agency: "Central Staging Depot (CTR-B)",
-    department: "Ward G-North Warehouse & Transport",
+    department: "Depot Staging & Vehicle Receiving",
     badgeNumber: "HUB-4020",
     avatarColor: "bg-blue-600",
     assignedFacilityId: "CTR-B",
+    defaultPassword: "admin@123",
   },
   {
-    id: "USR-FARHAN",
+    id: "farhan",
+    username: "farhan",
     name: "Dr. Farhan Shaikh",
-    email: "farhan.shaikh@sneha-relief.org",
+    email: "farhan@sneha-relief.org",
     role: "community_ngo",
-    roleTitle: "Community Relief Coordinator",
+    roleTitle: "Community Food Requester & Relief Lead",
     agency: "Sneha & Dharavi Community Relief NGO",
     department: "Ground Census & Family Assistance",
     badgeNumber: "NGO-7104",
     avatarColor: "bg-amber-600",
     assignedRegionId: "B",
+    defaultPassword: "admin@123",
   },
 ];
+
+export const PRESET_PROFILES: UserProfile[] = OFFICIAL_USERS.map(({ defaultPassword, ...profile }) => profile);
 
 interface AuthContextValue {
   currentUser: UserProfile | null;
   isAuthenticated: boolean;
-  login: (profile: UserProfile) => void;
-  loginCustom: (email: string, role: UserRole, agency?: string) => boolean;
+  loginWithCredentials: (identifier: string, password: string) => { success: boolean; error?: string };
   logout: () => void;
-  switchProfile: (userId: string) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -72,21 +79,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === "object") {
-          // Normalize legacy roles
-          if (parsed.role === "coordinator") parsed.role = "admin";
-          if (parsed.role === "operator") parsed.role = "hub_operator";
-          if (parsed.role === "reviewer") parsed.role = "community_ngo";
-
-          if (["admin", "hub_operator", "community_ngo"].includes(parsed.role)) {
-            return parsed as UserProfile;
-          }
+          // Normalize legacy id/username if needed
+          const matched = PRESET_PROFILES.find(
+            (p) =>
+              p.id === parsed.id ||
+              p.username.toLowerCase() === parsed.username?.toLowerCase() ||
+              p.name.toLowerCase() === parsed.name?.toLowerCase() ||
+              p.role === parsed.role
+          );
+          if (matched) return matched;
         }
       } catch {
-        return PRESET_PROFILES[0];
+        return null;
       }
     }
-    // Default to Swayam (State Admin) so the terminal is immediately operational
-    return PRESET_PROFILES[0];
+    // Return null so the real login screen is shown if not logged in
+    return null;
   });
 
   useEffect(() => {
@@ -97,66 +105,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [currentUser]);
 
-  const login = (profile: UserProfile) => {
+  const loginWithCredentials = (
+    identifier: string,
+    password: string
+  ): { success: boolean; error?: string } => {
+    const trimmedId = identifier.trim().toLowerCase();
+    const trimmedPw = password.trim();
+
+    if (!trimmedId) {
+      return { success: false, error: "Please enter your username or official email." };
+    }
+
+    if (!trimmedPw) {
+      return { success: false, error: "Please enter your password." };
+    }
+
+    // Check credentials against the official users
+    const matched = OFFICIAL_USERS.find(
+      (u) =>
+        u.username.toLowerCase() === trimmedId ||
+        u.email.toLowerCase() === trimmedId ||
+        u.id.toLowerCase() === trimmedId ||
+        u.name.toLowerCase().includes(trimmedId)
+    );
+
+    if (!matched) {
+      return {
+        success: false,
+        error: "User not recognized. Valid authorized logins: 'swayam', 'sunita', or 'farhan'.",
+      };
+    }
+
+    if (trimmedPw !== matched.defaultPassword) {
+      return {
+        success: false,
+        error: "Incorrect password. The authorized access password is: admin@123",
+      };
+    }
+
+    const { defaultPassword, ...profile } = matched;
     setCurrentUser(profile);
-  };
-
-  const loginCustom = (email: string, role: UserRole, agency?: string): boolean => {
-    if (!email || !email.includes("@")) return false;
-    const namePart = email.split("@")[0].replace(/[._]/g, " ");
-    const formattedName = namePart
-      .split(" ")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
-
-    const newProfile: UserProfile = {
-      id: `USR-${Date.now().toString().slice(-4)}`,
-      name: formattedName || "Authorized Officer",
-      email,
-      role,
-      roleTitle:
-        role === "admin"
-          ? "State Logistics Director"
-          : role === "hub_operator"
-          ? "Warehouse Hub Manager"
-          : "Community Relief NGO Partner",
-      agency:
-        agency ||
-        (role === "admin"
-          ? "Maharashtra State Food Distribution Authority"
-          : role === "hub_operator"
-          ? "Central Node Depot (CTR-B)"
-          : "Community Food Relief Partner"),
-      department:
-        role === "admin"
-          ? "State Operations Command"
-          : role === "hub_operator"
-          ? "Depot Staging & Vehicle Receiving"
-          : "Community Aid Distribution",
-      badgeNumber: `SEC-${Math.floor(1000 + Math.random() * 9000)}`,
-      avatarColor:
-        role === "admin"
-          ? "bg-emerald-600"
-          : role === "hub_operator"
-          ? "bg-blue-600"
-          : "bg-amber-600",
-      assignedFacilityId: role === "hub_operator" ? "CTR-B" : undefined,
-      assignedRegionId: role === "community_ngo" ? "B" : undefined,
-    };
-
-    setCurrentUser(newProfile);
-    return true;
+    return { success: true };
   };
 
   const logout = () => {
     setCurrentUser(null);
-  };
-
-  const switchProfile = (userId: string) => {
-    const target = PRESET_PROFILES.find((p) => p.id === userId);
-    if (target) {
-      setCurrentUser(target);
-    }
+    localStorage.removeItem("fairshare_auth_user");
   };
 
   return (
@@ -164,10 +158,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         currentUser,
         isAuthenticated: !!currentUser,
-        login,
-        loginCustom,
+        loginWithCredentials,
         logout,
-        switchProfile,
       }}
     >
       {children}

@@ -17,6 +17,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useOperational } from "../context/OperationalContext";
+import { useAuth } from "../context/AuthContext";
 import { INDIA_REGIONS_CSV, INDIA_STOCK_CSV } from "../lib/indiaSamples";
 import { parseCsv, cleanRegionRows } from "@fairshare/domain";
 import type { RawRegionRow } from "../types";
@@ -26,6 +27,9 @@ interface PracticeDeskViewProps {
 }
 
 export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAcceptModal }) => {
+  const { currentUser } = useAuth();
+  const role = currentUser?.role || "admin";
+
   const {
     stagedStock,
     setStagedStock,
@@ -184,13 +188,20 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
             </button>
           </div>
 
-          <button
-            onClick={onOpenAcceptModal}
-            className="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
-          >
-            <Lock className="w-3.5 h-3.5 mr-1.5" />
-            Commit Plan (Rev {authoritativeRevision + 1})
-          </button>
+          {role === "admin" ? (
+            <button
+              onClick={onOpenAcceptModal}
+              className="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+            >
+              <Lock className="w-3.5 h-3.5 mr-1.5" />
+              Commit Plan (Rev {authoritativeRevision + 1})
+            </button>
+          ) : (
+            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-mono text-zinc-500 bg-zinc-100 border border-zinc-200">
+              <Lock className="w-3.5 h-3.5 mr-1 text-zinc-400" />
+              State Admin Lock (r{authoritativeRevision})
+            </span>
+          )}
         </div>
       </div>
 
@@ -209,15 +220,17 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
               </span>
               <span className="text-[11px] text-zinc-400 ml-1">kits</span>
             </div>
-            <button
-              onClick={() => {
-                setTempStockInput(stagedStock.toString());
-                setShowStockModal(true);
-              }}
-              className="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
-            >
-              Adjust
-            </button>
+            {role === "admin" && (
+              <button
+                onClick={() => {
+                  setTempStockInput(stagedStock.toString());
+                  setShowStockModal(true);
+                }}
+                className="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
+              >
+                Adjust
+              </button>
+            )}
           </div>
           <div className="text-[11px] text-zinc-400 mt-1">Confirmed inclusive allocation pool</div>
         </div>

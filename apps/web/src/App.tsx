@@ -9,8 +9,7 @@ import { DataIntakeView } from "./views/DataIntakeView";
 import { ReconciliationView } from "./views/ReconciliationView";
 import { AuditLedgerView } from "./views/AuditLedgerView";
 import { LoginView } from "./views/LoginView";
-import { HubOperatorPortal } from "./views/HubOperatorPortal";
-import { CommunityNgoPortal } from "./views/CommunityNgoPortal";
+import { CommunityRequestView } from "./views/CommunityRequestView";
 import { ReviewAcceptModal } from "./components/modals/ReviewAcceptModal";
 import { RecordMovementModal } from "./components/modals/RecordMovementModal";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
@@ -35,6 +34,7 @@ const AuthenticatedTerminal: React.FC = () => {
         <ReconciliationView onOpenRecordModal={() => setIsRecordMovementModalOpen(true)} />
       )}
       {activePage === "audit" && <AuditLedgerView />}
+      {activePage === "community_request" && <CommunityRequestView />}
 
       {/* Published Plan Modal */}
       <ReviewAcceptModal
@@ -58,17 +58,9 @@ const RootRouter: React.FC = () => {
     return <LoginView />;
   }
 
-  const role = currentUser.role;
-
   return (
     <OperationalProvider>
-      {role === "hub_operator" ? (
-        <HubOperatorPortal />
-      ) : role === "community_ngo" ? (
-        <CommunityNgoPortal />
-      ) : (
-        <AuthenticatedTerminal />
-      )}
+      <AuthenticatedTerminal />
     </OperationalProvider>
   );
 };

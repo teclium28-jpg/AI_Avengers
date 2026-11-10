@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   LayoutDashboard,
   SlidersHorizontal,
@@ -18,9 +18,11 @@ import {
   LogOut,
   UserCheck,
   Server,
+  HeartHandshake,
+  Send,
 } from "lucide-react";
 import { useOperational } from "../../context/OperationalContext";
-import { useAuth, PRESET_PROFILES } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import type { NavigationPage } from "../../types";
 import { FairShareLogo, FairShareIcon } from "../brand/FairShareLogo";
 import { checkApiHealth } from "../../lib/api";
@@ -46,7 +48,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     resetToFactoryDefaults,
   } = useOperational();
 
-  const { currentUser, logout, switchProfile } = useAuth();
+  const { currentUser, logout } = useAuth();
+  const role = currentUser?.role || "admin";
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -56,19 +59,38 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     checkApiHealth().then((res) => setApiOnline(res.online));
   }, []);
 
-  const navItems: { id: NavigationPage; label: string; icon: React.ElementType; badge?: string }[] = [
-    { id: "dashboard", label: "Operations Overview", icon: LayoutDashboard },
-    {
-      id: "studio",
-      label: "Allocation Studio",
-      icon: SlidersHorizontal,
-      badge: hasStagedChanges ? "Staged" : undefined,
-    },
-    { id: "centers", label: "Distribution Nodes", icon: Building2 },
-    { id: "intake", label: "Data Intake & Batching", icon: UploadCloud },
-    { id: "reconciliation", label: "Dispatch & Transit Ledger", icon: Truck },
-    { id: "audit", label: "Audit Trail & Receipts", icon: ShieldCheck },
-  ];
+  const navItems = useMemo<{ id: NavigationPage; label: string; icon: React.ElementType; badge?: string }[]>(() => {
+    if (role === "hub_operator") {
+      return [
+        { id: "dashboard", label: "Depot Overview (CTR-B)", icon: LayoutDashboard },
+        { id: "studio", label: "Depot Quota & Headroom", icon: SlidersHorizontal },
+        { id: "centers", label: "Dharavi Logistics Hub", icon: Building2 },
+        { id: "reconciliation", label: "Inbound Deliveries & Waybills", icon: Truck },
+      ];
+    }
+    if (role === "community_ngo") {
+      return [
+        { id: "dashboard", label: "Community Aid Overview", icon: LayoutDashboard },
+        { id: "community_request", label: "Submit Food Aid Request", icon: HeartHandshake },
+        { id: "reconciliation", label: "Inbound Supply Shipments", icon: Truck },
+        { id: "audit", label: "Fairness Guarantee & Audit", icon: ShieldCheck },
+      ];
+    }
+    // Admin (Swayam)
+    return [
+      { id: "dashboard", label: "Operations Overview", icon: LayoutDashboard },
+      {
+        id: "studio",
+        label: "Allocation Studio",
+        icon: SlidersHorizontal,
+        badge: hasStagedChanges ? "Staged" : undefined,
+      },
+      { id: "centers", label: "Distribution Nodes", icon: Building2 },
+      { id: "intake", label: "Data Intake & Batching", icon: UploadCloud },
+      { id: "reconciliation", label: "Dispatch & Transit Ledger", icon: Truck },
+      { id: "audit", label: "Audit Trail & Receipts", icon: ShieldCheck },
+    ];
+  }, [role, hasStagedChanges]);
 
   return (
     <div className="min-h-screen bg-zinc-50 flex flex-col md:flex-row antialiased text-zinc-900 font-sans">
@@ -191,21 +213,45 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
           {/* Quick Actions & User Profile */}
           <div className="flex items-center space-x-3">
-            <button
-              onClick={onOpenRecordMovementModal}
-              className="hidden sm:inline-flex items-center px-3 py-1.5 border border-zinc-300 rounded-lg text-xs font-medium text-zinc-700 bg-white hover:bg-zinc-50 transition-colors shadow-sm"
-            >
-              <Truck className="w-3.5 h-3.5 mr-1.5 text-zinc-500" />
-              Record Waybill
-            </button>
+            {role === "admin" && (
+              <>
+                <button
+                  onClick={onOpenRecordMovementModal}
+                  className="hidden sm:inline-flex items-center px-3 py-1.5 border border-zinc-300 rounded-lg text-xs font-medium text-zinc-700 bg-white hover:bg-zinc-50 transition-colors shadow-sm"
+                >
+                  <Truck className="w-3.5 h-3.5 mr-1.5 text-zinc-500" />
+                  Record Waybill
+                </button>
 
-            {hasStagedChanges && (
+                {hasStagedChanges && (
+                  <button
+                    onClick={onOpenPublishModal}
+                    className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-colors"
+                  >
+                    <Lock className="w-3.5 h-3.5 mr-1.5" />
+                    Publish Revision r{authoritativeRevision + 1}
+                  </button>
+                )}
+              </>
+            )}
+
+            {role === "hub_operator" && (
               <button
-                onClick={onOpenPublishModal}
-                className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-colors"
+                onClick={onOpenRecordMovementModal}
+                className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors"
               >
-                <Lock className="w-3.5 h-3.5 mr-1.5" />
-                Publish Revision r{authoritativeRevision + 1}
+                <Truck className="w-3.5 h-3.5 mr-1.5" />
+                Confirm Truck Arrival
+              </button>
+            )}
+
+            {role === "community_ngo" && (
+              <button
+                onClick={() => setActivePage("community_request")}
+                className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 shadow-sm transition-colors"
+              >
+                <Send className="w-3.5 h-3.5 mr-1.5" />
+                Submit Food Request
               </button>
             )}
 
@@ -240,45 +286,34 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 <ChevronDown className="w-3.5 h-3.5 text-zinc-400 hidden lg:block" />
               </button>
 
-              {/* Dropdown Menu */}
+              {/* Dropdown Menu - No Switcher, Only Sign Out */}
               {profileDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-zinc-200 py-2 z-50 text-xs">
                   <div className="px-4 py-3 border-b border-zinc-100">
                     <div className="font-bold text-zinc-950 text-sm">{currentUser?.name}</div>
                     <div className="text-[11px] text-zinc-500 font-mono">{currentUser?.email}</div>
-                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase font-mono">
-                      {currentUser?.role} • Badge {currentUser?.badgeNumber}
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-100 text-zinc-800 border border-zinc-200 uppercase font-mono">
+                        {currentUser?.role}
+                      </span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono">
+                        Badge {currentUser?.badgeNumber}
+                      </span>
+                      {currentUser?.assignedFacilityId && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200 font-mono">
+                          Depot {currentUser.assignedFacilityId}
+                        </span>
+                      )}
+                      {currentUser?.assignedRegionId && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 font-mono">
+                          Ward {currentUser.assignedRegionId}
+                        </span>
+                      )}
                     </div>
-                    <div className="text-[11px] text-zinc-400 mt-1 line-clamp-1">{currentUser?.agency}</div>
+                    <div className="text-[11px] text-zinc-400 mt-2 line-clamp-1">{currentUser?.agency}</div>
                   </div>
 
-                  <div className="px-2 py-2 border-b border-zinc-100">
-                    <span className="px-2 text-[10px] font-bold uppercase text-zinc-400 font-mono block mb-1">
-                      Switch Officer Credentials
-                    </span>
-                    {PRESET_PROFILES.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => {
-                          switchProfile(p.id);
-                          setProfileDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between text-xs transition-colors ${
-                          currentUser?.id === p.id
-                            ? "bg-zinc-100 font-semibold text-zinc-900"
-                            : "text-zinc-600 hover:bg-zinc-50"
-                        }`}
-                      >
-                        <div className="truncate">
-                          <div>{p.name}</div>
-                          <div className="text-[10px] text-zinc-400 truncate">{p.roleTitle}</div>
-                        </div>
-                        {currentUser?.id === p.id && <UserCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0 ml-1" />}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="p-1">
+                  <div className="p-1.5">
                     <button
                       onClick={() => {
                         setProfileDropdownOpen(false);

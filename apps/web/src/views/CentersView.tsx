@@ -11,9 +11,13 @@ import {
   Search,
 } from "lucide-react";
 import { useOperational } from "../context/OperationalContext";
+import { useAuth } from "../context/AuthContext";
 import type { CenterEntity, RegionEntity } from "../types";
 
 export const CentersView: React.FC = () => {
+  const { currentUser } = useAuth();
+  const role = currentUser?.role || "admin";
+
   const {
     stagedCenters,
     updateCenterCapacity,
@@ -72,13 +76,15 @@ export const CentersView: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700 shadow-sm transition-colors"
-        >
-          <Plus className="w-4 h-4 mr-1.5" />
-          Add Distribution Center
-        </button>
+        {role === "admin" && (
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700 shadow-sm transition-colors"
+          >
+            <Plus className="w-4 h-4 mr-1.5" />
+            Add Distribution Center
+          </button>
+        )}
       </div>
 
       {/* Filter & Search Bar */}
