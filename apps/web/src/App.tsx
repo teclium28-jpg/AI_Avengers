@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { OperationalProvider, useOperational } from "./context/OperationalContext";
 import { AppLayout } from "./components/layout/AppLayout";
 import { DashboardView } from "./views/DashboardView";
@@ -7,10 +8,11 @@ import { CentersView } from "./views/CentersView";
 import { DataIntakeView } from "./views/DataIntakeView";
 import { ReconciliationView } from "./views/ReconciliationView";
 import { AuditLedgerView } from "./views/AuditLedgerView";
+import { LoginView } from "./views/LoginView";
 import { ReviewAcceptModal } from "./components/modals/ReviewAcceptModal";
 import { RecordMovementModal } from "./components/modals/RecordMovementModal";
 
-const MainContent: React.FC = () => {
+const AuthenticatedTerminal: React.FC = () => {
   const { activePage } = useOperational();
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [isRecordMovementModalOpen, setIsRecordMovementModalOpen] = useState(false);
@@ -46,11 +48,25 @@ const MainContent: React.FC = () => {
   );
 };
 
-export const App: React.FC = () => {
+const RootRouter: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return <LoginView />;
+  }
+
   return (
     <OperationalProvider>
-      <MainContent />
+      <AuthenticatedTerminal />
     </OperationalProvider>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <RootRouter />
+    </AuthProvider>
   );
 };
 

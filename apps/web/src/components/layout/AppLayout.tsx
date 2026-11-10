@@ -15,8 +15,11 @@ import {
   X,
   ExternalLink,
   RotateCcw,
+  LogOut,
+  UserCheck,
 } from "lucide-react";
 import { useOperational } from "../../context/OperationalContext";
+import { useAuth, PRESET_PROFILES } from "../../context/AuthContext";
 import type { NavigationPage } from "../../types";
 import { FairShareLogo, FairShareIcon } from "../brand/FairShareLogo";
 
@@ -38,10 +41,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     periodName,
     authoritativeRevision,
     hasStagedChanges,
-    userName,
-    userRole,
     resetToFactoryDefaults,
   } = useOperational();
+
+  const { currentUser, logout, switchProfile } = useAuth();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -74,7 +77,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               Authority Tenant
             </span>
             <span className="text-xs font-medium text-zinc-800 line-clamp-1 mt-0.5">
-              {organizationName}
+              {currentUser?.agency || organizationName}
             </span>
           </div>
         </div>
@@ -186,19 +189,89 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               </button>
             )}
 
-            {/* Profile Avatar & Info */}
-            <div className="relative pl-3 border-l border-zinc-200 flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full bg-zinc-900 text-white font-semibold flex items-center justify-center text-xs">
-                {userName.slice(0, 2).toUpperCase()}
-              </div>
-              <div className="hidden lg:block text-left">
-                <span className="text-xs font-semibold text-zinc-900 block leading-none">
-                  {userName}
-                </span>
-                <span className="text-[10px] text-zinc-500 leading-tight block">
-                  {userRole}
-                </span>
-              </div>
+            {/* Profile Avatar & Interactive Dropdown */}
+            <div className="relative pl-3 border-l border-zinc-200">
+              <button
+                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                className="flex items-center space-x-2 p-1 rounded-lg hover:bg-zinc-100/70 transition-colors"
+              >
+                <div
+                  className={`w-8 h-8 rounded-full ${
+                    currentUser?.avatarColor || "bg-zinc-900"
+                  } text-white font-semibold flex items-center justify-center text-xs shadow-sm`}
+                >
+                  {currentUser?.name
+                    ? currentUser.name
+                        .split(" ")
+                        .map((w) => w[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase()
+                    : "FS"}
+                </div>
+                <div className="hidden lg:block text-left">
+                  <span className="text-xs font-semibold text-zinc-900 block leading-none">
+                    {currentUser?.name || "Authorized Officer"}
+                  </span>
+                  <span className="text-[10px] text-zinc-500 leading-tight block mt-0.5">
+                    {currentUser?.roleTitle || "Operations"}
+                  </span>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-zinc-400 hidden lg:block" />
+              </button>
+
+              {/* Dropdown Menu */}
+              {profileDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-zinc-200 py-2 z-50 text-xs">
+                  <div className="px-4 py-3 border-b border-zinc-100">
+                    <div className="font-bold text-zinc-950 text-sm">{currentUser?.name}</div>
+                    <div className="text-[11px] text-zinc-500 font-mono">{currentUser?.email}</div>
+                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase font-mono">
+                      {currentUser?.role} • Badge {currentUser?.badgeNumber}
+                    </div>
+                    <div className="text-[11px] text-zinc-400 mt-1 line-clamp-1">{currentUser?.agency}</div>
+                  </div>
+
+                  <div className="px-2 py-2 border-b border-zinc-100">
+                    <span className="px-2 text-[10px] font-bold uppercase text-zinc-400 font-mono block mb-1">
+                      Switch Officer Credentials
+                    </span>
+                    {PRESET_PROFILES.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          switchProfile(p.id);
+                          setProfileDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between text-xs transition-colors ${
+                          currentUser?.id === p.id
+                            ? "bg-zinc-100 font-semibold text-zinc-900"
+                            : "text-zinc-600 hover:bg-zinc-50"
+                        }`}
+                      >
+                        <div className="truncate">
+                          <div>{p.name}</div>
+                          <div className="text-[10px] text-zinc-400 truncate">{p.roleTitle}</div>
+                        </div>
+                        {currentUser?.id === p.id && <UserCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0 ml-1" />}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="p-1">
+                    <button
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        logout();
+                      }}
+                      className="w-full text-left px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-lg flex items-center space-x-2 font-medium transition-colors"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Lock Terminal & Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>

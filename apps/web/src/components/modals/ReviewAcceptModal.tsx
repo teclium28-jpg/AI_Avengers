@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { AlertCircle, CheckCircle2, Lock, RefreshCw, X, AlertTriangle } from "lucide-react";
+import { AlertCircle, CheckCircle2, Lock, RefreshCw, X, AlertTriangle, ShieldAlert } from "lucide-react";
 import { useOperational } from "../../context/OperationalContext";
+import { useAuth } from "../../context/AuthContext";
 
 interface ReviewAcceptModalProps {
   isOpen: boolean;
@@ -18,10 +19,11 @@ export const ReviewAcceptModal: React.FC<ReviewAcceptModalProps> = ({ isOpen, on
     resetStudioToAuthoritative,
   } = useOperational();
 
+  const { currentUser } = useAuth();
+  const isReviewer = currentUser?.role === "reviewer";
+
   const [justification, setJustification] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [simulateConflict, setSimulateConflict] = useState(false);
-  const [conflictError, setConflictError] = useState<string | null>(null);
   const [idempotencyKey] = useState<string>(() => crypto.randomUUID());
 
   if (!isOpen) return null;
@@ -48,20 +50,15 @@ export const ReviewAcceptModal: React.FC<ReviewAcceptModalProps> = ({ isOpen, on
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (justification.trim().length < 10) return;
-
-    if (simulateConflict) {
-      setConflictError(
-        `Conflict 409: Revision r${authoritativeRevision} was superseded by Revision r${
-          authoritativeRevision + 1
-        } by Ishaan. Please reload authoritative register.`
-      );
-      return;
-    }
+    if (isReviewer || justification.trim().length < 10) return;
 
     setIsSubmitting(true);
     try {
-      await publishAuthoritativePlan(justification, idempotencyKey);
+      await publishAuthoritativePlan(justification, idempotencyKey, {
+        actorId: currentUser?.id || "ACT-DIR-01",
+        actorName: currentUser?.name || "Authorized Officer",
+        actorRole: currentUser?.roleTitle || "Operations Coordinator",
+      });
       onClose();
     } finally {
       setIsSubmitting(false);
@@ -131,25 +128,15 @@ export const ReviewAcceptModal: React.FC<ReviewAcceptModalProps> = ({ isOpen, on
             </div>
           )}
 
-          {/* Conflict Error Notice */}
-          {conflictError && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-start space-x-2 text-rose-800">
-              <AlertCircle className="w-4 h-4 text-rose-600 mt-0.5 shrink-0" />
-              <div className="flex-1">
-                <span className="font-semibold">Concurrent Write Conflict</span>
-                <p className="mt-0.5">{conflictError}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConflictError(null);
-                    resetStudioToAuthoritative();
-                    onClose();
-                  }}
-                  className="mt-2 inline-flex items-center text-xs font-semibold text-rose-700 hover:text-rose-900 underline"
-                >
-                  <RefreshCw className="w-3 h-3 mr-1" />
-                  Reload Authoritative State
-                </button>
+          {/* Reviewer Notice */}
+          {isReviewer && (
+            <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg flex items-start space-x-2.5 text-purple-900">
+              <ShieldAlert className="w-4 h-4 text-purple-600 mt-0.5 shrink-0" />
+              <div>
+                <span className="font-semibold">Auditor Credentials (Read-Only):</span>
+                <p className="mt-0.5 leading-relaxed text-[11px]">
+                  You are authenticated with an Independent Auditor profile ({currentUser?.name}). You can review proposed allocations, but publishing regulatory revisions requires Coordinator credentials.
+                </p>
               </div>
             </div>
           )}
@@ -191,7 +178,7 @@ export const ReviewAcceptModal: React.FC<ReviewAcceptModalProps> = ({ isOpen, on
             </button>
             <button
               type="submit"
-              disabled={justification.trim().length < 10 || isSubmitting}
+              disabled={isReviewer || justification.trim().length < 10 || isSubmitting}
               className="inline-flex items-center px-4 py-2 font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 shadow-sm transition-colors"
             >
               <CheckCircle2 className="w-4 h-4 mr-1.5" />

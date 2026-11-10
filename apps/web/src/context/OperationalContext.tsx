@@ -243,7 +243,11 @@ interface OperationalContextValue {
   toggleCenterStatus: (centerId: string) => void;
   updateRegionDemand: (regionId: string, newDemand: number) => void;
   addNewCenter: (center: Omit<CenterEntity, "committedDispatches">) => void;
-  publishAuthoritativePlan: (justification: string, idempotencyKey: string) => Promise<void>;
+  publishAuthoritativePlan: (
+    justification: string,
+    idempotencyKey: string,
+    actor?: { actorId: string; actorName: string; actorRole: string }
+  ) => Promise<void>;
   recordMovementEvent: (event: Omit<MovementRecord, "recordId" | "timestampUTC" | "timestampIST">) => void;
   applyBatchIntake: (regions: RegionEntity[], stockKits: number) => void;
   resetStudioToAuthoritative: () => void;
@@ -515,7 +519,11 @@ export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setStagedRegions(authoritativeRegions.map((r) => ({ ...r })));
   };
 
-  const publishAuthoritativePlan = async (justification: string, idempotencyKey: string) => {
+  const publishAuthoritativePlan = async (
+    justification: string,
+    idempotencyKey: string,
+    actor?: { actorId: string; actorName: string; actorRole: string }
+  ) => {
     const nextRevision = authoritativeRevision + 1;
     const now = new Date();
 
@@ -542,10 +550,14 @@ export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ c
       statusOverrides,
     };
 
+    const effectiveActorId = actor?.actorId || "ACT-DIR-01";
+    const effectiveActorName = actor?.actorName || "Swayam";
+    const effectiveActorRole = actor?.actorRole || "Chief Operations Coordinator";
+
     const payloadToHash = {
       periodId: "2026-W46",
       revision: nextRevision,
-      actorId: "ACT-DIR-01",
+      actorId: effectiveActorId,
       algorithm: selectedAlgorithm,
       algorithmVersion: "SRS Progressive Max-Min Engine v3.1 (Integer BigInt)",
       changeJustification: justification,
@@ -559,9 +571,9 @@ export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ c
       receiptId: `RCPT-MMR-2026-${String(nextRevision).padStart(3, "0")}`,
       periodId: "2026-W46",
       revision: nextRevision,
-      actorId: "ACT-DIR-01",
-      actorName: "Swayam",
-      actorRole: "Chief Operations Coordinator",
+      actorId: effectiveActorId,
+      actorName: effectiveActorName,
+      actorRole: effectiveActorRole,
       timestampUTC: now.toISOString(),
       timestampIST:
         now.toLocaleString("en-IN", {
