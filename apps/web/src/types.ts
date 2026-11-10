@@ -51,7 +51,7 @@ export interface CenterEntity {
   centerId: string;
   centerName: string;
   configuredCapacity: number;     // Physical handling limit (kits)
-  committedDispatches: number;    // Already dispatched and committed
+  committedDispatches: number;    // Dispatches imported with the data; ledger dispatches are added on top
   operatingStatus: CenterOperatingStatus;
   address?: string;
   contactPerson?: string;
@@ -81,7 +81,7 @@ export interface CalculatedAllocationItem {
   coveragePercentage: number;
   isCappedByCapacity: boolean;
   isCappedByDemand: boolean;
-  status: "full" | "partial" | "capacity_capped" | "unserviceable" | "zero_demand";
+  status: "full" | "partial" | "capacity_capped" | "unserviceable" | "zero_demand" | "ineligible";
 }
 
 export interface DecisionReceiptEntity {
@@ -107,6 +107,7 @@ export interface DecisionReceiptEntity {
 export type MovementType =
   | "dispatch"       // Central Warehouse -> Center
   | "receipt"        // Arrived at Center
+  | "in_transit"     // Carrier report: kits still in transit (latest report, not cumulative)
   | "collection"     // Distributed to Family / Community
   | "transit_loss"   // Damaged or stolen in transit
   | "center_damage"  // Spoiled or damaged in center warehouse
@@ -146,4 +147,17 @@ export interface CenterReconciliationSummary {
   damagedKits: number;
   remainingInCenterKits: number;
   isBalanced: boolean;
+}
+
+/** A community partner's request. It never changes demand by itself; a coordinator reviews it. */
+export interface AidRequest {
+  requestId: string;
+  regionId: string;
+  requestedKits: number;
+  headcount: number;
+  urgency: "standard" | "high" | "critical";
+  notes: string;
+  submittedBy: string;
+  submittedAtUTC: string;
+  status: "pending" | "staged" | "dismissed";
 }

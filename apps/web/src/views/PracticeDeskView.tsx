@@ -18,9 +18,7 @@ import {
 } from "lucide-react";
 import { useOperational } from "../context/OperationalContext";
 import { useAuth } from "../context/AuthContext";
-import { INDIA_REGIONS_CSV, INDIA_STOCK_CSV } from "../lib/indiaSamples";
-import { parseCsv, cleanRegionRows } from "@fairshare/domain";
-import type { RawRegionRow } from "../types";
+import { formatPct } from "../lib/planning";
 
 interface PracticeDeskViewProps {
   onOpenAcceptModal: () => void;
@@ -33,78 +31,43 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
   const {
     stagedStock,
     setStagedStock,
-    stagedCenters,
-    updateCenterCapacity,
-    toggleCenterStatus,
+    stagedConfirmedStock,
+    hypotheticalStockKits,
     stagedRegions,
-    updateRegionDemand,
+    updateCenterCapacity,
     selectedAlgorithm,
     setSelectedAlgorithm,
-    hasStagedChanges,
+    stagedSource,
+    stagedCommitted,
     currentPlan,
-    totalStockAvailable,
+    baselinePlan,
+    planIssues,
     totalAllocatedKits,
+    totalDemandKits,
     totalUnmetKits,
     averageCoveragePct,
     minCoveragePct,
-    activeCentersCount,
     authoritativeRevision,
-    authoritativeStock,
     resetStudioToAuthoritative,
-    applyBatchIntake,
+    applyScenario,
   } = useOperational();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState<"all" | "deficit" | "bound" | "closed">("all");
   const [editingCapacityId, setEditingCapacityId] = useState<string | null>(null);
-  const [tempCapacityValue, setTempCapacityValue] = useState<number>(0);
+  const [tempCapacityValue, setTempCapacityValue] = useState<string>("0");
+  const [capacityError, setCapacityError] = useState<string | null>(null);
   const [showStockModal, setShowStockModal] = useState(false);
   const [tempStockInput, setTempStockInput] = useState(stagedStock.toString());
+  const [stockError, setStockError] = useState<string | null>(null);
 
-  // Quick Scope Selector
   const isStatewide = stagedRegions.length > 10;
-
-  const switchToStatewide = () => {
-    const raw = parseCsv(INDIA_REGIONS_CSV) as unknown as RawRegionRow[];
-    const { rows } = cleanRegionRows(raw);
-    const regions = rows.map((r) => ({
-      regionId: r.regionId,
-      regionName: r.regionName,
-      assignedCenterId: r.centerId,
-      demandKits: r.demandKits,
-      status: r.status === "open" ? ("active" as const) : ("ineligible" as const),
-    }));
-    applyBatchIntake(regions, 15520);
-  };
-
-  const switchToMetropolitan = () => {
-    applyBatchIntake(
-      [
-        {
-          regionId: "A",
-          regionName: "Zone 1 — Northern Wards",
-          assignedCenterId: "CTR-A",
-          demandKits: 60,
-          status: "active",
-        },
-        {
-          regionId: "B",
-          regionName: "Zone 2 — Central Transit Belt",
-          assignedCenterId: "CTR-B",
-          demandKits: 60,
-          status: "active",
-        },
-        {
-          regionId: "C",
-          regionName: "Zone 3 — Coastal Waterfront",
-          assignedCenterId: "CTR-C",
-          demandKits: 60,
-          status: "active",
-        },
-      ],
-      120
-    );
-  };
+  const switchToStatewide = () => applyScenario("india-operation");
+  const switchToMetropolitan = () => resetStudioToAuthoritative();
+  const baselineKits = useMemo(() => new Map(baselinePlan.map((b) => [b.regionId, b.allocatedKits])), [baselinePlan]);
+  // Coordinators edit any center; an operator reports usable capacity for their own center only.
+  const canEditCapacity = (centerId: string) =>
+    role === "admin" || (role === "hub_operator" && currentUser?.assignedFacilityId === centerId);
 
   // Filtered plan rows
   const filteredPlan = useMemo(() => {
@@ -118,24 +81,29 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
       if (!matchesSearch) return false;
 
       // Filter
-      if (filterMode === "deficit") return item.coveragePercentage < 99 && item.status !== "unserviceable";
-      if (filterMode === "bound") return item.isCappedByCapacity;
+      if (filterMode === "deficit") return item.status === "partial" || item.status === "capacity_capped" || item.status === "unserviceable";
+      if (filterMode === "bound") return item.status === "capacity_capped";
       if (filterMode === "closed") return item.status === "unserviceable";
       return true;
     });
   }, [currentPlan, searchQuery, filterMode]);
 
-  const totalDemand = useMemo(
-    () => stagedRegions.reduce((sum, r) => sum + r.demandKits, 0),
-    [stagedRegions]
-  );
-
   const unallocatedStock = Math.max(0, stagedStock - totalAllocatedKits);
 
   const handleSaveCapacity = (centerId: string) => {
-    updateCenterCapacity(centerId, tempCapacityValue);
-    setEditingCapacityId(null);
+    const text = tempCapacityValue.trim();
+    const error = /^\d+$/.test(text) ? updateCenterCapacity(centerId, Number(text)) : "Capacity must be a whole number of kits.";
+    setCapacityError(error);
+    if (!error) setEditingCapacityId(null);
   };
+
+  const presetButtons = [
+    { id: "golden-baseline", label: "1. Golden baseline" },
+    { id: "b-throttled", label: "2. B throttled to 20" },
+    { id: "stock-surge", label: "3. Stock surge +20" },
+    { id: "restore-b", label: "4. Restore B" },
+    { id: "emergency-closure", label: "5. Close center C" },
+  ];
 
   return (
     <div className="space-y-6 pb-20">
@@ -224,6 +192,7 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
               <button
                 onClick={() => {
                   setTempStockInput(stagedStock.toString());
+                  setStockError(null);
                   setShowStockModal(true);
                 }}
                 className="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
@@ -232,7 +201,13 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
               </button>
             )}
           </div>
-          <div className="text-[11px] text-zinc-400 mt-1">Confirmed inclusive allocation pool</div>
+          {hypotheticalStockKits !== 0 ? (
+            <div className="text-[11px] text-amber-700 font-semibold mt-1">
+              {hypotheticalStockKits > 0 ? "+" : ""}{hypotheticalStockKits} hypothetical (confirmed: {stagedConfirmedStock})
+            </div>
+          ) : (
+            <div className="text-[11px] text-zinc-400 mt-1">Confirmed stock, including kits already dispatched</div>
+          )}
         </div>
 
         {/* Allocated Stock */}
@@ -285,12 +260,12 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
           </div>
           <div className="mt-2 flex items-baseline">
             <span className="text-2xl font-bold font-mono text-zinc-950">
-              {totalDemand.toLocaleString()}
+              {totalDemandKits.toLocaleString()}
             </span>
             <span className="text-[11px] text-zinc-400 ml-1">kits total</span>
           </div>
           <div className="text-[11px] text-rose-600 font-medium mt-1">
-            {totalUnmetKits.toLocaleString()} kits shortfall ({averageCoveragePct.toFixed(1)}% avg coverage)
+            {totalUnmetKits.toLocaleString()} kits shortfall ({formatPct(averageCoveragePct)} avg coverage)
           </div>
         </div>
 
@@ -302,12 +277,67 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
           </div>
           <div className="mt-2 flex items-baseline">
             <span className="text-2xl font-bold font-mono text-zinc-950">
-              {minCoveragePct.toFixed(1)}%
+              {formatPct(minCoveragePct)}
             </span>
             <span className="text-[11px] text-zinc-400 ml-1">min coverage</span>
           </div>
           <div className="text-[11px] text-zinc-400 mt-1">Guaranteed minimum across all open nodes</div>
         </div>
+      </div>
+
+      {/* Scenario presets, policy choice and input conflicts */}
+      <div className="bg-white rounded-xl border border-zinc-200 p-4 shadow-sm space-y-3">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="font-semibold uppercase tracking-wider text-[11px] text-zinc-500 mr-1">What-if presets</span>
+          {presetButtons.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => applyScenario(p.id)}
+              className="px-2.5 py-1 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+            >
+              {p.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={resetStudioToAuthoritative}
+            className="px-2.5 py-1 rounded-lg border border-zinc-300 bg-zinc-50 font-semibold text-zinc-800 hover:bg-zinc-100"
+          >
+            Reset to register r{authoritativeRevision}
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="font-semibold uppercase tracking-wider text-[11px] text-zinc-500 mr-1">Policy</span>
+          <div className="inline-flex rounded-lg border border-zinc-200 p-0.5 bg-zinc-50" role="group" aria-label="Allocation policy">
+            {([["srs-progressive-maxmin", "Fair (max-min)"], ["hamilton-proportional", "Proportional baseline"]] as const).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={selectedAlgorithm === id}
+                onClick={() => setSelectedAlgorithm(id)}
+                className={`px-2.5 py-1 rounded-md ${selectedAlgorithm === id ? "bg-white font-semibold text-zinc-900 shadow-sm" : "text-zinc-600"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {stagedSource === "scenario" && (
+            <span className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
+              Scenario preview: models the period before any dispatch; not publishable
+            </span>
+          )}
+        </div>
+        {planIssues.length > 0 && (
+          <div role="alert" className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs space-y-1">
+            <p className="font-semibold">The engine cannot plan with these inputs. Only kits already dispatched are shown.</p>
+            <ul className="list-disc pl-5 space-y-0.5">
+              {planIssues.map((issue, i) => (
+                <li key={i}>{issue.message}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       {/* Main Allocation Matrix Card */}
@@ -381,13 +411,16 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
                 <th className="py-3 px-4 font-mono text-right font-bold text-zinc-900">
                   Allocated Quota
                 </th>
+                <th className="py-3 px-4 font-mono text-right" title={selectedAlgorithm === "srs-progressive-maxmin" ? "Proportional baseline allocation for comparison" : "Fair max-min allocation for comparison"}>
+                  {selectedAlgorithm === "srs-progressive-maxmin" ? "Baseline" : "Fair Plan"}
+                </th>
                 <th className="py-3 px-4 font-mono text-right">Coverage</th>
                 <th className="py-3 px-4 text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {filteredPlan.map((item) => {
-                const isClosed = item.status === "unserviceable";
+                const isClosed = item.status === "unserviceable" || item.status === "ineligible";
                 const isEditing = editingCapacityId === item.assignedCenterId;
 
                 return (
@@ -420,8 +453,15 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
                         <div className="inline-flex items-center space-x-1">
                           <input
                             type="number"
+                            min={stagedCommitted[item.assignedCenterId] ?? 0}
+                            step={1}
+                            aria-label={`Capacity for ${item.assignedCenterId}`}
                             value={tempCapacityValue}
-                            onChange={(e) => setTempCapacityValue(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                            onChange={(e) => setTempCapacityValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveCapacity(item.assignedCenterId);
+                              if (e.key === "Escape") setEditingCapacityId(null);
+                            }}
                             className="w-20 px-1.5 py-0.5 border border-emerald-500 rounded text-xs font-mono text-right"
                           />
                           <button
@@ -430,18 +470,22 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
                           >
                             Save
                           </button>
+                          {capacityError && <span role="alert" className="block text-[10px] text-rose-700 max-w-[12rem] text-left">{capacityError}</span>}
                         </div>
-                      ) : (
+                      ) : canEditCapacity(item.assignedCenterId) ? (
                         <button
                           onClick={() => {
                             setEditingCapacityId(item.assignedCenterId);
-                            setTempCapacityValue(item.centerCapacity);
+                            setTempCapacityValue(String(item.centerCapacity));
+                            setCapacityError(null);
                           }}
                           className="hover:underline hover:text-emerald-700 font-mono text-zinc-700"
                           title="Click to adjust center capacity"
                         >
                           {item.centerCapacity.toLocaleString()}
                         </button>
+                      ) : (
+                        <span className="font-mono text-zinc-700">{item.centerCapacity.toLocaleString()}</span>
                       )}
                     </td>
 
@@ -459,9 +503,14 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
                       {item.allocatedKits.toLocaleString()}
                     </td>
 
+                    {/* Comparison allocation */}
+                    <td className="py-3 px-4 font-mono text-right text-zinc-500">
+                      {selectedAlgorithm === "srs-progressive-maxmin" ? (baselineKits.get(item.regionId) ?? 0).toLocaleString() : "—"}
+                    </td>
+
                     {/* Coverage Ratio & Bar */}
                     <td className="py-3 px-4 font-mono text-right">
-                      {item.demandKits > 0 ? (
+                      {item.demandKits > 0 && item.status !== "ineligible" ? (
                         <div className="flex flex-col items-end">
                           <span
                             className={`font-bold ${
@@ -494,23 +543,7 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
 
                     {/* Operational Status */}
                     <td className="py-3 px-4 text-center">
-                      {isClosed ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-800 border border-rose-200">
-                          Hub Closed
-                        </span>
-                      ) : item.isCappedByCapacity ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                          Hub Bound
-                        </span>
-                      ) : item.coveragePercentage >= 100 ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                          Fulfilled
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-100 text-zinc-700">
-                          Active
-                        </span>
-                      )}
+                      <StatusBadge status={item.status} />
                     </td>
                   </tr>
                 );
@@ -525,22 +558,26 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
         <div className="fixed inset-0 z-50 bg-zinc-950/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl border border-zinc-200 max-w-sm w-full p-6 space-y-4">
             <h3 className="text-base font-bold text-zinc-900 font-sans">
-              Adjust Total Available Stock
+              Try a Different Stock Level
             </h3>
             <p className="text-xs text-zinc-500">
-              Update central warehouse pool. Allocations will instantly recalculate across all active hubs according to Max-Min fairness.
+              A what-if: allocations recalculate instantly. Stock above the confirmed {stagedConfirmedStock} kits is hypothetical and cannot be published; only a confirmed warehouse import changes confirmed stock.
             </p>
 
             <div>
               <label className="text-xs font-semibold text-zinc-700 block mb-1">
-                Total Confirmed Stock (Kits)
+                Stock for this preview (kits)
               </label>
               <input
                 type="number"
                 value={tempStockInput}
                 onChange={(e) => setTempStockInput(e.target.value)}
+                min={0}
+                step={1}
+                aria-label="Stock for this preview"
                 className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm font-mono text-zinc-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
+              {stockError && <p role="alert" className="text-[11px] text-rose-700 mt-1">{stockError}</p>}
             </div>
 
             <div className="flex items-center justify-end space-x-2 pt-2">
@@ -552,13 +589,16 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
               </button>
               <button
                 onClick={() => {
-                  const val = parseInt(tempStockInput, 10);
-                  if (!isNaN(val) && val >= 0) {
-                    setStagedStock(val);
-                    setShowStockModal(false);
+                  const text = tempStockInput.trim();
+                  if (!/^\d+$/.test(text)) {
+                    setStockError("Enter a whole, non-negative number of kits.");
+                    return;
                   }
+                  setStagedStock(Number(text));
+                  setStockError(null);
+                  setShowStockModal(false);
                 }}
-                className="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm"
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold"
               >
                 Apply New Pool
               </button>
@@ -568,4 +608,18 @@ export const PracticeDeskView: React.FC<PracticeDeskViewProps> = ({ onOpenAccept
       )}
     </div>
   );
+};
+
+const STATUS_BADGE: Record<string, [string, string]> = {
+  unserviceable: ["Center Closed", "bg-rose-50 text-rose-800 border-rose-200"],
+  ineligible: ["Not in Program (N/A)", "bg-zinc-100 text-zinc-600 border-zinc-200"],
+  zero_demand: ["Zero Demand (N/A)", "bg-zinc-100 text-zinc-600 border-zinc-200"],
+  capacity_capped: ["Hub Bound", "bg-amber-50 text-amber-800 border-amber-200"],
+  full: ["Fulfilled", "bg-emerald-50 text-emerald-800 border-emerald-200"],
+  partial: ["Fair Share", "bg-zinc-100 text-zinc-700 border-zinc-200"],
+};
+
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+  const [label, tone] = STATUS_BADGE[status] ?? [status, "bg-zinc-100 text-zinc-700 border-zinc-200"];
+  return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${tone}`}>{label}</span>;
 };

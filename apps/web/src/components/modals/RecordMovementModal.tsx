@@ -3,6 +3,7 @@ import { Truck, X, CheckCircle2 } from "lucide-react";
 import { useOperational } from "../../context/OperationalContext";
 import { useAuth } from "../../context/AuthContext";
 import type { MovementType } from "../../types";
+import { MOVEMENT_LABELS } from "../../lib/planning";
 
 interface RecordMovementModalProps {
   isOpen: boolean;
@@ -13,48 +14,74 @@ export const RecordMovementModal: React.FC<RecordMovementModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { authoritativeCenters, recordMovementEvent } = useOperational();
+  const { authoritativeCenters, recordMovementEvent, dispatchHeadroomFor } = useOperational();
   const { currentUser } = useAuth();
+  const isOperator = currentUser?.role === "hub_operator";
+  // Operators report facts for their own center only, and never dispatch (coordinator action).
+  const allowedTypes: MovementType[] = isOperator
+    ? ["receipt", "in_transit", "collection", "center_damage", "transit_loss", "return"]
+    : ["dispatch", "receipt", "in_transit", "collection", "transit_loss", "center_damage", "return"];
+  const allowedCenters = isOperator
+    ? authoritativeCenters.filter((c) => c.centerId === currentUser?.assignedFacilityId)
+    : authoritativeCenters;
 
-  const [centerId, setCenterId] = useState(
-    currentUser?.assignedFacilityId ||
-      (authoritativeCenters.length > 0 ? authoritativeCenters[0].centerId : "CTR-A")
-  );
-  const [movementType, setMovementType] = useState<MovementType>(
-    currentUser?.role === "hub_operator" ? "receipt" : "dispatch"
-  );
+  const newWaybill = () => `WB-MMR-${Math.floor(1000 + Math.random() * 9000)}`;
+  const [centerId, setCenterId] = useState("");
+  const [movementType, setMovementType] = useState<MovementType>("dispatch");
+  const [quantityText, setQuantityText] = useState("20");
+  const [waybill, setWaybill] = useState(newWaybill);
+  const [carrier, setCarrier] = useState("State Logistics Fleet #MH-04-E-8821");
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
+  // Each opening is a new report: reset the form (a reused waybill number would duplicate one).
   useEffect(() => {
-    if (currentUser?.assignedFacilityId) {
-      setCenterId(currentUser.assignedFacilityId);
-    }
-    if (currentUser?.role === "hub_operator") {
-      setMovementType("receipt");
-    }
-  }, [currentUser]);
-  const [quantity, setQuantity] = useState<number>(20);
-  const [waybill, setWaybill] = useState<string>(`WB-MMR-${Math.floor(1000 + Math.random() * 9000)}`);
-  const [carrier, setCarrier] = useState<string>("State Logistics Fleet #MH-04-E-8821");
-  const [notes, setNotes] = useState<string>("");
+    if (!isOpen) return;
+    setCenterId(allowedCenters[0]?.centerId ?? "");
+    setMovementType(allowedTypes[0]);
+    setQuantityText("20");
+    setWaybill(newWaybill());
+    setCarrier("State Logistics Fleet #MH-04-E-8821");
+    setNotes("");
+    setError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, currentUser?.id]);
 
   if (!isOpen) return null;
 
+  const headroom = centerId ? dispatchHeadroomFor(centerId) : 0;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    if (!allowedCenters.some((c) => c.centerId === centerId)) {
+      setError("You are not assigned to this center.");
+      return;
+    }
+    if (!/^\d+$/.test(quantityText.trim())) {
+      setError("Quantity must be a whole number of kits.");
+      return;
+    }
+    if (!waybill.trim()) {
+      setError("A waybill or challan number is required.");
+      return;
+    }
     const selectedCenter = authoritativeCenters.find((c) => c.centerId === centerId);
-
-    recordMovementEvent({
+    const result = recordMovementEvent({
       periodId: "2026-W46",
       centerId,
       centerName: selectedCenter?.centerName || centerId,
       movementType,
-      quantityKits: quantity,
-      waybillNumber: waybill.trim() || `WB-MMR-${Date.now().toString().slice(-4)}`,
+      quantityKits: Number(quantityText.trim()),
+      waybillNumber: waybill.trim(),
       carrierOrAgent: carrier.trim() || "Local Transport Service",
       verifiedBy: `${currentUser?.name || "Authorized Officer"} (${currentUser?.roleTitle || "Operations"})`,
       notes: notes.trim() || "Operational transit logged via terminal.",
     });
-
+    if (!result.ok) {
+      setError(result.message ?? "This movement could not be recorded.");
+      return;
+    }
     onClose();
   };
 
@@ -82,12 +109,11 @@ export const RecordMovementModal: React.FC<RecordMovementModalProps> = ({
                 onChange={(e) => setMovementType(e.target.value as MovementType)}
                 className="w-full border border-zinc-300 rounded-lg p-2 font-medium"
               >
-                <option value="dispatch">Dispatch (Central Warehouse → Center)</option>
-                <option value="receipt">Receipt (Arrived at Center)</option>
-                <option value="collection">Collection (Distributed to Families)</option>
-                <option value="transit_loss">Confirmed Transit Loss / Spoilage</option>
-                <option value="center_damage">Center Warehouse Damage</option>
-                <option value="return">Return to Central Depot</option>
+                {allowedTypes.map((t) => (
+                  <option key={t} value={t}>
+                    {MOVEMENT_LABELS[t]}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -96,9 +122,10 @@ export const RecordMovementModal: React.FC<RecordMovementModalProps> = ({
               <select
                 value={centerId}
                 onChange={(e) => setCenterId(e.target.value)}
+                disabled={isOperator}
                 className="w-full border border-zinc-300 rounded-lg p-2 font-medium"
               >
-                {authoritativeCenters.map((c) => (
+                {allowedCenters.map((c) => (
                   <option key={c.centerId} value={c.centerId}>
                     {c.centerName} ({c.centerId})
                   </option>
@@ -113,10 +140,10 @@ export const RecordMovementModal: React.FC<RecordMovementModalProps> = ({
               <input
                 required
                 type="number"
-                min={1}
-                max={500}
-                value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value, 10) || 1)}
+                min={movementType === "in_transit" ? 0 : 1}
+                step={1}
+                value={quantityText}
+                onChange={(e) => setQuantityText(e.target.value)}
                 className="w-full border border-zinc-300 rounded-lg p-2 font-mono font-bold text-sm"
               />
             </div>
@@ -133,6 +160,19 @@ export const RecordMovementModal: React.FC<RecordMovementModalProps> = ({
             </div>
           </div>
 
+          {movementType === "dispatch" && (
+            <p className="text-[11px] text-zinc-500">
+              Published plan leaves <span className="font-mono font-semibold text-zinc-800">{Math.max(0, headroom)}</span> kits to dispatch to this center.
+            </p>
+          )}
+          {movementType === "in_transit" && (
+            <p className="text-[11px] text-zinc-500">Carrier's latest count of kits still on the road. It replaces the previous report and explains that part of the gap.</p>
+          )}
+          {error && (
+            <div role="alert" className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800">
+              {error}
+            </div>
+          )}
           <div>
             <label className="font-semibold text-zinc-700 block mb-1">Carrier / Transport Details</label>
             <input

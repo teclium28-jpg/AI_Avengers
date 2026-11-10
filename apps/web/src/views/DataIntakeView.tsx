@@ -20,7 +20,8 @@ import {
   cleanStockRows,
   prepareImport,
 } from "@fairshare/domain";
-import type { DataIssue, RawRegionRow, RawStockRow, RegionEntity } from "../types";
+import type { CenterEntity, DataIssue, RawRegionRow, RawStockRow, RegionEntity } from "../types";
+import { PERIOD_ID, committedByCenter, intakeIssues, intakeToEntities, type IntakeRow } from "../lib/planning";
 import { useOperational } from "../context/OperationalContext";
 import {
   INDIA_REGIONS_CSV,
@@ -29,72 +30,64 @@ import {
 } from "../lib/indiaSamples";
 
 export const DataIntakeView: React.FC = () => {
-  const { applyBatchIntake, setActivePage } = useOperational();
+  const { applyBatchIntake, setActivePage, movements, stagedCenters, authoritativeCenters } = useOperational();
 
-  const [regionsCsvContent, setRegionsCsvContent] = useState<string>(INDIA_REGIONS_CSV);
-  const [stockCsvContent, setStockCsvContent] = useState<string>(INDIA_STOCK_CSV);
+  type Validation = { issues: DataIssue[]; regions: RegionEntity[]; centers: CenterEntity[]; stock: number };
 
-  const [parsedIssues, setParsedIssues] = useState<DataIssue[]>([]);
-  const [cleanedRegions, setCleanedRegions] = useState<RegionEntity[]>([]);
-  const [cleanedStock, setCleanedStock] = useState<number>(15520);
-  const [hasValidated, setHasValidated] = useState<boolean>(true);
-  const [successBanner, setSuccessBanner] = useState<string | null>(null);
-  const [showRawEditor, setShowRawEditor] = useState<boolean>(false);
-
-  // Validate CSVs using domain pipeline
-  const runValidation = (regCsv: string, stCsv: string) => {
+  const validate = (regCsv: string, stCsv: string): Validation => {
     try {
       const rawRegions = parseCsv(regCsv) as unknown as RawRegionRow[];
       const rawStock = parseCsv(stCsv) as unknown as RawStockRow[];
-
       const { rows: regionRows, issues: regionIssues } = cleanRegionRows(rawRegions);
       const { rows: stockRows, issues: stockIssues } = cleanStockRows(rawStock);
-
-      const allIssues = [...regionIssues, ...stockIssues];
-
-      const prep = prepareImport("2026-W46", regionRows, stockRows);
+      const allIssues: DataIssue[] = [...regionIssues, ...stockIssues];
+      const prep = prepareImport(PERIOD_ID, regionRows, stockRows);
       allIssues.push(...prep.issues);
-
-      setParsedIssues(allIssues);
-      setHasValidated(true);
-
-      if (prep.ok && prep.input && allIssues.length === 0) {
-        const mappedRegions: RegionEntity[] = prep.input.regions.map((r) => ({
-          regionId: r.regionId,
-          regionName: r.regionName,
-          assignedCenterId: r.centerId,
-          demandKits: r.demandKits,
-          status: r.status === "open" ? "active" : "ineligible",
-        }));
-        setCleanedRegions(mappedRegions);
-        setCleanedStock(prep.input.stockKits);
-      } else {
-        setCleanedRegions([]);
+      if (regionRows.length > 0 && regionRows.every((r) => r.periodId !== PERIOD_ID)) {
+        allIssues.push({ kind: "missing_field", row: 0, message: `These rows are for period ${regionRows[0].periodId}; the open period is ${PERIOD_ID}.` });
       }
+      if (!prep.ok || !prep.input || allIssues.length) return { issues: allIssues, regions: [], centers: [], stock: 0 };
+      if (prep.input.regions.length === 0) return { issues: [{ kind: "missing_field", row: 0, message: "No region rows to import." }], regions: [], centers: [], stock: 0 };
+
+      const rows: IntakeRow[] = prep.input.regions.map((r) => ({
+        regionId: r.regionId, regionName: r.regionName, centerId: r.centerId, demandKits: r.demandKits,
+        capacityKits: r.capacityKits, priorDispatchedKits: r.priorDispatchedKits, status: r.status,
+      }));
+      const extra: DataIssue[] = intakeIssues(rows).map((i) => ({ kind: "duplicate_row", row: 0, message: i.message }));
+      // Dispatches already in this period's ledger must match the imported prior dispatches.
+      const ledger = committedByCenter(rows.map((r) => ({ centerId: r.centerId, committedDispatches: 0 } as CenterEntity)), movements);
+      rows.forEach((r, i) => {
+        const recorded = ledger[r.centerId] ?? 0;
+        if (recorded > 0 && r.priorDispatchedKits !== recorded) {
+          extra.push({ kind: "impossible_balance", row: i + 2, message: `prior_dispatched_kits for ${r.centerId} is ${r.priorDispatchedKits}, but the movement ledger records ${recorded} kits dispatched.` });
+        }
+      });
+      if (extra.length) return { issues: extra, regions: [], centers: [], stock: 0 };
+
+      const { regions, centers } = intakeToEntities(rows, [...authoritativeCenters, ...stagedCenters]);
+      // Ledger dispatches are added on top of the imported baseline, so do not count them twice.
+      const baselined = centers.map((c) => ({ ...c, committedDispatches: c.committedDispatches - (ledger[c.centerId] ?? 0) }));
+      return { issues: [], regions, centers: baselined, stock: prep.input.stockKits };
     } catch (err: any) {
-      setParsedIssues([
-        {
-          kind: "missing_field",
-          row: 0,
-          message: err.message || "Failed to parse CSV format",
-        },
-      ]);
-      setCleanedRegions([]);
-      setHasValidated(true);
+      return { issues: [{ kind: "missing_field", row: 0, message: err?.message || "Failed to parse CSV format" }], regions: [], centers: [], stock: 0 };
     }
   };
 
+  const [regionsCsvContent, setRegionsCsvContent] = useState<string>(INDIA_REGIONS_CSV);
+  const [stockCsvContent, setStockCsvContent] = useState<string>(INDIA_STOCK_CSV);
+  // Validate the initial content immediately: never show "succeeded" for unchecked data.
+  const [result, setResult] = useState<Validation>(() => validate(INDIA_REGIONS_CSV, INDIA_STOCK_CSV));
+  const parsedIssues = result.issues;
+  const cleanedRegions = result.regions;
+  const cleanedStock = result.stock;
+  const [successBanner, setSuccessBanner] = useState<string | null>(null);
+  const [showRawEditor, setShowRawEditor] = useState<boolean>(false);
+
+  const runValidation = (regCsv: string, stCsv: string) => setResult(validate(regCsv, stCsv));
+
   const handleApply = () => {
-    if (cleanedRegions.length > 0 && parsedIssues.length === 0) {
-      applyBatchIntake(cleanedRegions, cleanedStock);
-      setSuccessBanner(
-        `Successfully transferred ${cleanedRegions.length} verified regions and ${cleanedStock.toLocaleString()} confirmed stock kits to the Allocation Planner.`
-      );
-      setTimeout(() => {
-        setSuccessBanner(null);
-        setActivePage("studio");
-      }, 1500);
-    }
+    // applyBatchIntake opens the planner with the imported data staged for review.
+    if (cleanedRegions.length > 0 && parsedIssues.length === 0) applyBatchIntake(cleanedRegions, result.centers, cleanedStock);
   };
 
   const handleLoadStatewide = () => {
@@ -106,7 +99,7 @@ export const DataIntakeView: React.FC = () => {
   const handleLoadMetropolitan = () => {
     const reg = `period_id,region_id,region_name,center_id,demand_kits,capacity_kits,prior_dispatched_kits,status,reported_or_simulated
 2026-W46,A,Zone 1 — Northern Wards,CTR-A,60,60,0,open,reported
-2026-W46,B,Zone 2 — Central Transit Belt,CTR-B,60,40,0,open,reported
+2026-W46,B,Zone 2 — Central Transit Belt,CTR-B,60,40,40,open,reported
 2026-W46,C,Zone 3 — Coastal Waterfront,CTR-C,60,60,0,open,reported`;
     const st = `period_id,stock_kits,stock_type,source,as_of_date
 2026-W46,120,confirmed,Central Warehouse Count,2026-11-10`;

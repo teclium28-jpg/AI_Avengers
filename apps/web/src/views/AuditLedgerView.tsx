@@ -28,6 +28,7 @@ export const AuditLedgerView: React.FC = () => {
   const [verifiedFingerprint, setVerifiedFingerprint] = useState<boolean | null>(null);
 
   useEffect(() => {
+    setVerifiedFingerprint(null);
     if (selectedReceipt) {
       const payloadToHash = {
         periodId: selectedReceipt.periodId,
@@ -40,9 +41,17 @@ export const AuditLedgerView: React.FC = () => {
         stagedOverrides: selectedReceipt.stagedOverrides,
       };
 
-      computeSha256Fingerprint(payloadToHash).then((hash) => {
-        setVerifiedFingerprint(hash === selectedReceipt.canonicalPayloadHash);
-      });
+      let current = true;
+      computeSha256Fingerprint(payloadToHash)
+        .then((hash) => {
+          if (current) setVerifiedFingerprint(hash === selectedReceipt.canonicalPayloadHash);
+        })
+        .catch(() => {
+          if (current) setVerifiedFingerprint(null);
+        });
+      return () => {
+        current = false;
+      };
     }
   }, [selectedReceipt]);
 
@@ -122,6 +131,10 @@ export const AuditLedgerView: React.FC = () => {
                     <span className="inline-flex items-center text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                       <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" />
                       Fingerprint Match
+                    </span>
+                  ) : verifiedFingerprint === false ? (
+                    <span role="alert" className="inline-flex items-center text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
+                      Fingerprint Mismatch: stored content differs from its recorded hash
                     </span>
                   ) : (
                     <span className="inline-flex items-center text-zinc-500 bg-zinc-100 px-2.5 py-0.5 rounded-full">
@@ -253,7 +266,7 @@ export const AuditLedgerView: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100">
-                    {Object.keys(selectedReceipt.resultingAllocation).map((regId) => {
+                    {[...new Set([...Object.keys(compareReceipt.resultingAllocation), ...Object.keys(selectedReceipt.resultingAllocation)])].sort().map((regId) => {
                       const v1 = compareReceipt.resultingAllocation[regId] ?? 0;
                       const v2 = selectedReceipt.resultingAllocation[regId] ?? 0;
                       const diff = v2 - v1;

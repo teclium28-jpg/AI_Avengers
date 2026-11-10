@@ -14,31 +14,35 @@ import {
 } from "lucide-react";
 import { useOperational } from "../context/OperationalContext";
 import { useAuth } from "../context/AuthContext";
-import type { CalculatedAllocationItem, DecisionReceiptEntity } from "../types";
+import type { CalculatedAllocationItem, DecisionReceiptEntity, NavigationPage } from "../types";
+import { canOpen } from "../lib/access";
+import { formatPct } from "../lib/planning";
 
 export const DashboardView: React.FC = () => {
   const {
     authoritativeStock,
     authoritativeRevision,
-    currentPlan,
-    totalAllocatedKits,
-    totalUnmetKits,
-    averageCoveragePct,
-    minCoveragePct,
-    activeCentersCount,
+    authoritativePlan,
     authoritativeCenters,
+    centerLedgers,
     receipts,
-    movements,
+    aidRequests,
+    resolveAidRequest,
     setActivePage,
   } = useOperational();
 
   const { currentUser } = useAuth();
   const role = currentUser?.role || "admin";
+  const allowed = (page: NavigationPage) => canOpen(currentUser?.role, page);
 
-  const totalDemand = currentPlan.reduce(
-    (sum: number, item: CalculatedAllocationItem) => sum + item.demandKits,
-    0
-  );
+  // The overview always shows the PUBLISHED register, never an unpublished studio preview.
+  const currentPlan = authoritativePlan.rows;
+  const { totalAllocatedKits, totalUnmetKits, averageCoveragePct } = authoritativePlan;
+  const totalDemand = authoritativePlan.totalDemandKits;
+  const closedCenters = authoritativeCenters.filter((c) => c.operatingStatus === "closed" || c.configuredCapacity === 0);
+  const activeCentersCount = authoritativeCenters.length - closedCenters.length;
+  const reviewItems = centerLedgers.filter((l) => l.unresolvedKits !== 0 || !l.centerBalanced);
+  const pendingRequests = aidRequests.filter((r) => r.status === "pending");
 
   // Recent 3 receipts
   const recentReceipts = receipts.slice(-3).reverse();
@@ -145,7 +149,7 @@ export const DashboardView: React.FC = () => {
           <div className="mt-2 w-full bg-zinc-100 rounded-full h-1.5 overflow-hidden">
             <div
               className="bg-emerald-600 h-1.5 rounded-full"
-              style={{ width: `${(totalAllocatedKits / (authoritativeStock || 1)) * 100}%` }}
+              style={{ width: `${Math.min(100, (totalAllocatedKits / (authoritativeStock || 1)) * 100)}%` }}
             />
           </div>
         </div>
@@ -162,7 +166,7 @@ export const DashboardView: React.FC = () => {
             <span className="text-xs text-zinc-500 font-medium">kits deficit ({totalDemand} demand)</span>
           </div>
           <span className="mt-2 text-[11px] text-zinc-400 font-medium">
-            Avg Coverage: <span className="font-mono font-bold text-zinc-700">{averageCoveragePct.toFixed(1)}%</span>
+            Avg Coverage: <span className="font-mono font-bold text-zinc-700">{formatPct(averageCoveragePct)}</span>
           </span>
         </div>
 
@@ -179,10 +183,16 @@ export const DashboardView: React.FC = () => {
             </span>
             <span className="text-xs text-zinc-500 font-medium">Distribution Nodes Active</span>
           </div>
-          <span className="mt-2 text-[11px] text-emerald-700 font-medium flex items-center">
-            <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-            All assigned routes operational
-          </span>
+          {closedCenters.length === 0 ? (
+            <span className="mt-2 text-[11px] text-emerald-700 font-medium flex items-center">
+              <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+              All distribution centers open
+            </span>
+          ) : (
+            <span className="mt-2 text-[11px] text-rose-700 font-medium">
+              Closed: {closedCenters.map((c) => c.centerId).join(", ")}
+            </span>
+          )}
         </div>
       </div>
 
@@ -199,12 +209,14 @@ export const DashboardView: React.FC = () => {
                 Authoritative register allocation under SRS Progressive Max-Min fairness engine.
               </p>
             </div>
-            <button
-              onClick={() => setActivePage("studio")}
-              className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 flex items-center"
-            >
-              Open Studio <ArrowRight className="w-3.5 h-3.5 ml-1" />
-            </button>
+            {allowed("studio") && (
+              <button
+                onClick={() => setActivePage("studio")}
+                className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 flex items-center"
+              >
+                Open Studio <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              </button>
+            )}
           </div>
 
           <div className="overflow-x-auto flex-1">
@@ -237,10 +249,16 @@ export const DashboardView: React.FC = () => {
                       {item.allocatedKits.toLocaleString()} kits
                     </td>
                     <td className="py-3.5 px-4 font-mono text-right font-semibold">
-                      <span className="text-zinc-900">{item.coveragePercentage.toFixed(1)}%</span>
-                      <span className="text-[10px] text-zinc-400 ml-1">
-                        ({item.allocatedKits}/{item.demandKits})
-                      </span>
+                      {item.demandKits > 0 && item.status !== "ineligible" ? (
+                        <>
+                          <span className="text-zinc-900">{item.coveragePercentage.toFixed(1)}%</span>
+                          <span className="text-[10px] text-zinc-400 ml-1">
+                            ({item.allocatedKits}/{item.demandKits})
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-zinc-400">N/A</span>
+                      )}
                     </td>
                     <td className="py-3.5 px-4 text-center">
                       {item.status === "full" ? (
@@ -255,6 +273,10 @@ export const DashboardView: React.FC = () => {
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-800 border border-rose-200">
                           Node Closed
                         </span>
+                      ) : item.status === "zero_demand" || item.status === "ineligible" ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-100 text-zinc-600 border border-zinc-200">
+                          {item.status === "zero_demand" ? "Zero Demand" : "Not in Program"}
+                        </span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">
                           Equal Max-Min Share
@@ -267,7 +289,7 @@ export const DashboardView: React.FC = () => {
             </table>
           </div>
 
-          {currentPlan.length > 8 && (
+          {currentPlan.length > 8 && allowed("studio") && (
             <div className="p-3 bg-zinc-50 border-t border-zinc-100 text-center">
               <button
                 onClick={() => setActivePage("studio")}
@@ -291,12 +313,24 @@ export const DashboardView: React.FC = () => {
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-lg bg-amber-50/60 border border-amber-200/80 text-amber-900 space-y-1">
-                <span className="font-semibold block">Waybill Discrepancy Flag:</span>
-                <p className="text-[11px] leading-relaxed text-amber-800">
-                  Waybill #WB-MMR-4020: 5 kits pending physical verification at Dharavi Central Node. Non-punitive investigation ticket opened.
-                </p>
-              </div>
+              {reviewItems.length === 0 ? (
+                <div className="p-3 rounded-lg bg-emerald-50/60 border border-emerald-200 text-emerald-900">
+                  All dispatch and center balances reconcile.
+                </div>
+              ) : (
+                reviewItems.map((l) => (
+                  <div key={l.centerId} className="p-3 rounded-lg bg-amber-50/60 border border-amber-200/80 text-amber-900 space-y-1">
+                    <span className="font-semibold block">Review signal: {l.centerName}</span>
+                    <p className="text-[11px] leading-relaxed text-amber-800">
+                      {l.unresolvedKits > 0
+                        ? `${l.unresolvedKits} dispatched kits are not yet explained by a receipt, loss or in-transit report. This is an operational discrepancy to review, not an accusation.`
+                        : l.unresolvedKits < 0
+                        ? `${-l.unresolvedKits} more kits were reported received or lost than were dispatched. Check the records.`
+                        : "Center stock balance needs review."}
+                    </p>
+                  </div>
+                ))
+              )}
 
               <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-200 text-zinc-800 space-y-1">
                 <span className="font-semibold block text-zinc-900">Current Revision Status:</span>
@@ -313,6 +347,7 @@ export const DashboardView: React.FC = () => {
               Operational Actions
             </h3>
             <div className="grid grid-cols-1 gap-2">
+              {allowed("intake") && (
               <button
                 onClick={() => setActivePage("intake")}
                 className="w-full text-left p-2.5 rounded-lg border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 transition-colors flex items-center justify-between text-xs"
@@ -323,7 +358,9 @@ export const DashboardView: React.FC = () => {
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
               </button>
+              )}
 
+              {allowed("reconciliation") && (
               <button
                 onClick={() => setActivePage("reconciliation")}
                 className="w-full text-left p-2.5 rounded-lg border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 transition-colors flex items-center justify-between text-xs"
@@ -334,7 +371,9 @@ export const DashboardView: React.FC = () => {
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
               </button>
+              )}
 
+              {allowed("audit") && (
               <button
                 onClick={() => setActivePage("audit")}
                 className="w-full text-left p-2.5 rounded-lg border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 transition-colors flex items-center justify-between text-xs"
@@ -345,10 +384,52 @@ export const DashboardView: React.FC = () => {
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
               </button>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {role === "admin" && (
+        <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm space-y-3">
+          <h3 className="text-sm font-bold text-zinc-900 font-sans">Community Aid Requests ({pendingRequests.length} pending)</h3>
+          {pendingRequests.length === 0 ? (
+            <p className="text-xs text-zinc-500">No pending requests from community partners.</p>
+          ) : (
+            <ul className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg text-xs">
+              {pendingRequests.map((r) => (
+                <li key={r.requestId} className="p-3 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                  <div>
+                    <span className="font-semibold text-zinc-900">Ward {r.regionId}: {r.requestedKits} kits</span>
+                    <span className="ml-2 uppercase text-[10px] font-bold text-amber-700">{r.urgency}</span>
+                    <p className="text-zinc-500 mt-0.5">{r.headcount} families · {r.submittedBy} · {new Date(r.submittedAtUTC).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST</p>
+                    {r.notes && <p className="text-zinc-700 mt-0.5">{r.notes}</p>}
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resolveAidRequest(r.requestId, "staged");
+                        setActivePage("studio");
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700"
+                    >
+                      Stage as demand
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => resolveAidRequest(r.requestId, "dismissed")}
+                      className="px-3 py-1.5 rounded-lg border border-zinc-300 text-zinc-700 hover:bg-zinc-50"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* Recent Regulatory Receipts Timeline */}
       <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm space-y-4">
@@ -359,12 +440,14 @@ export const DashboardView: React.FC = () => {
               Recent Authoritative Decision Receipts
             </h3>
           </div>
-          <button
-            onClick={() => setActivePage("audit")}
-            className="text-xs font-semibold text-emerald-700 hover:text-emerald-900"
-          >
-            View Complete Audit Log →
-          </button>
+          {allowed("audit") && (
+            <button
+              onClick={() => setActivePage("audit")}
+              className="text-xs font-semibold text-emerald-700 hover:text-emerald-900"
+            >
+              View Complete Audit Log →
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useOperational } from "../context/OperationalContext";
 import { useAuth } from "../context/AuthContext";
+import { toSafeCsv, MOVEMENT_LABELS } from "../lib/planning";
 
 interface ReconciliationViewProps {
   onOpenRecordModal: () => void;
@@ -20,26 +21,22 @@ interface ReconciliationViewProps {
 export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ onOpenRecordModal }) => {
   const { currentUser } = useAuth();
   const role = currentUser?.role || "admin";
-  const { dispatchReconciliation, centerReconciliation, movements } = useOperational();
+  const { centerLedgers, movements } = useOperational();
+  const received = (kits: number | null) => (kits === null ? "Not reported" : kits);
 
-  // Formula-safe CSV exporter
+  // Every cell is quoted and formula-neutralised (shared rule with the server exports).
   const handleExportSafeCsv = () => {
-    let csv = "Center ID,Center Name,Dispatched,Received,In Transit,Loss,Unresolved Difference\n";
-    dispatchReconciliation.forEach((row) => {
-      const sanitize = (val: string) => {
-        if (/^[=+\-@\s]/.test(val)) return `'${val}`;
-        return val;
-      };
-      csv += `${sanitize(row.centerId)},${sanitize(row.centerName)},${row.dispatchedKits},${row.receivedKits},${row.inTransitKits},${row.confirmedLossKits},${row.unresolvedKits}\n`;
-    });
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const rows: unknown[][] = [["Center ID", "Center Name", "Dispatched", "Received", "In Transit (reported)", "Confirmed Transit Loss", "Unresolved Difference", "Collected", "Damaged at Center", "Returned", "Remaining at Center"]];
+    for (const r of centerLedgers) rows.push([r.centerId, r.centerName, r.dispatchedKits, received(r.receivedKits), r.inTransitKits, r.confirmedLossKits, r.unresolvedKits, r.collectedKits, r.damagedKits, r.returnedKits, r.remainingInCenterKits]);
+    const blob = new Blob([toSafeCsv(rows)], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `fairshare_reconciliation_audit_${Date.now()}.csv`;
+    link.download = `fairshare_reconciliation_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(url);
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   };
 
   const handlePrint = () => {
@@ -143,14 +140,14 @@ export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ onOpenRe
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {dispatchReconciliation.map((row) => (
+              {centerLedgers.map((row) => (
                 <tr key={row.centerId} className="hover:bg-zinc-50/70">
                   <td className="py-3 px-4">
                     <span className="font-semibold text-zinc-800">{row.centerName}</span>
                     <span className="font-mono text-zinc-400 ml-1.5">({row.centerId})</span>
                   </td>
                   <td className="py-3 px-4 font-mono text-right font-medium">{row.dispatchedKits}</td>
-                  <td className="py-3 px-4 font-mono text-right font-medium">{row.receivedKits}</td>
+                  <td className="py-3 px-4 font-mono text-right font-medium">{row.receivedKits === null ? <span className="text-zinc-400 font-sans italic">Not reported</span> : row.receivedKits}</td>
                   <td className="py-3 px-4 font-mono text-right text-zinc-500">{row.inTransitKits}</td>
                   <td className="py-3 px-4 font-mono text-right text-zinc-500">{row.confirmedLossKits}</td>
                   <td className="py-3 px-4 font-mono text-right font-bold">
@@ -163,7 +160,7 @@ export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ onOpenRe
                     </span>
                   </td>
                   <td className="py-3 px-4 text-center">
-                    {row.isBalanced ? (
+                    {row.dispatchBalanced ? (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
                         <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
                         Reconciled
@@ -171,7 +168,7 @@ export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ onOpenRe
                     ) : (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
                         <AlertTriangle className="w-3 h-3 mr-1 text-amber-600" />
-                        Under Review
+                        Needs Review
                       </span>
                     )}
                   </td>
@@ -192,7 +189,7 @@ export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ onOpenRe
             </h3>
           </div>
           <span className="text-[11px] font-mono text-zinc-500">
-            Formula: Received = Collected + Damaged + Remaining in Center
+            Formula: Received = Collected + Damaged + Returned + Remaining
           </span>
         </div>
 
@@ -204,6 +201,7 @@ export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ onOpenRe
                 <th className="py-3 px-4 font-mono text-right">Received at Center</th>
                 <th className="py-3 px-4 font-mono text-right">Collected by Families</th>
                 <th className="py-3 px-4 font-mono text-right">Damaged in Storage</th>
+                <th className="py-3 px-4 font-mono text-right">Returned</th>
                 <th className="py-3 px-4 font-mono text-right font-bold text-zinc-900">
                   Remaining in Store
                 </th>
@@ -211,23 +209,31 @@ export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ onOpenRe
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {centerReconciliation.map((row) => (
+              {centerLedgers.map((row) => (
                 <tr key={row.centerId} className="hover:bg-zinc-50/70">
                   <td className="py-3 px-4">
                     <span className="font-semibold text-zinc-800">{row.centerName}</span>
                     <span className="font-mono text-zinc-400 ml-1.5">({row.centerId})</span>
                   </td>
-                  <td className="py-3 px-4 font-mono text-right font-medium">{row.receivedKits}</td>
+                  <td className="py-3 px-4 font-mono text-right font-medium">{row.receivedKits ?? 0}</td>
                   <td className="py-3 px-4 font-mono text-right font-medium">{row.collectedKits}</td>
                   <td className="py-3 px-4 font-mono text-right text-zinc-500">{row.damagedKits}</td>
+                  <td className="py-3 px-4 font-mono text-right text-zinc-500">{row.returnedKits}</td>
                   <td className="py-3 px-4 font-mono text-right font-bold text-emerald-700">
                     {row.remainingInCenterKits} kits
                   </td>
                   <td className="py-3 px-4 text-center">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
-                      Balanced
-                    </span>
+                    {row.centerBalanced ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
+                        Balanced
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                        <AlertTriangle className="w-3 h-3 mr-1 text-amber-600" />
+                        Needs Review
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -255,7 +261,7 @@ export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ onOpenRe
                   {evt.waybillNumber}
                 </span>
                 <span className="font-semibold uppercase px-2 py-0.5 rounded text-[10px] bg-zinc-100 border border-zinc-200 text-zinc-700">
-                  {evt.movementType}
+                  {MOVEMENT_LABELS[evt.movementType] ?? evt.movementType}
                 </span>
                 <span className="text-zinc-800">{evt.notes}</span>
               </div>

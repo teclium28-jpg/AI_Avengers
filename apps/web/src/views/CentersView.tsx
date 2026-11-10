@@ -24,7 +24,17 @@ export const CentersView: React.FC = () => {
     toggleCenterStatus,
     addNewCenter,
     stagedRegions,
+    stagedCommitted,
   } = useOperational();
+  const [addError, setAddError] = useState<string | null>(null);
+  const [capacityErrors, setCapacityErrors] = useState<Record<string, string>>({});
+  // Coordinators manage every center; an operator manages only their assigned center.
+  const canManage = (centerId: string) =>
+    role === "admin" || (role === "hub_operator" && currentUser?.assignedFacilityId === centerId);
+  const setCapacity = (centerId: string, value: number) => {
+    const error = updateCenterCapacity(centerId, value);
+    setCapacityErrors((prev) => ({ ...prev, [centerId]: error ?? "" }));
+  };
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -44,17 +54,23 @@ export const CentersView: React.FC = () => {
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCenterId.trim() || !newCenterName.trim()) return;
-
-    addNewCenter({
-      centerId: newCenterId.toUpperCase().trim(),
+    if (!newCenterId.trim() || !newCenterName.trim()) {
+      setAddError("Center code and name are required.");
+      return;
+    }
+    const error = addNewCenter({
+      centerId: newCenterId,
       centerName: newCenterName.trim(),
       configuredCapacity: newCapacity,
       operatingStatus: "active",
       address: newAddress.trim() || "Local Municipal Facility",
       contactPerson: newContact.trim() || "Assigned Operations Staff",
     });
-
+    if (error) {
+      setAddError(error);
+      return;
+    }
+    setAddError(null);
     setIsAddModalOpen(false);
     setNewCenterId("");
     setNewCenterName("");
@@ -78,7 +94,10 @@ export const CentersView: React.FC = () => {
 
         {role === "admin" && (
           <button
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={() => {
+              setAddError(null);
+              setIsAddModalOpen(true);
+            }}
             className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700 shadow-sm transition-colors"
           >
             <Plus className="w-4 h-4 mr-1.5" />
@@ -134,13 +153,15 @@ export const CentersView: React.FC = () => {
                 </div>
                 <button
                   onClick={() => toggleCenterStatus(center.centerId)}
+                  disabled={!canManage(center.centerId)}
+                  title={canManage(center.centerId) ? "Toggle operating status (staged until published)" : "You are not assigned to this center"}
                   className={`px-2.5 py-1 rounded text-[11px] font-semibold border transition-colors ${
-                    center.operatingStatus === "active"
+                    !isClosed
                       ? "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
                       : "bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100"
-                  }`}
+                  } disabled:cursor-not-allowed disabled:opacity-70`}
                 >
-                  {center.operatingStatus === "active" ? "Active" : "Closed"}
+                  {isClosed ? "Closed" : center.operatingStatus === "constrained" ? "Constrained" : "Active"}
                 </button>
               </div>
 
@@ -167,18 +188,22 @@ export const CentersView: React.FC = () => {
                 <input
                   type="range"
                   min={0}
-                  max={120}
-                  step={5}
-                  disabled={isClosed}
+                  max={Math.max(120, totalAssignedDemand * 2, center.configuredCapacity)}
+                  step={center.configuredCapacity > 500 ? 10 : 5}
+                  disabled={isClosed || !canManage(center.centerId)}
+                  aria-label={`Capacity for ${center.centerId}`}
                   value={center.configuredCapacity}
-                  onChange={(e) => updateCenterCapacity(center.centerId, parseInt(e.target.value, 10))}
+                  onChange={(e) => setCapacity(center.centerId, Number(e.target.value))}
                   className="w-full accent-emerald-600 disabled:opacity-30 cursor-pointer"
                 />
 
                 <div className="flex justify-between text-[11px] text-zinc-500 font-mono pt-1">
                   <span>Assigned Demand: {totalAssignedDemand} kits</span>
-                  <span>Dispatched: {center.committedDispatches} kits</span>
+                  <span>Dispatched: {stagedCommitted[center.centerId] ?? 0} kits</span>
                 </div>
+                {capacityErrors[center.centerId] && (
+                  <p role="alert" className="text-[11px] text-rose-700">{capacityErrors[center.centerId]}</p>
+                )}
               </div>
             </div>
           );
@@ -193,6 +218,7 @@ export const CentersView: React.FC = () => {
               Register New Distribution Node
             </h3>
             <form onSubmit={handleAddSubmit} className="space-y-3 text-xs">
+              {addError && <p role="alert" className="p-2 rounded bg-rose-50 border border-rose-200 text-rose-800">{addError}</p>}
               <div>
                 <label className="font-semibold text-zinc-700 block mb-1">Center Code / ID *</label>
                 <input
@@ -224,7 +250,7 @@ export const CentersView: React.FC = () => {
                   min={0}
                   max={500}
                   value={newCapacity}
-                  onChange={(e) => setNewCapacity(parseInt(e.target.value, 10) || 0)}
+                  onChange={(e) => setNewCapacity(Math.max(0, parseInt(e.target.value, 10) || 0))}
                   className="w-full border border-zinc-300 rounded-lg p-2 font-mono"
                 />
               </div>

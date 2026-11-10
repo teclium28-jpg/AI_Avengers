@@ -14,51 +14,55 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useOperational } from "../context/OperationalContext";
-import { supabase, isSupabaseConfigured } from "../lib/supabase";
 
 export const CommunityRequestView: React.FC = () => {
   const { currentUser } = useAuth();
-  const { stagedRegions, updateRegionDemand, currentPlan } = useOperational();
+  const { authoritativeRegions, authoritativePlan, authoritativeCenters, aidRequests, submitAidRequest } = useOperational();
 
   const targetRegionId = currentUser?.assignedRegionId || "B";
-  const myRegion = stagedRegions.find((r) => r.regionId === targetRegionId) || stagedRegions[0];
-  const myAllocation = currentPlan.find((p) => p.regionId === targetRegionId);
+  // Partners see the PUBLISHED allocation, not someone's unpublished preview.
+  const myRegion = authoritativeRegions.find((r) => r.regionId === targetRegionId);
+  const myAllocation = authoritativePlan.rows.find((p) => p.regionId === targetRegionId);
+  const myCenter = authoritativeCenters.find((c) => c.centerId === myRegion?.assignedCenterId);
+  const myRequests = aidRequests.filter((r) => r.regionId === targetRegionId);
 
-  const [headcount, setHeadcount] = useState<number>(1250);
-  const [kitsNeeded, setKitsNeeded] = useState<number>(myRegion?.demandKits || 60);
+  const [headcount, setHeadcount] = useState<string>("1250");
+  const [kitsNeeded, setKitsNeeded] = useState<string>(String(myRegion?.demandKits ?? 60));
   const [urgency, setUrgency] = useState<"standard" | "high" | "critical">("high");
   const [notes, setNotes] = useState<string>(
     "Monsoon flash-flood waterlogging in Low-Lying Sector 4; families stranded with no cooking fuel."
   );
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateRegionDemand(targetRegionId, kitsNeeded);
-    setSubmitted(true);
-
-    if (isSupabaseConfigured) {
-      void (async () => {
-        try {
-          await supabase.from("demand_records").insert({
-            organization_id: "10000000-0000-0000-0000-000000000001",
-            region_id: targetRegionId,
-            period_id: "50000000-0000-0000-0000-000000000001",
-            revision: 1,
-            period_revision: 1,
-            quantity_kits: kitsNeeded,
-            source: "NGO Field Census Telemetry",
-            observed_at: new Date().toISOString(),
-            provenance: "reported",
-            recorded_by: "20000000-0000-0000-0000-000000000003",
-          });
-        } catch (err) {
-          console.warn("[Supabase Sync] Demand record update:", err);
-        }
-      })();
+    setSubmitted(false);
+    const kits = Number(kitsNeeded.trim());
+    const families = Number(headcount.trim());
+    if (!myRegion) {
+      setError(`Ward ${targetRegionId} is not part of the current published plan.`);
+      return;
     }
-
-    setTimeout(() => setSubmitted(false), 4000);
+    if (!/^\d+$/.test(kitsNeeded.trim()) || kits < 1 || kits > 100000) {
+      setError("Kits required must be a whole number between 1 and 100,000.");
+      return;
+    }
+    if (!/^\d+$/.test(headcount.trim()) || families < 1) {
+      setError("Family headcount must be a whole number of at least 1.");
+      return;
+    }
+    setError(null);
+    // A request never changes demand directly: a coordinator reviews it first.
+    submitAidRequest({
+      regionId: targetRegionId,
+      requestedKits: kits,
+      headcount: families,
+      urgency,
+      notes: notes.trim(),
+      submittedBy: `${currentUser?.name ?? "Community partner"} (${currentUser?.agency ?? "NGO"})`,
+    });
+    setSubmitted(true);
   };
 
   return (
@@ -92,10 +96,9 @@ export const CommunityRequestView: React.FC = () => {
         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center space-x-3 shadow-sm animate-in fade-in">
           <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
           <div>
-            <span className="font-bold block">Community Demand Updated Successfully!</span>
+            <span className="font-bold block">Request submitted for review</span>
             <span className="text-emerald-700">
-              The State Progressive Max-Min fairness engine has updated Ward {targetRegionId} allocation quota to{" "}
-              <strong>{myAllocation?.allocatedKits || kitsNeeded} kits</strong>.
+              Your request for Ward {targetRegionId} ({kitsNeeded} kits) was sent to the State coordinator. The allocation changes only after a coordinator reviews it and publishes a new revision.
             </span>
           </div>
         </div>
@@ -116,6 +119,7 @@ export const CommunityRequestView: React.FC = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+            {error && <p role="alert" className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800">{error}</p>}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block font-semibold text-zinc-700 mb-1">
@@ -131,7 +135,7 @@ export const CommunityRequestView: React.FC = () => {
                     max={50000}
                     required
                     value={headcount}
-                    onChange={(e) => setHeadcount(parseInt(e.target.value, 10) || 0)}
+                    onChange={(e) => setHeadcount(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 border border-zinc-300 rounded-lg text-zinc-900 font-mono text-xs focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
@@ -151,10 +155,10 @@ export const CommunityRequestView: React.FC = () => {
                   <input
                     type="number"
                     min={1}
-                    max={1000}
+                    max={100000}
                     required
                     value={kitsNeeded}
-                    onChange={(e) => setKitsNeeded(parseInt(e.target.value, 10) || 0)}
+                    onChange={(e) => setKitsNeeded(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 border border-zinc-300 rounded-lg text-zinc-900 font-mono text-xs focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
@@ -230,21 +234,35 @@ export const CommunityRequestView: React.FC = () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-zinc-500">Staging Logistics Depot:</span>
-                <span className="font-mono text-zinc-700">Dharavi Central Node (CTR-B)</span>
+                <span className="font-mono text-zinc-700">{myCenter ? `${myCenter.centerName} (${myCenter.centerId})` : "Not assigned"}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-zinc-500">Current Aid Quota:</span>
                 <span className="font-mono font-bold text-emerald-700 text-sm">
-                  {myAllocation?.allocatedKits || 40} Kits
+                  {myAllocation ? `${myAllocation.allocatedKits} Kits` : "—"}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-zinc-500">Coverage Quotient:</span>
                 <span className="font-mono font-bold text-zinc-900">
-                  {myAllocation?.coveragePercentage.toFixed(1) || "66.7"}%
+                  {myAllocation && myAllocation.demandKits > 0 ? `${myAllocation.coveragePercentage.toFixed(1)}%` : "N/A"}
                 </span>
               </div>
             </div>
+
+            {myRequests.length > 0 && (
+              <div className="space-y-1.5">
+                <span className="font-semibold text-zinc-800 block text-[11px] uppercase tracking-wider">Your requests</span>
+                <ul className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg text-[11px]">
+                  {myRequests.slice(0, 5).map((r) => (
+                    <li key={r.requestId} className="p-2 flex justify-between">
+                      <span>{r.requestedKits} kits · {new Date(r.submittedAtUTC).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}</span>
+                      <span className="font-semibold capitalize">{r.status === "staged" ? "Accepted for planning" : r.status}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <div className="p-3 bg-zinc-50 rounded-lg border border-zinc-200 space-y-1.5 text-[11px] text-zinc-600 leading-relaxed">
               <span className="font-semibold text-zinc-800 block">Progressive Max-Min Guarantee:</span>

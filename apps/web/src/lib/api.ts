@@ -3,7 +3,10 @@
  * Connects to the Cloudflare Worker Hono API backend, with offline fallback.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8787";
+// Same origin by default: production serves /api/v1 beside the app, and the Vite dev server
+// proxies /api to the local Worker. A hard-coded localhost URL would make deployed builds call
+// the visitor's own machine.
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 
 export interface ApiHealthResponse {
   status: string;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useLayoutEffect } from "react";
 import { AlertCircle, CheckCircle2, Lock, RefreshCw, X, AlertTriangle, ShieldAlert } from "lucide-react";
 import { useOperational } from "../../context/OperationalContext";
 import { useAuth } from "../../context/AuthContext";
@@ -13,53 +13,76 @@ export const ReviewAcceptModal: React.FC<ReviewAcceptModalProps> = ({ isOpen, on
     authoritativeRevision,
     authoritativeStock,
     stagedStock,
+    stagedConfirmedStock,
     authoritativeCenters,
     stagedCenters,
+    authoritativeRegions,
+    stagedRegions,
+    stagedSource,
+    planIssues,
+    selectedAlgorithm,
     publishAuthoritativePlan,
-    resetStudioToAuthoritative,
   } = useOperational();
-
   const { currentUser } = useAuth();
   const canPublish = currentUser?.role === "admin";
 
   const [justification, setJustification] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [idempotencyKey] = useState<string>(() => crypto.randomUUID());
+  const [error, setError] = useState<string | null>(null);
+  const [idempotencyKey, setIdempotencyKey] = useState<string>(() => crypto.randomUUID());
+
+  // One key per acceptance intent: a fresh key whenever the review is reopened. Retries while
+  // the modal stays open reuse the same key, so a retried publish cannot create two revisions.
+  // A layout effect runs before paint, so the previous intent's key is never shown or submitted.
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    setIdempotencyKey(crypto.randomUUID());
+    setJustification("");
+    setError(null);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  // Identify staged overrides
   const overrides: string[] = [];
+  if (stagedStock !== authoritativeStock) overrides.push(`Stock: ${authoritativeStock} → ${stagedStock} kits`);
   stagedCenters.forEach((sc) => {
     const orig = authoritativeCenters.find((c) => c.centerId === sc.centerId);
-    if (orig) {
-      if (orig.configuredCapacity !== sc.configuredCapacity) {
-        overrides.push(
-          `${sc.centerName}: Handling capacity changed from ${orig.configuredCapacity} to ${sc.configuredCapacity} kits`
-        );
-      }
-      if (orig.operatingStatus !== sc.operatingStatus) {
-        overrides.push(
-          `${sc.centerName}: Operating status changed from "${orig.operatingStatus}" to "${sc.operatingStatus}"`
-        );
-      }
+    if (!orig) {
+      overrides.push(`${sc.centerName} (${sc.centerId}): new center, capacity ${sc.configuredCapacity} kits`);
+      return;
     }
+    if (orig.configuredCapacity !== sc.configuredCapacity) overrides.push(`${sc.centerName}: capacity ${orig.configuredCapacity} → ${sc.configuredCapacity} kits`);
+    if (orig.operatingStatus !== sc.operatingStatus) overrides.push(`${sc.centerName}: status "${orig.operatingStatus}" → "${sc.operatingStatus}"`);
   });
+  stagedRegions.forEach((sr) => {
+    const orig = authoritativeRegions.find((r) => r.regionId === sr.regionId);
+    if (!orig) overrides.push(`Region ${sr.regionId}: added (demand ${sr.demandKits} kits)`);
+    else if (orig.demandKits !== sr.demandKits) overrides.push(`Region ${sr.regionId}: demand ${orig.demandKits} → ${sr.demandKits} kits`);
+  });
+  const removed = authoritativeRegions.filter((r) => !stagedRegions.some((s) => s.regionId === r.regionId)).length;
+  if (removed) overrides.push(`${removed} region(s) removed from the period`);
 
-  const isSurgeStock = stagedStock > authoritativeStock;
+  const hypothetical = stagedStock !== stagedConfirmedStock;
+  const blockers: string[] = [];
+  if (stagedSource === "scenario") blockers.push("This preview is a scenario preset (a what-if study of the period before any dispatch). Reset to the register or import confirmed data to publish.");
+  if (hypothetical) blockers.push(`Hypothetical stock cannot become confirmed stock. The preview uses ${stagedStock} kits but ${stagedConfirmedStock} are confirmed. Reset the stock or import a confirmed warehouse count.`);
+  if (planIssues.length) blockers.push(`The plan has ${planIssues.length} input conflict(s) shown in the studio. Resolve them first.`);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canPublish || justification.trim().length < 10) return;
-
+    if (!canPublish || justification.trim().length < 10 || blockers.length) return;
     setIsSubmitting(true);
+    setError(null);
     try {
-      await publishAuthoritativePlan(justification, idempotencyKey, {
+      const result = await publishAuthoritativePlan(justification, idempotencyKey, {
         actorId: currentUser?.id || "ACT-DIR-01",
         actorName: currentUser?.name || "Authorized Officer",
         actorRole: currentUser?.roleTitle || "Operations Coordinator",
       });
-      onClose();
+      if (result.ok) onClose();
+      else setError(result.message ?? "The plan could not be published.");
+    } catch {
+      setError("The plan could not be published. Try again; the same request will not be recorded twice.");
     } finally {
       setIsSubmitting(false);
     }
@@ -96,7 +119,7 @@ export const ReviewAcceptModal: React.FC<ReviewAcceptModalProps> = ({ isOpen, on
           {/* Staged Overrides */}
           <div className="space-y-1.5">
             <label className="font-semibold text-zinc-700 uppercase tracking-wider text-[11px]">
-              Staged Parameter Overrides ({overrides.length})
+              Changes Since r{authoritativeRevision} ({overrides.length})
             </label>
             {overrides.length > 0 ? (
               <ul className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg bg-zinc-50/50 text-zinc-800 max-h-32 overflow-y-auto">
@@ -109,24 +132,24 @@ export const ReviewAcceptModal: React.FC<ReviewAcceptModalProps> = ({ isOpen, on
               </ul>
             ) : (
               <p className="text-zinc-500 italic p-2 bg-zinc-50 rounded border border-zinc-200">
-                Baseline allocation with no center capacity overrides.
+                No input changes: this re-publishes the current inputs.
               </p>
             )}
           </div>
 
-          {/* Surge Warning */}
-          {isSurgeStock && (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start space-x-2.5 text-amber-800">
+          {blockers.map((message) => (
+            <div key={message} role="alert" className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start space-x-2.5 text-amber-800">
               <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-              <div>
-                <span className="font-semibold">Unconfirmed Hypothetical Stock:</span>
-                <p className="mt-0.5 leading-relaxed">
-                  You have staged {stagedStock} kits ({stagedStock - authoritativeStock} unconfirmed surge kits).
-                  Hypothetical stock cannot become confirmed stock in the official register without warehouse physical verification.
-                </p>
-              </div>
+              <p className="leading-relaxed">{message}</p>
             </div>
+          ))}
+          {error && (
+            <div role="alert" className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-800">{error}</div>
           )}
+          <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg border border-zinc-200">
+            <span className="text-zinc-600">Allocation policy:</span>
+            <span className="font-medium text-zinc-900">{selectedAlgorithm === "srs-progressive-maxmin" ? "Progressive max-min fairness" : "Proportional baseline (Hamilton)"}</span>
+          </div>
 
           {/* Non-Admin Notice */}
           {!canPublish && (
@@ -178,7 +201,7 @@ export const ReviewAcceptModal: React.FC<ReviewAcceptModalProps> = ({ isOpen, on
             </button>
             <button
               type="submit"
-              disabled={!canPublish || justification.trim().length < 10 || isSubmitting}
+              disabled={!canPublish || justification.trim().length < 10 || isSubmitting || blockers.length > 0}
               className="inline-flex items-center px-4 py-2 font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 shadow-sm transition-colors"
             >
               <CheckCircle2 className="w-4 h-4 mr-1.5" />

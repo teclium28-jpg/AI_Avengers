@@ -1,22 +1,32 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from "react";
 import type {
+  AidRequest,
   RegionEntity,
   CenterEntity,
-  StockBatch,
   CalculatedAllocationItem,
   DecisionReceiptEntity,
   MovementRecord,
   AllocationAlgorithmType,
-  DispatchReconciliationSummary,
-  CenterReconciliationSummary,
   NavigationPage,
 } from "../types";
-import { allocateFairness, computeBaselineAllocation } from "@fairshare/domain";
 import { computeSha256Fingerprint } from "../lib/crypto";
-import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import { mirrorToSupabase } from "../lib/sync";
+import {
+  PERIOD_ID,
+  computePlan,
+  committedByCenter,
+  summarizeCenterLedger,
+  checkMovement,
+  dispatchHeadroom,
+  type CenterLedgerSummary,
+  type MovementCheck,
+  type PlanIssue,
+  type PlanResult,
+} from "../lib/planning";
+import { SCENARIO_PRESETS } from "../lib/scenarios";
 
 // ==========================================
-// Initial Production Baseline Seed Data
+// Seed data (clearly synthetic demo fixtures)
 // ==========================================
 
 const SEED_CENTERS: CenterEntity[] = [
@@ -79,10 +89,15 @@ const SEED_REGIONS: RegionEntity[] = [
   },
 ];
 
+const ALGORITHM_VERSION: Record<AllocationAlgorithmType, string> = {
+  "srs-progressive-maxmin": "SRS Progressive Max-Min Engine v3.1 (Integer BigInt)",
+  "hamilton-proportional": "Hamilton Proportional Baseline v1 (Largest Remainder)",
+};
+
 const SEED_RECEIPTS: DecisionReceiptEntity[] = [
   {
     receiptId: "RCPT-MMR-2026-001",
-    periodId: "2026-W46",
+    periodId: PERIOD_ID,
     revision: 1,
     actorId: "ACT-DIR-01",
     actorName: "Swayam Ruparel",
@@ -90,9 +105,10 @@ const SEED_RECEIPTS: DecisionReceiptEntity[] = [
     timestampUTC: "2026-11-10T08:00:00Z",
     timestampIST: "10 Nov 2026, 13:30:00 IST",
     algorithm: "srs-progressive-maxmin",
-    algorithmVersion: "SRS Progressive Max-Min Engine v3.1 (Integer BigInt)",
+    algorithmVersion: ALGORITHM_VERSION["srs-progressive-maxmin"],
     changeJustification: "Initial approved baseline allocation for Cycle 2026-W46.",
-    canonicalPayloadHash: "8f4a13b6d27e95c01b44d34e9e0fa958a4361287c8e54736f9872514d3b6a931",
+    // SHA-256 of the canonical payload below; verified by the audit view.
+    canonicalPayloadHash: "4f4df5eab0d624a5a54e05aaea40552c3a987ef30cc8a07a9720b000712de2c4",
     stagedOverrides: { capacityOverrides: {}, statusOverrides: {} },
     resultingAllocation: { A: 40, B: 40, C: 40 },
   },
@@ -100,37 +116,9 @@ const SEED_RECEIPTS: DecisionReceiptEntity[] = [
 
 const SEED_MOVEMENTS: MovementRecord[] = [
   {
-    recordId: "MOV-2026-001",
-    waybillNumber: "WB-MMR-4019",
-    periodId: "2026-W46",
-    centerId: "CTR-B",
-    centerName: "Central Node (Dharavi Community Depot)",
-    movementType: "dispatch",
-    quantityKits: 40,
-    timestampUTC: "2026-11-10T02:00:00Z",
-    timestampIST: "10 Nov 2026, 07:30 IST",
-    carrierOrAgent: "State Logistics Fleet #MH-04-E-8821",
-    verifiedBy: "Gaurav Shinde (Depot Manager)",
-    notes: "Direct dispatch of sealed 15kg Emergency Ration Kits from Central Warehouse",
-  },
-  {
-    recordId: "MOV-2026-002",
-    waybillNumber: "WB-MMR-4020",
-    periodId: "2026-W46",
-    centerId: "CTR-B",
-    centerName: "Central Node (Dharavi Community Depot)",
-    movementType: "receipt",
-    quantityKits: 35,
-    timestampUTC: "2026-11-10T04:15:00Z",
-    timestampIST: "10 Nov 2026, 09:45 IST",
-    carrierOrAgent: "State Logistics Fleet #MH-04-E-8821",
-    verifiedBy: "Sunita Kamble (Distribution Supervisor)",
-    notes: "35 kits received and scanned. 5 kits marked unaccounted upon arrival (Investigation ticket opened: TKT-INV-881).",
-  },
-  {
     recordId: "MOV-2026-003",
     waybillNumber: "WB-MMR-4021",
-    periodId: "2026-W46",
+    periodId: PERIOD_ID,
     centerId: "CTR-B",
     centerName: "Central Node (Dharavi Community Depot)",
     movementType: "collection",
@@ -141,68 +129,182 @@ const SEED_MOVEMENTS: MovementRecord[] = [
     verifiedBy: "Sunita Kamble (Distribution Supervisor)",
     notes: "25 registered households verified via physical family tokens and collected monthly kit.",
   },
+  {
+    recordId: "MOV-2026-002",
+    waybillNumber: "WB-MMR-4020",
+    periodId: PERIOD_ID,
+    centerId: "CTR-B",
+    centerName: "Central Node (Dharavi Community Depot)",
+    movementType: "receipt",
+    quantityKits: 35,
+    timestampUTC: "2026-11-10T04:15:00Z",
+    timestampIST: "10 Nov 2026, 09:45 IST",
+    carrierOrAgent: "State Logistics Fleet #MH-04-E-8821",
+    verifiedBy: "Sunita Kamble (Distribution Supervisor)",
+    notes: "35 kits received and scanned. 5 kits not yet explained (review ticket TKT-INV-881).",
+  },
+  {
+    recordId: "MOV-2026-001",
+    waybillNumber: "WB-MMR-4019",
+    periodId: PERIOD_ID,
+    centerId: "CTR-B",
+    centerName: "Central Node (Dharavi Community Depot)",
+    movementType: "dispatch",
+    quantityKits: 40,
+    timestampUTC: "2026-11-10T02:00:00Z",
+    timestampIST: "10 Nov 2026, 07:30 IST",
+    carrierOrAgent: "State Logistics Fleet #MH-04-E-8821",
+    verifiedBy: "Gaurav Shinde (Depot Manager)",
+    notes: "Direct dispatch of sealed 15kg Emergency Ration Kits from Central Warehouse",
+  },
 ];
 
 // ==========================================
-// Operational Context State Interface
+// Storage: every read is validated; anything malformed falls back to the seed.
 // ==========================================
 
+const STORAGE_SCHEMA = "2";
+const KEYS = {
+  schema: "fairshare_schema",
+  revision: "fairshare_revision",
+  stock: "fairshare_stock",
+  centers: "fairshare_centers",
+  regions: "fairshare_regions",
+  receipts: "fairshare_receipts",
+  movements: "fairshare_movements",
+  requests: "fairshare_aid_requests",
+} as const;
+
+function readStorage(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function writeStorage(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* storage full or blocked: the session keeps working in memory */
+  }
+}
+function readInt(key: string, fallback: number): number {
+  const n = Number(readStorage(key));
+  return readStorage(key) !== null && Number.isSafeInteger(n) && n >= 0 ? n : fallback;
+}
+function readArray<T>(key: string, fallback: T[], valid: (item: any) => boolean): T[] {
+  try {
+    const parsed = JSON.parse(readStorage(key) ?? "null");
+    return Array.isArray(parsed) && parsed.every(valid) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
+const isCenter = (c: any) => c && typeof c.centerId === "string" && Number.isSafeInteger(c.configuredCapacity) && c.configuredCapacity >= 0;
+const isRegion = (r: any) => r && typeof r.regionId === "string" && typeof r.assignedCenterId === "string" && Number.isSafeInteger(r.demandKits) && r.demandKits >= 0;
+const isReceipt = (r: any) => r && typeof r.receiptId === "string" && Number.isSafeInteger(r.revision) && r.resultingAllocation && typeof r.resultingAllocation === "object";
+const isMovement = (m: any) => m && typeof m.recordId === "string" && typeof m.centerId === "string" && Number.isSafeInteger(m.quantityKits);
+const isRequest = (r: any) => r && typeof r.requestId === "string" && typeof r.regionId === "string";
+
+function loadInitialState() {
+  const schema = readStorage(KEYS.schema);
+  const centers = readArray<CenterEntity>(KEYS.centers, SEED_CENTERS, isCenter);
+  const receipts = readArray<DecisionReceiptEntity>(KEYS.receipts, SEED_RECEIPTS, isReceipt);
+  return {
+    revision: Math.max(1, receipts.reduce((m, r) => Math.max(m, r.revision), 0), readInt(KEYS.revision, 1)),
+    stock: readInt(KEYS.stock, 120),
+    // Before schema 2, ledger dispatches were also added to committedDispatches. Dispatches are
+    // now always derived from the ledger, so the stored running total is reset to avoid counting
+    // them twice.
+    centers: schema === STORAGE_SCHEMA ? centers : centers.map((c) => ({ ...c, committedDispatches: 0 })),
+    regions: readArray<RegionEntity>(KEYS.regions, SEED_REGIONS, isRegion),
+    receipts: receipts.map((r) => (r.receiptId === SEED_RECEIPTS[0].receiptId && r.revision === 1 ? SEED_RECEIPTS[0] : r)),
+    movements: readArray<MovementRecord>(KEYS.movements, SEED_MOVEMENTS, isMovement),
+    requests: readArray<AidRequest>(KEYS.requests, [], isRequest),
+  };
+}
+
+const formatIST = (date: Date, timeStyle: "short" | "medium") =>
+  date.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle }) + " IST";
+
+const newId = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+
+// ==========================================
+// Context
+// ==========================================
+
+export interface PublishResult {
+  ok: boolean;
+  message?: string;
+}
+
 interface OperationalContextValue {
-  // Navigation
   activePage: NavigationPage;
   setActivePage: (page: NavigationPage) => void;
 
-  // Active Organization & Period Metadata
   organizationName: string;
   organizationId: string;
   periodName: string;
   periodId: string;
-  userRole: string;
-  userName: string;
 
-  // Authoritative Registered State
+  // Authoritative register (last published revision)
   authoritativeRevision: number;
   authoritativeStock: number;
   authoritativeCenters: CenterEntity[];
   authoritativeRegions: RegionEntity[];
+  authoritativePlan: PlanResult;
+  publishedAllocation: Record<string, number>;
   receipts: DecisionReceiptEntity[];
   movements: MovementRecord[];
+  committedDispatches: Record<string, number>;
 
-  // Interactive Planning Studio State
+  // Planning studio (uncommitted preview)
   stagedStock: number;
   setStagedStock: (stock: number) => void;
+  /** Confirmed stock behind the preview; anything above it is hypothetical. */
+  stagedConfirmedStock: number;
+  hypotheticalStockKits: number;
   stagedCenters: CenterEntity[];
   stagedRegions: RegionEntity[];
   selectedAlgorithm: AllocationAlgorithmType;
   setSelectedAlgorithm: (algo: AllocationAlgorithmType) => void;
   hasStagedChanges: boolean;
+  stagedSource: "register" | "intake" | "scenario";
+  /** Kits already dispatched per center as used by the preview. */
+  stagedCommitted: Record<string, number>;
 
-  // Calculated Results
   currentPlan: CalculatedAllocationItem[];
   baselinePlan: CalculatedAllocationItem[];
+  planIssues: PlanIssue[];
   totalStockAvailable: number;
   totalAllocatedKits: number;
+  totalDemandKits: number;
   totalUnmetKits: number;
-  averageCoveragePct: number;
-  minCoveragePct: number;
+  averageCoveragePct: number | null;
+  minCoveragePct: number | null;
   activeCentersCount: number;
 
-  // Reconciliation summaries
-  dispatchReconciliation: DispatchReconciliationSummary[];
-  centerReconciliation: CenterReconciliationSummary[];
+  centerLedgers: (CenterLedgerSummary & { centerName: string })[];
 
-  // Mutator Actions
-  updateCenterCapacity: (centerId: string, newCapacity: number) => void;
+  aidRequests: AidRequest[];
+  submitAidRequest: (request: Omit<AidRequest, "requestId" | "submittedAtUTC" | "status">) => void;
+  resolveAidRequest: (requestId: string, decision: "staged" | "dismissed") => void;
+
+  /** Returns an error message when the change is refused. */
+  updateCenterCapacity: (centerId: string, newCapacity: number) => string | null;
   toggleCenterStatus: (centerId: string) => void;
-  updateRegionDemand: (regionId: string, newDemand: number) => void;
-  addNewCenter: (center: Omit<CenterEntity, "committedDispatches">) => void;
+  updateRegionDemand: (regionId: string, newDemand: number) => string | null;
+  addNewCenter: (center: Omit<CenterEntity, "committedDispatches">) => string | null;
   publishAuthoritativePlan: (
     justification: string,
     idempotencyKey: string,
     actor?: { actorId: string; actorName: string; actorRole: string }
-  ) => Promise<void>;
-  recordMovementEvent: (event: Omit<MovementRecord, "recordId" | "timestampUTC" | "timestampIST">) => void;
-  applyBatchIntake: (regions: RegionEntity[], stockKits: number) => void;
+  ) => Promise<PublishResult>;
+  dispatchHeadroomFor: (centerId: string) => number;
+  recordMovementEvent: (event: Omit<MovementRecord, "recordId" | "timestampUTC" | "timestampIST">) => MovementCheck;
+  applyBatchIntake: (regions: RegionEntity[], centers: CenterEntity[], confirmedStockKits: number) => void;
+  applyScenario: (scenarioId: string) => void;
   resetStudioToAuthoritative: () => void;
   resetToFactoryDefaults: () => void;
 }
@@ -210,288 +312,132 @@ interface OperationalContextValue {
 const OperationalContext = createContext<OperationalContextValue | null>(null);
 
 export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Load state from localStorage or initialize from seeds
+  const [initial] = useState(loadInitialState);
   const [activePage, setActivePage] = useState<NavigationPage>("dashboard");
 
-  const [authoritativeRevision, setAuthoritativeRevision] = useState<number>(() => {
-    const saved = localStorage.getItem("fairshare_revision");
-    return saved && saved !== "4" ? parseInt(saved, 10) : 1;
-  });
+  const [authoritativeRevision, setAuthoritativeRevision] = useState<number>(initial.revision);
+  const [authoritativeStock, setAuthoritativeStock] = useState<number>(initial.stock);
+  const [authoritativeCenters, setAuthoritativeCenters] = useState<CenterEntity[]>(initial.centers);
+  const [authoritativeRegions, setAuthoritativeRegions] = useState<RegionEntity[]>(initial.regions);
+  const [receipts, setReceipts] = useState<DecisionReceiptEntity[]>(initial.receipts);
+  const [movements, setMovements] = useState<MovementRecord[]>(initial.movements);
+  const [aidRequests, setAidRequests] = useState<AidRequest[]>(initial.requests);
 
-  const [authoritativeStock, setAuthoritativeStock] = useState<number>(() => {
-    const saved = localStorage.getItem("fairshare_stock");
-    return saved ? parseInt(saved, 10) : 120;
-  });
+  const [stagedStock, setStagedStockState] = useState<number>(initial.stock);
+  const [stagedConfirmedStock, setStagedConfirmedStock] = useState<number>(initial.stock);
+  const [stagedCenters, setStagedCenters] = useState<CenterEntity[]>(initial.centers);
+  const [stagedRegions, setStagedRegions] = useState<RegionEntity[]>(initial.regions);
+  const [selectedAlgorithm, setSelectedAlgorithm] = useState<AllocationAlgorithmType>("srs-progressive-maxmin");
+  /** Where the preview came from. Scenario presets are what-if studies and cannot be published. */
+  const [stagedSource, setStagedSource] = useState<"register" | "intake" | "scenario">("register");
+  const usedIdempotencyKeys = useRef(new Set<string>());
 
-  const [authoritativeCenters, setAuthoritativeCenters] = useState<CenterEntity[]>(() => {
-    try {
-      const saved = localStorage.getItem("fairshare_centers");
-      return saved ? JSON.parse(saved) : SEED_CENTERS;
-    } catch {
-      return SEED_CENTERS;
-    }
-  });
-
-  const [authoritativeRegions, setAuthoritativeRegions] = useState<RegionEntity[]>(() => {
-    try {
-      const saved = localStorage.getItem("fairshare_regions");
-      return saved ? JSON.parse(saved) : SEED_REGIONS;
-    } catch {
-      return SEED_REGIONS;
-    }
-  });
-
-  const [receipts, setReceipts] = useState<DecisionReceiptEntity[]>(() => {
-    const saved = localStorage.getItem("fairshare_receipts");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length === 4 && parsed[3]?.receiptId === "RCPT-MMR-2026-004") {
-          return SEED_RECEIPTS;
-        }
-        return parsed;
-      } catch {
-        return SEED_RECEIPTS;
-      }
-    }
-    return SEED_RECEIPTS;
-  });
-
-  const [movements, setMovements] = useState<MovementRecord[]>(() => {
-    try {
-      const saved = localStorage.getItem("fairshare_movements");
-      return saved ? JSON.parse(saved) : SEED_MOVEMENTS;
-    } catch {
-      return SEED_MOVEMENTS;
-    }
-  });
-
-  // Staged Studio state
-  const [stagedStock, setStagedStock] = useState<number>(authoritativeStock);
-  const [stagedCenters, setStagedCenters] = useState<CenterEntity[]>(authoritativeCenters);
-  const [stagedRegions, setStagedRegions] = useState<RegionEntity[]>(authoritativeRegions);
-  const [selectedAlgorithm, setSelectedAlgorithm] = useState<AllocationAlgorithmType>(
-    "srs-progressive-maxmin"
-  );
-
-  // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem("fairshare_revision", authoritativeRevision.toString());
-    localStorage.setItem("fairshare_stock", authoritativeStock.toString());
-    localStorage.setItem("fairshare_centers", JSON.stringify(authoritativeCenters));
-    localStorage.setItem("fairshare_regions", JSON.stringify(authoritativeRegions));
-    localStorage.setItem("fairshare_receipts", JSON.stringify(receipts));
-    localStorage.setItem("fairshare_movements", JSON.stringify(movements));
-  }, [authoritativeRevision, authoritativeStock, authoritativeCenters, authoritativeRegions, receipts, movements]);
+    writeStorage(KEYS.schema, STORAGE_SCHEMA);
+    writeStorage(KEYS.revision, String(authoritativeRevision));
+    writeStorage(KEYS.stock, String(authoritativeStock));
+    writeStorage(KEYS.centers, JSON.stringify(authoritativeCenters));
+    writeStorage(KEYS.regions, JSON.stringify(authoritativeRegions));
+    writeStorage(KEYS.receipts, JSON.stringify(receipts));
+    writeStorage(KEYS.movements, JSON.stringify(movements));
+    writeStorage(KEYS.requests, JSON.stringify(aidRequests));
+  }, [authoritativeRevision, authoritativeStock, authoritativeCenters, authoritativeRegions, receipts, movements, aidRequests]);
 
-  // Check if staged state differs from authoritative register
+  const committedDispatches = useMemo(() => {
+    // Staged and authoritative center lists can differ (e.g. after an import); cover both.
+    const all = new Map<string, CenterEntity>();
+    for (const c of authoritativeCenters) all.set(c.centerId, c);
+    for (const c of stagedCenters) all.set(c.centerId, c);
+    return committedByCenter([...all.values()], movements);
+  }, [authoritativeCenters, stagedCenters, movements]);
+
   const hasStagedChanges = useMemo(() => {
     if (stagedStock !== authoritativeStock) return true;
+    if (stagedCenters.length !== authoritativeCenters.length || stagedRegions.length !== authoritativeRegions.length) return true;
     for (const sc of stagedCenters) {
       const ac = authoritativeCenters.find((c) => c.centerId === sc.centerId);
-      if (!ac) return true;
-      if (ac.configuredCapacity !== sc.configuredCapacity || ac.operatingStatus !== sc.operatingStatus)
-        return true;
+      if (!ac || ac.configuredCapacity !== sc.configuredCapacity || ac.operatingStatus !== sc.operatingStatus || ac.committedDispatches !== sc.committedDispatches) return true;
     }
     for (const sr of stagedRegions) {
       const ar = authoritativeRegions.find((r) => r.regionId === sr.regionId);
-      if (!ar) return true;
-      if (ar.demandKits !== sr.demandKits || ar.status !== sr.status) return true;
+      if (!ar || ar.demandKits !== sr.demandKits || ar.status !== sr.status || ar.assignedCenterId !== sr.assignedCenterId) return true;
     }
     return false;
   }, [stagedStock, stagedCenters, stagedRegions, authoritativeStock, authoritativeCenters, authoritativeRegions]);
 
-  // Calculate allocations using domain engine
-  const { currentPlan, baselinePlan, totalAllocatedKits, totalUnmetKits, averageCoveragePct, minCoveragePct } =
-    useMemo(() => {
-      // Build domain period input
-      const domainInput = {
-        periodId: "2026-W46",
-        stockKits: stagedStock,
-        regions: stagedRegions.map((r) => {
-          const center = stagedCenters.find((c) => c.centerId === r.assignedCenterId);
-          const effectiveCapacity =
-            !center || center.operatingStatus === "closed" ? 0 : center.configuredCapacity;
+  // Presets model the period before any dispatch, so the ledger is left out of their preview.
+  const stagedCommitted = useMemo(
+    () => (stagedSource === "scenario" ? committedByCenter(stagedCenters, []) : committedDispatches),
+    [stagedSource, stagedCenters, committedDispatches]
+  );
+  const fairPlan = useMemo(
+    () => computePlan(stagedStock, stagedCenters, stagedRegions, stagedCommitted, "srs-progressive-maxmin"),
+    [stagedStock, stagedCenters, stagedRegions, stagedCommitted]
+  );
+  const proportionalPlan = useMemo(
+    () => computePlan(stagedStock, stagedCenters, stagedRegions, stagedCommitted, "hamilton-proportional"),
+    [stagedStock, stagedCenters, stagedRegions, stagedCommitted]
+  );
+  const currentResult = selectedAlgorithm === "srs-progressive-maxmin" ? fairPlan : proportionalPlan;
 
-          return {
-            periodId: "2026-W46",
-            regionId: r.regionId,
-            regionName: r.regionName,
-            centerId: r.assignedCenterId,
-            demandKits: r.demandKits,
-            capacityKits: effectiveCapacity,
-            priorDispatchedKits: center?.committedDispatches || 0,
-            status: r.status === "active" && effectiveCapacity > 0 ? ("open" as const) : ("closed" as const),
-            provenance: "reported" as const,
-          };
-        }),
-      };
+  const latestReceipt = receipts.length ? receipts.reduce((a, b) => (b.revision > a.revision ? b : a)) : null;
+  const authoritativePlan = useMemo(
+    () => computePlan(authoritativeStock, authoritativeCenters, authoritativeRegions, committedDispatches, latestReceipt?.algorithm ?? "srs-progressive-maxmin"),
+    [authoritativeStock, authoritativeCenters, authoritativeRegions, committedDispatches, latestReceipt?.algorithm]
+  );
+  const publishedAllocation = latestReceipt?.resultingAllocation ?? {};
 
-      // Run SRS Progressive Max-Min fairness engine
-      const fairnessResult = allocateFairness(domainInput);
+  const centerLedgers = useMemo(() => {
+    const ids = new Set(movements.map((m) => m.centerId));
+    const named = new Map<string, string>();
+    for (const c of [...authoritativeCenters, ...stagedCenters]) named.set(c.centerId, c.centerName);
+    for (const m of movements) if (!named.has(m.centerId)) named.set(m.centerId, m.centerName);
+    // Every current center, plus any center that still has ledger history.
+    const centerIds = [...new Set([...authoritativeCenters.map((c) => c.centerId), ...ids])];
+    return centerIds.map((id) => ({ ...summarizeCenterLedger(id, movements), centerName: named.get(id) ?? id }));
+  }, [authoritativeCenters, stagedCenters, movements]);
 
-      // Run Hamilton proportional baseline
-      const baselineResult = computeBaselineAllocation(domainInput);
+  // ---------------- Mutators ----------------
 
-      // Build enriched UI models
-      const enrich = (allocList: typeof fairnessResult.allocations) => {
-        return allocList.map((a) => {
-          const reg = stagedRegions.find((r) => r.regionId === a.regionId)!;
-          const ctr = stagedCenters.find((c) => c.centerId === reg.assignedCenterId);
-          const isCenterClosed = !ctr || ctr.operatingStatus === "closed" || ctr.configuredCapacity === 0;
+  const setStagedStock = (stock: number) => {
+    if (Number.isSafeInteger(stock) && stock >= 0) setStagedStockState(stock);
+  };
 
-          let status: CalculatedAllocationItem["status"] = "partial";
-          if (reg.demandKits === 0) {
-            status = "zero_demand";
-          } else if (isCenterClosed) {
-            status = "unserviceable";
-          } else if (a.allocatedKits >= reg.demandKits) {
-            status = "full";
-          } else if (a.boundByCapacity) {
-            status = "capacity_capped";
-          }
-
-          return {
-            regionId: reg.regionId,
-            regionName: reg.regionName,
-            assignedCenterId: reg.assignedCenterId,
-            centerName: ctr?.centerName || "Unassigned",
-            demandKits: reg.demandKits,
-            centerCapacity: ctr?.configuredCapacity || 0,
-            priorDispatchedKits: domainInput.regions.find((ir) => ir.regionId === reg.regionId)?.priorDispatchedKits || 0,
-            newlyAllocatedKits: a.newlyAllocatedKits,
-            allocatedKits: a.allocatedKits,
-            coverageFraction: { numerator: a.allocatedKits, denominator: reg.demandKits },
-            coveragePercentage: reg.demandKits > 0 ? (a.allocatedKits / reg.demandKits) * 100 : 0,
-            isCappedByCapacity: a.boundByCapacity,
-            isCappedByDemand: a.allocatedKits >= reg.demandKits,
-            status,
-          };
-        });
-      };
-
-      const current = selectedAlgorithm === "srs-progressive-maxmin"
-        ? enrich(fairnessResult.allocations)
-        : enrich(baselineResult.allocations);
-
-      const baseline = enrich(baselineResult.allocations);
-
-      const totalAlloc = current.reduce((sum, item) => sum + item.allocatedKits, 0);
-      const totalDemand = current.reduce((sum, item) => sum + item.demandKits, 0);
-      const totalUnmet = Math.max(0, totalDemand - totalAlloc);
-
-      const coverages = current.map((c) => c.coveragePercentage);
-      const avgCov = coverages.length > 0 ? coverages.reduce((a, b) => a + b, 0) / coverages.length : 0;
-      const minCov = coverages.length > 0 ? Math.min(...coverages) : 0;
-
-      return {
-        currentPlan: current,
-        baselinePlan: baseline,
-        totalAllocatedKits: totalAlloc,
-        totalUnmetKits: totalUnmet,
-        averageCoveragePct: avgCov,
-        minCoveragePct: minCov,
-      };
-    }, [stagedStock, stagedRegions, stagedCenters, selectedAlgorithm]);
-
-  // Compute 2-layer reconciliation from physical movement logs
-  const { dispatchReconciliation, centerReconciliation } = useMemo(() => {
-    const dispSummary: DispatchReconciliationSummary[] = [];
-    const ctrSummary: CenterReconciliationSummary[] = [];
-
-    authoritativeCenters.forEach((center) => {
-      const centerMovements = movements.filter((m) => m.centerId === center.centerId);
-
-      const dispatched = centerMovements
-        .filter((m) => m.movementType === "dispatch")
-        .reduce((sum, m) => sum + m.quantityKits, 0);
-
-      const received = centerMovements
-        .filter((m) => m.movementType === "receipt")
-        .reduce((sum, m) => sum + m.quantityKits, 0);
-
-      const transitLoss = centerMovements
-        .filter((m) => m.movementType === "transit_loss")
-        .reduce((sum, m) => sum + m.quantityKits, 0);
-
-      const inTransit = Math.max(0, dispatched - received - transitLoss);
-      const unresolvedDiff = dispatched - (received + inTransit + transitLoss);
-
-      dispSummary.push({
-        centerId: center.centerId,
-        centerName: center.centerName,
-        dispatchedKits: dispatched,
-        receivedKits: received,
-        inTransitKits: inTransit,
-        confirmedLossKits: transitLoss,
-        unresolvedKits: unresolvedDiff,
-        isBalanced: unresolvedDiff === 0,
-      });
-
-      const collected = centerMovements
-        .filter((m) => m.movementType === "collection")
-        .reduce((sum, m) => sum + m.quantityKits, 0);
-
-      const damaged = centerMovements
-        .filter((m) => m.movementType === "center_damage")
-        .reduce((sum, m) => sum + m.quantityKits, 0);
-
-      const remaining = Math.max(0, received - (collected + damaged));
-
-      ctrSummary.push({
-        centerId: center.centerId,
-        centerName: center.centerName,
-        receivedKits: received,
-        collectedKits: collected,
-        damagedKits: damaged,
-        remainingInCenterKits: remaining,
-        isBalanced: true,
-      });
-    });
-
-    return {
-      dispatchReconciliation: dispSummary,
-      centerReconciliation: ctrSummary,
-    };
-  }, [authoritativeCenters, movements]);
-
-  // Mutator Actions
-  const updateCenterCapacity = (centerId: string, newCapacity: number) => {
-    setStagedCenters((prev) =>
-      prev.map((c) => (c.centerId === centerId ? { ...c, configuredCapacity: Math.max(0, newCapacity) } : c))
-    );
+  const updateCenterCapacity = (centerId: string, newCapacity: number): string | null => {
+    if (!Number.isSafeInteger(newCapacity) || newCapacity < 0) return "Capacity must be a whole, non-negative number of kits.";
+    const dispatched = stagedCommitted[centerId] ?? 0;
+    if (newCapacity < dispatched) return `${dispatched} kits were already dispatched to this center; capacity cannot be set below that.`;
+    setStagedCenters((prev) => prev.map((c) => (c.centerId === centerId ? { ...c, configuredCapacity: newCapacity } : c)));
+    return null;
   };
 
   const toggleCenterStatus = (centerId: string) => {
     setStagedCenters((prev) =>
-      prev.map((c) =>
-        c.centerId === centerId
-          ? {
-              ...c,
-              operatingStatus: c.operatingStatus === "active" ? "closed" : "active",
-            }
-          : c
-      )
+      prev.map((c) => (c.centerId === centerId ? { ...c, operatingStatus: c.operatingStatus === "closed" ? "active" : "closed" } : c))
     );
   };
 
-  const updateRegionDemand = (regionId: string, newDemand: number) => {
-    setStagedRegions((prev) =>
-      prev.map((r) => (r.regionId === regionId ? { ...r, demandKits: Math.max(0, newDemand) } : r))
-    );
+  const updateRegionDemand = (regionId: string, newDemand: number): string | null => {
+    if (!Number.isSafeInteger(newDemand) || newDemand < 0) return "Demand must be a whole, non-negative number of kits.";
+    setStagedRegions((prev) => prev.map((r) => (r.regionId === regionId ? { ...r, demandKits: newDemand } : r)));
+    return null;
   };
 
-  const addNewCenter = (newCenter: Omit<CenterEntity, "committedDispatches">) => {
-    const centerWithCommitment: CenterEntity = {
-      ...newCenter,
-      committedDispatches: 0,
-    };
-    setAuthoritativeCenters((prev) => [...prev, centerWithCommitment]);
-    setStagedCenters((prev) => [...prev, centerWithCommitment]);
+  const addNewCenter = (newCenter: Omit<CenterEntity, "committedDispatches">): string | null => {
+    const id = newCenter.centerId.trim().toUpperCase();
+    if (!id) return "A center code is required.";
+    if ([...authoritativeCenters, ...stagedCenters].some((c) => c.centerId === id)) return `Center ${id} already exists.`;
+    if (!Number.isSafeInteger(newCenter.configuredCapacity) || newCenter.configuredCapacity < 0) return "Capacity must be a whole, non-negative number of kits.";
+    const center: CenterEntity = { ...newCenter, centerId: id, committedDispatches: 0 };
+    setAuthoritativeCenters((prev) => [...prev, center]);
+    setStagedCenters((prev) => [...prev, center]);
+    return null;
   };
 
   const resetStudioToAuthoritative = () => {
-    setStagedStock(authoritativeStock);
+    setStagedSource("register");
+    setStagedStockState(authoritativeStock);
+    setStagedConfirmedStock(authoritativeStock);
     setStagedCenters(authoritativeCenters.map((c) => ({ ...c })));
     setStagedRegions(authoritativeRegions.map((r) => ({ ...r })));
   };
@@ -500,188 +446,195 @@ export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ c
     justification: string,
     idempotencyKey: string,
     actor?: { actorId: string; actorName: string; actorRole: string }
-  ) => {
+  ): Promise<PublishResult> => {
+    // Same intent retried (double click, retry after error): never create a second revision.
+    if (usedIdempotencyKeys.current.has(idempotencyKey)) return { ok: true };
+    if (stagedSource === "scenario") return { ok: false, message: "Scenario presets are what-if studies of the period before any dispatch. Reset to the register (or import confirmed data) to publish." };
+    if (justification.trim().length < 10) return { ok: false, message: "A justification of at least 10 characters is required." };
+    if (currentResult.issues.length) return { ok: false, message: "The plan has input conflicts. Resolve them before publishing." };
+    if (stagedStock !== stagedConfirmedStock) {
+      return { ok: false, message: `Staged stock (${stagedStock}) differs from confirmed stock (${stagedConfirmedStock}). Hypothetical stock cannot become confirmed stock; reset the stock or import a confirmed warehouse count.` };
+    }
+    usedIdempotencyKeys.current.add(idempotencyKey);
+
     const nextRevision = authoritativeRevision + 1;
     const now = new Date();
-
     const resultingAllocation: Record<string, number> = {};
-    currentPlan.forEach((item) => {
+    currentResult.rows.forEach((item) => {
       resultingAllocation[item.regionId] = item.allocatedKits;
     });
-
     const capacityOverrides: Record<string, number> = {};
     const statusOverrides: Record<string, "active" | "closed"> = {};
-
     stagedCenters.forEach((sc) => {
       const orig = authoritativeCenters.find((c) => c.centerId === sc.centerId);
-      if (orig && orig.configuredCapacity !== sc.configuredCapacity) {
-        capacityOverrides[sc.centerId] = sc.configuredCapacity;
-      }
-      if (orig && orig.operatingStatus !== sc.operatingStatus) {
-        statusOverrides[sc.centerId] = sc.operatingStatus === "active" ? "active" : "closed";
-      }
+      if (orig && orig.configuredCapacity !== sc.configuredCapacity) capacityOverrides[sc.centerId] = sc.configuredCapacity;
+      if (orig && orig.operatingStatus !== sc.operatingStatus) statusOverrides[sc.centerId] = sc.operatingStatus === "closed" ? "closed" : "active";
     });
-
-    const stagedOverrides = {
-      capacityOverrides,
-      statusOverrides,
-    };
-
+    const stagedOverrides = { capacityOverrides, statusOverrides };
     const effectiveActorId = actor?.actorId || "ACT-DIR-01";
-    const effectiveActorName = actor?.actorName || "Swayam";
+    const effectiveActorName = actor?.actorName || "Authorized Officer";
     const effectiveActorRole = actor?.actorRole || "Chief Operations Coordinator";
+    const algorithmVersion = ALGORITHM_VERSION[selectedAlgorithm];
+    const changeJustification = justification.trim();
 
-    const payloadToHash = {
-      periodId: "2026-W46",
+    const canonicalHash = await computeSha256Fingerprint({
+      periodId: PERIOD_ID,
       revision: nextRevision,
       actorId: effectiveActorId,
       algorithm: selectedAlgorithm,
-      algorithmVersion: "SRS Progressive Max-Min Engine v3.1 (Integer BigInt)",
-      changeJustification: justification,
+      algorithmVersion,
+      changeJustification,
       resultingAllocation,
       stagedOverrides,
-    };
-
-    const canonicalHash = await computeSha256Fingerprint(payloadToHash);
+    });
 
     const newReceipt: DecisionReceiptEntity = {
       receiptId: `RCPT-MMR-2026-${String(nextRevision).padStart(3, "0")}`,
-      periodId: "2026-W46",
+      periodId: PERIOD_ID,
       revision: nextRevision,
       actorId: effectiveActorId,
       actorName: effectiveActorName,
       actorRole: effectiveActorRole,
       timestampUTC: now.toISOString(),
-      timestampIST:
-        now.toLocaleString("en-IN", {
-          timeZone: "Asia/Kolkata",
-          dateStyle: "medium",
-          timeStyle: "medium",
-        }) + " IST",
+      timestampIST: formatIST(now, "medium"),
       algorithm: selectedAlgorithm,
-      algorithmVersion: "SRS Progressive Max-Min Engine v3.1 (Integer BigInt)",
-      changeJustification: justification,
+      algorithmVersion,
+      changeJustification,
       canonicalPayloadHash: canonicalHash,
       stagedOverrides,
       resultingAllocation,
     };
 
-    // Commit state atomically
     setAuthoritativeRevision(nextRevision);
     setAuthoritativeStock(stagedStock);
     setAuthoritativeCenters(stagedCenters.map((c) => ({ ...c })));
     setAuthoritativeRegions(stagedRegions.map((r) => ({ ...r })));
     setReceipts((prev) => [...prev, newReceipt]);
 
-    // Persist to Supabase if configured
-    if (isSupabaseConfigured) {
-      void (async () => {
-        try {
-          const { error } = await supabase.from("authoritative_ledger").insert({
-            receipt_id: newReceipt.receiptId,
-            cycle_id: newReceipt.periodId,
-            revision: newReceipt.revision,
-            parent_receipt_id: receipts.length > 0 ? receipts[receipts.length - 1].receiptId : null,
-            sha256_hash: canonicalHash,
-            idempotency_key: idempotencyKey,
-            actor_id: effectiveActorId,
-            actor_name: effectiveActorName,
-            actor_role: effectiveActorRole,
-            justification: justification,
-            stock_kits: stagedStock,
-            allocations: resultingAllocation,
-          });
-          if (error) {
-            console.warn("[Supabase Sync] authoritative_ledger insert failed:", error.message);
-          } else {
-            console.info("[Supabase Sync] Revision recorded in Supabase:", newReceipt.receiptId);
-          }
-        } catch (err) {
-          console.warn("[Supabase Sync] Network error:", err);
-        }
-      })();
-    }
+    mirrorToSupabase("authoritative_ledger", {
+      receipt_id: newReceipt.receiptId,
+      cycle_id: newReceipt.periodId,
+      revision: newReceipt.revision,
+      parent_receipt_id: latestReceipt?.receiptId ?? null,
+      sha256_hash: canonicalHash,
+      idempotency_key: idempotencyKey,
+      actor_id: effectiveActorId,
+      actor_name: effectiveActorName,
+      actor_role: effectiveActorRole,
+      justification: changeJustification,
+      stock_kits: stagedStock,
+      allocations: resultingAllocation,
+    });
+    return { ok: true };
   };
 
-  const recordMovementEvent = (
-    event: Omit<MovementRecord, "recordId" | "timestampUTC" | "timestampIST">
-  ) => {
+  const dispatchHeadroomFor = (centerId: string) =>
+    dispatchHeadroom(centerId, authoritativeRegions, publishedAllocation, committedDispatches);
+
+  const recordMovementEvent = (event: Omit<MovementRecord, "recordId" | "timestampUTC" | "timestampIST">): MovementCheck => {
+    const check = checkMovement(event, movements, dispatchHeadroomFor(event.centerId));
+    if (!check.ok) return check;
     const now = new Date();
     const newRecord: MovementRecord = {
       ...event,
-      recordId: `MOV-${Date.now().toString().slice(-6)}`,
+      recordId: `MOV-${newId()}`,
       timestampUTC: now.toISOString(),
-      timestampIST:
-        now.toLocaleString("en-IN", {
-          timeZone: "Asia/Kolkata",
-          dateStyle: "medium",
-          timeStyle: "short",
-        }) + " IST",
+      timestampIST: formatIST(now, "short"),
     };
-
-    // If movement is dispatch, update center committedDispatches
-    if (event.movementType === "dispatch") {
-      setAuthoritativeCenters((prev) =>
-        prev.map((c) =>
-          c.centerId === event.centerId
-            ? { ...c, committedDispatches: c.committedDispatches + event.quantityKits }
-            : c
-        )
-      );
-      setStagedCenters((prev) =>
-        prev.map((c) =>
-          c.centerId === event.centerId
-            ? { ...c, committedDispatches: c.committedDispatches + event.quantityKits }
-            : c
-        )
-      );
-    }
-
+    // Dispatches become commitments through the ledger itself (see committedByCenter).
     setMovements((prev) => [newRecord, ...prev]);
-
-    // Persist to Supabase if configured
-    if (isSupabaseConfigured) {
-      void (async () => {
-        try {
-          const { error } = await supabase.from("inbound_shipments").upsert({
-            id: newRecord.waybillNumber,
-            destination_facility_id: newRecord.centerId,
-            destination_region_id: newRecord.centerId.replace("CTR-", ""),
-            kits_shipped: newRecord.quantityKits,
-            kits_received: newRecord.movementType === "receipt" ? newRecord.quantityKits : null,
-            status: newRecord.movementType === "receipt" ? "delivered" : "in_transit",
-            confirmed_by: newRecord.verifiedBy,
-            confirmed_at: newRecord.timestampUTC,
-          });
-          if (error) console.warn("[Supabase Sync] inbound_shipments upsert failed:", error.message);
-        } catch (err) {
-          console.warn("[Supabase Sync] Network error:", err);
-        }
-      })();
-    }
+    mirrorToSupabase(
+      "inbound_shipments",
+      {
+        id: newRecord.waybillNumber,
+        destination_facility_id: newRecord.centerId,
+        kits_shipped: newRecord.quantityKits,
+        kits_received: newRecord.movementType === "receipt" ? newRecord.quantityKits : null,
+        status: newRecord.movementType === "receipt" ? "delivered" : "in_transit",
+        confirmed_by: newRecord.verifiedBy,
+        confirmed_at: newRecord.timestampUTC,
+      },
+      "upsert"
+    );
+    return { ok: true };
   };
 
-  const applyBatchIntake = (newRegions: RegionEntity[], newStockKits: number) => {
-    setStagedStock(newStockKits);
-    setStagedRegions(newRegions);
+  const applyBatchIntake = (newRegions: RegionEntity[], newCenters: CenterEntity[], confirmedStockKits: number) => {
+    setStagedStockState(confirmedStockKits);
+    setStagedConfirmedStock(confirmedStockKits);
+    setStagedCenters(newCenters.map((c) => ({ ...c })));
+    setStagedRegions(newRegions.map((r) => ({ ...r })));
+    setStagedSource("intake");
     setActivePage("studio");
   };
 
+  /** Deterministic presets: each one resets every input to a known state (FRONTEND.md 4.3). */
+  const applyScenario = (scenarioId: string) => {
+    const preset = SCENARIO_PRESETS.find((s) => s.id === scenarioId);
+    if (!preset) return;
+    const seedRegion = new Map(SEED_REGIONS.map((r) => [r.regionId, r]));
+    const seedCenter = new Map(SEED_CENTERS.map((c) => [c.centerId, c]));
+    const centers: CenterEntity[] = preset.input.regions.map((r) => ({
+      ...(seedCenter.get(r.centerId) ?? { centerName: `${r.regionName} distribution center` }),
+      centerId: r.centerId,
+      configuredCapacity: r.capacityKits,
+      committedDispatches: r.priorDispatchedKits,
+      operatingStatus: r.status === "closed" ? "closed" : "active",
+    }) as CenterEntity);
+    const regions: RegionEntity[] = preset.input.regions.map((r) => ({
+      ...(seedRegion.get(r.regionId) ?? {}),
+      regionId: r.regionId,
+      regionName: seedRegion.get(r.regionId)?.regionName ?? r.regionName,
+      assignedCenterId: r.centerId,
+      demandKits: r.demandKits,
+      status: "active",
+    }));
+    // Presets are what-if studies: their stock is hypothetical unless it equals confirmed stock.
+    setStagedStockState(preset.input.stockKits);
+    setStagedConfirmedStock(authoritativeStock);
+    setStagedCenters(centers);
+    setStagedRegions(regions);
+    setStagedSource("scenario");
+  };
+
+  const submitAidRequest = (request: Omit<AidRequest, "requestId" | "submittedAtUTC" | "status">) => {
+    const saved: AidRequest = { ...request, requestId: `REQ-${newId().slice(0, 8)}`, submittedAtUTC: new Date().toISOString(), status: "pending" };
+    setAidRequests((prev) => [saved, ...prev]);
+  };
+
+  const resolveAidRequest = (requestId: string, decision: "staged" | "dismissed") => {
+    const request = aidRequests.find((r) => r.requestId === requestId);
+    if (!request || request.status !== "pending") return;
+    if (decision === "staged") updateRegionDemand(request.regionId, request.requestedKits);
+    setAidRequests((prev) => prev.map((r) => (r.requestId === requestId ? { ...r, status: decision } : r)));
+  };
+
   const resetToFactoryDefaults = () => {
-    localStorage.clear();
+    // Remove only planning data; the signed-in session is kept.
+    for (const key of Object.values(KEYS)) {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        /* ignore */
+      }
+    }
+    usedIdempotencyKeys.current.clear();
     setAuthoritativeRevision(1);
     setAuthoritativeStock(120);
     setAuthoritativeCenters(SEED_CENTERS);
     setAuthoritativeRegions(SEED_REGIONS);
     setReceipts(SEED_RECEIPTS);
     setMovements(SEED_MOVEMENTS);
-    setStagedStock(120);
+    setAidRequests([]);
+    setStagedStockState(120);
+    setStagedConfirmedStock(120);
     setStagedCenters(SEED_CENTERS);
     setStagedRegions(SEED_REGIONS);
+    setStagedSource("register");
   };
 
   const activeCentersCount = useMemo(
-    () => stagedCenters.filter((c) => c.operatingStatus === "active" && c.configuredCapacity > 0).length,
+    () => stagedCenters.filter((c) => c.operatingStatus !== "closed" && c.configuredCapacity > 0).length,
     [stagedCenters]
   );
 
@@ -693,39 +646,50 @@ export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ c
         organizationName: "Maharashtra State Food Distribution Authority",
         organizationId: "MSFDA-MMR-DIV",
         periodName: "Cycle 2026-W46 (10 Nov – 16 Nov 2026)",
-        periodId: "2026-W46",
-        userRole: "Chief Operations Coordinator",
-        userName: "Swayam",
+        periodId: PERIOD_ID,
         authoritativeRevision,
         authoritativeStock,
         authoritativeCenters,
         authoritativeRegions,
+        authoritativePlan,
+        publishedAllocation,
         receipts,
         movements,
+        committedDispatches,
         stagedStock,
         setStagedStock,
+        stagedConfirmedStock,
+        hypotheticalStockKits: stagedStock - stagedConfirmedStock,
         stagedCenters,
         stagedRegions,
         selectedAlgorithm,
         setSelectedAlgorithm,
         hasStagedChanges,
-        currentPlan,
-        baselinePlan,
+        stagedSource,
+        stagedCommitted,
+        currentPlan: currentResult.rows,
+        baselinePlan: proportionalPlan.rows,
+        planIssues: currentResult.issues,
         totalStockAvailable: stagedStock,
-        totalAllocatedKits,
-        totalUnmetKits,
-        averageCoveragePct,
-        minCoveragePct,
+        totalAllocatedKits: currentResult.totalAllocatedKits,
+        totalDemandKits: currentResult.totalDemandKits,
+        totalUnmetKits: currentResult.totalUnmetKits,
+        averageCoveragePct: currentResult.averageCoveragePct,
+        minCoveragePct: currentResult.minCoveragePct,
         activeCentersCount,
-        dispatchReconciliation,
-        centerReconciliation,
+        centerLedgers,
+        aidRequests,
+        submitAidRequest,
+        resolveAidRequest,
         updateCenterCapacity,
         toggleCenterStatus,
         updateRegionDemand,
         addNewCenter,
         publishAuthoritativePlan,
+        dispatchHeadroomFor,
         recordMovementEvent,
         applyBatchIntake,
+        applyScenario,
         resetStudioToAuthoritative,
         resetToFactoryDefaults,
       }}

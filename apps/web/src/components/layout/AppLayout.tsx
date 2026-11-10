@@ -54,6 +54,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [apiOnline, setApiOnline] = useState<boolean>(false);
+  const [browserOnline, setBrowserOnline] = useState<boolean>(() => (typeof navigator === "undefined" ? true : navigator.onLine));
+  useEffect(() => {
+    const update = () => setBrowserOnline(navigator.onLine);
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
 
   useEffect(() => {
     checkApiHealth().then((res) => setApiOnline(res.online));
@@ -148,8 +158,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         <div className="p-4 border-t border-zinc-100 bg-zinc-50/50 space-y-2.5">
           <div className="flex items-center justify-between text-xs">
             <span className="text-zinc-600 font-medium flex items-center">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2" />
-              Network Online
+              <span className={`w-2 h-2 rounded-full mr-2 ${browserOnline ? "bg-emerald-500" : "bg-rose-500"}`} />
+              {browserOnline ? "Network Online" : "Offline (preview only)"}
             </span>
             <span className="text-[11px] text-zinc-400 font-mono">Cycle W46</span>
           </div>

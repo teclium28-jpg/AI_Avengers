@@ -13,9 +13,13 @@ import { CommunityRequestView } from "./views/CommunityRequestView";
 import { ReviewAcceptModal } from "./components/modals/ReviewAcceptModal";
 import { RecordMovementModal } from "./components/modals/RecordMovementModal";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
+import { canOpen } from "./lib/access";
 
 const AuthenticatedTerminal: React.FC = () => {
-  const { activePage } = useOperational();
+  const { activePage: requestedPage } = useOperational();
+  const { currentUser } = useAuth();
+  // A page outside the role's permissions falls back to the dashboard.
+  const activePage = canOpen(currentUser?.role, requestedPage) ? requestedPage : "dashboard";
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [isRecordMovementModalOpen, setIsRecordMovementModalOpen] = useState(false);
 
