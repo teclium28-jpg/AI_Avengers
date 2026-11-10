@@ -157,17 +157,20 @@ Required security tests:
 ## Exact acceptance transaction
 Use READ COMMITTED. No SERIALIZABLE/application-level lock.
 
+Resolved against final technical plan PDF v3 section 04 on 10 November 2026. See docs/integration-contract.md for details. Recompute from authoritative inputs before the short write transaction; its locked revision check protects against intervening changes.
+
 POST /api/v1/plans/accept:
 1. Authenticate/authorize.
 2. Canonicalize payload and hash it.
-3. Start short transaction; set local actor/org.
-4. Check idempotency first:
-   - same org + actor + key + hash -> original result
-   - same key + different payload -> 422
+3. Check completed idempotency replays first. Read authoritative inputs/revision consistently in an organization-scoped read transaction; recompute and independently validate outside the short write transaction.
+4. Start short write transaction; set local actor/org. Claim a unique (organization, request key) record; bind actor and canonical payload hash:
+   - same actor + payload -> original result before rejecting stale revision
+   - same actor + different payload -> 422
+   - different actor -> 403
 5. Set lock timeout around 2 seconds and bounded statement timeout.
 6. SELECT period FOR UPDATE.
-7. Compare expected revision; different -> 409 refresh.
-8. Reload authoritative inputs; recompute and independently validate.
+7. Compare expected revision AND recomputation snapshot revision to locked revision; different -> 409 refresh.
+8. Use the server-computed, independently validated result only after these revision checks.
 9. Insert plan, allocations, eligible reservations, receipt and audit event.
 10. Increment period revision.
 11. Commit atomically.
@@ -257,11 +260,11 @@ LLM disabled initially. Allow ~$4 for 2,000 or ~$85 for 50,000 short calls; rech
 - C:\Users\Ishaan\Desktop\FairShare_Technical_Plan_Senior_Review.pdf
 
 ## Current status
-No FairShare application code currently exists. Temporary starter code was deleted at the user's request. The DataNova workspace retains final PDF artifacts only.
+The team added the browser demo, shared types, preprocessing, Hamilton baseline and progressive fairness engine. Local Hono health runs. Four PostgreSQL migrations now define the private fairshare schema, tenant RLS, revisioned data and immutable history; a separate synthetic seed and embedded PostgreSQL tests are available. No hosted Supabase project exists yet. Production identity/role grants, approved database functions, authoritative acceptance and the live Worker/Supabase transaction remain unfinished. See docs/database.md, docs/integration-contract.md and docs/local-api.md for guarantees and evidence limits.
 
 Recommended next command:
 cd "C:\Users\Ishaan\OneDrive\FairShare"
 code .
 
-Create code only after confirming this is the intended implementation folder.
+This is the user-authorized implementation folder.
 

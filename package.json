@@ -2,11 +2,20 @@
   "name": "fairshare",
   "private": true,
   "type": "module",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "npm run dev -w @fairshare/web",
     "dev:api": "npm run dev -w @fairshare/api",
+    "check:db": "node scripts/check-database.mjs",
+    "test": "npm run test --workspaces --if-present && npm run test:db",
+    "test:db": "node --test tests/database/*.test.mjs",
     "build": "npm run build -w @fairshare/web",
     "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16"
   }
 }

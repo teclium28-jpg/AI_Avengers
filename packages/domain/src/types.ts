@@ -68,6 +68,7 @@ export interface DataIssue {
 /** Everything the baseline (and later the fairness engine) needs for one period. */
 export interface PeriodInput {
   periodId: string;
+  /** Confirmed period total INCLUDING prior dispatches, not remaining warehouse stock. */
   stockKits: number;
   regions: RegionInputRow[];
 }

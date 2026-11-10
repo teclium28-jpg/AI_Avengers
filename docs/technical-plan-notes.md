@@ -13,9 +13,9 @@ Source: FairShare Final Technical Plan v3, 10 November 2026 (three-page PDF supp
 - The optional LLM is outside the critical path, requires validated output and human confirmation, and cannot decide allocations.
 - Performance, cost, and recovery numbers in the PDF are targets or estimates, not verified outcomes.
 
-## Decision to reconcile before implementing acceptance
+## Acceptance decisions
 
-The PDF says to recompute from authoritative inputs before the short write transaction, then lock the period and compare the revision. `context.md` instead places reload and recomputation inside that transaction. Preserve the same correctness guarantees and settle the placement with a concurrency-focused design and tests before implementing it. The PDF also scopes idempotency uniqueness to organization and request key, binding actor and payload; the existing context describes organization, actor and key. Do not silently assume these are equivalent.
+Use final PDF v3 section 04: recompute from a consistent authoritative snapshot before the short write transaction; check its revision and the client's expected revision under the period lock. Idempotency uniqueness is organization plus request key, with actor and canonical request hash bound to the record. Replays are handled before stale-revision rejection. See `integration-contract.md` for the full sequence, accounting conventions and teammate confirmations still outstanding. These are design decisions, not implemented acceptance behavior.
 
 ## Setup milestone
 

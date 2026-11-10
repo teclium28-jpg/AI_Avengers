@@ -3,9 +3,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "typecheck": "tsc --noEmit"
+    "dev": "wrangler dev --config wrangler.local.jsonc",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
   },
-  "dependencies": { "hono": "^4.0.0" },
-  "devDependencies": { "typescript": "^5.0.0", "wrangler": "^4.0.0" }
+  "dependencies": {
+    "hono": "^4.0.0",
+    "postgres": "^3.4.9"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "wrangler": "^4.0.0"
+  }
 }
