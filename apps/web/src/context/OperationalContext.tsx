@@ -84,63 +84,15 @@ const SEED_RECEIPTS: DecisionReceiptEntity[] = [
     periodId: "2026-W46",
     revision: 1,
     actorId: "ACT-DIR-01",
-    actorName: "Swayam",
+    actorName: "Swayam Ruparel",
     actorRole: "Chief Operations Coordinator",
-    timestampUTC: "2026-11-09T08:00:00Z",
-    timestampIST: "09 Nov 2026, 13:30:00 IST",
+    timestampUTC: "2026-11-10T08:00:00Z",
+    timestampIST: "10 Nov 2026, 13:30:00 IST",
     algorithm: "srs-progressive-maxmin",
     algorithmVersion: "SRS Progressive Max-Min Engine v3.1 (Integer BigInt)",
     changeJustification: "Initial approved baseline allocation for Cycle 2026-W46.",
     canonicalPayloadHash: "8f4a13b6d27e95c01b44d34e9e0fa958a4361287c8e54736f9872514d3b6a931",
     stagedOverrides: { capacityOverrides: {}, statusOverrides: {} },
-    resultingAllocation: { A: 40, B: 40, C: 40 },
-  },
-  {
-    receiptId: "RCPT-MMR-2026-002",
-    periodId: "2026-W46",
-    revision: 2,
-    actorId: "ACT-DIR-01",
-    actorName: "Swayam",
-    actorRole: "Chief Operations Coordinator",
-    timestampUTC: "2026-11-09T14:15:00Z",
-    timestampIST: "09 Nov 2026, 19:45:00 IST",
-    algorithm: "srs-progressive-maxmin",
-    algorithmVersion: "SRS Progressive Max-Min Engine v3.1 (Integer BigInt)",
-    changeJustification: "Heavy rainfall damaged culvert approaching Dharavi Central Node; restricted loading capacity to 20 kits.",
-    canonicalPayloadHash: "c23f4b67819ad5490b83e445176ea39bf54867104b2a8f9c7356291a45d09876",
-    stagedOverrides: { capacityOverrides: { "CTR-B": 20 }, statusOverrides: {} },
-    resultingAllocation: { A: 50, B: 20, C: 50 },
-  },
-  {
-    receiptId: "RCPT-MMR-2026-003",
-    periodId: "2026-W46",
-    revision: 3,
-    actorId: "ACT-DIR-01",
-    actorName: "Swayam",
-    actorRole: "Chief Operations Coordinator",
-    timestampUTC: "2026-11-10T01:30:00Z",
-    timestampIST: "10 Nov 2026, 07:00:00 IST",
-    algorithm: "srs-progressive-maxmin",
-    algorithmVersion: "SRS Progressive Max-Min Engine v3.1 (Integer BigInt)",
-    changeJustification: "Allocated additional warehouse reserve batch (+20 kits) to maximize coverage across accessible zones.",
-    canonicalPayloadHash: "19d7a5b34e8f0c291847e335298a44c9b65741087d3a2f8b5c90142e76f59843",
-    stagedOverrides: { capacityOverrides: { "CTR-B": 20 }, statusOverrides: {} },
-    resultingAllocation: { A: 60, B: 20, C: 60 },
-  },
-  {
-    receiptId: "RCPT-MMR-2026-004",
-    periodId: "2026-W46",
-    revision: 4,
-    actorId: "ACT-DIR-01",
-    actorName: "Swayam",
-    actorRole: "Chief Operations Coordinator",
-    timestampUTC: "2026-11-10T03:00:00Z",
-    timestampIST: "10 Nov 2026, 08:30:00 IST",
-    algorithm: "srs-progressive-maxmin",
-    algorithmVersion: "SRS Progressive Max-Min Engine v3.1 (Integer BigInt)",
-    changeJustification: "Emergency roadway repairs completed by municipal engineers; restored Dharavi Central Node capacity to 40 kits.",
-    canonicalPayloadHash: "7b4c92a18e3d5f0412894567e98a34bc21785906d4e21f3a5b8970142c3e5678",
-    stagedOverrides: { capacityOverrides: { "CTR-B": 40 }, statusOverrides: {} },
     resultingAllocation: { A: 40, B: 40, C: 40 },
   },
 ];
@@ -262,7 +214,7 @@ export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const [authoritativeRevision, setAuthoritativeRevision] = useState<number>(() => {
     const saved = localStorage.getItem("fairshare_revision");
-    return saved ? parseInt(saved, 10) : 4;
+    return saved && saved !== "4" ? parseInt(saved, 10) : 1;
   });
 
   const [authoritativeStock, setAuthoritativeStock] = useState<number>(() => {
@@ -282,7 +234,18 @@ export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const [receipts, setReceipts] = useState<DecisionReceiptEntity[]>(() => {
     const saved = localStorage.getItem("fairshare_receipts");
-    return saved ? JSON.parse(saved) : SEED_RECEIPTS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === 4 && parsed[3]?.receiptId === "RCPT-MMR-2026-004") {
+          return SEED_RECEIPTS;
+        }
+        return parsed;
+      } catch {
+        return SEED_RECEIPTS;
+      }
+    }
+    return SEED_RECEIPTS;
   });
 
   const [movements, setMovements] = useState<MovementRecord[]>(() => {
@@ -642,7 +605,7 @@ export const OperationalProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const resetToFactoryDefaults = () => {
     localStorage.clear();
-    setAuthoritativeRevision(4);
+    setAuthoritativeRevision(1);
     setAuthoritativeStock(120);
     setAuthoritativeCenters(SEED_CENTERS);
     setAuthoritativeRegions(SEED_REGIONS);
